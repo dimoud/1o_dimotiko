@@ -96,7 +96,7 @@ def kefalida(r, nav_html):
 
 def ypo(r, etos):
     cookies = ' · <a class="foot-admin" href="#" data-cc-open>Ρυθμίσεις cookies</a>' if r.get('ga4') else ''
-    admin = ('\n  <p><a class="foot-admin" href="' + esc(r['forma_url']) + '" rel="nofollow">🔒 Διαχείριση ιστοσελίδας</a>' + cookies + '</p>') if r.get('forma_url') else ''
+    admin = ('\n  <p><a class="foot-admin" href="/diaxeirisi/" rel="nofollow">🔒 Διαχείριση ιστοσελίδας</a>' + cookies + '</p>') if r.get('forma_url') else ''
     email = f'<li><a href="mailto:{esc(r["email"])}">{esc(r["email"])}</a></li>' if r.get('email') else ''
     return f'''<footer class="site-foot">
  <div class="foot-art" aria-hidden="true">

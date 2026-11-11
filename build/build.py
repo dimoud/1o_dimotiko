@@ -637,7 +637,7 @@ class Istotopos:
         (self.out / 'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
                                               ''.join(f'<url><loc>{tomeas}{p}</loc></url>\n' for p in self.sitemap) + '</urlset>\n', encoding='utf-8')
         (self.out / 'robots.txt').write_text(
-            'User-agent: *\nAllow: /\nDisallow: /fotografies/\n\n'
+            'User-agent: *\nAllow: /\nDisallow: /fotografies/\nDisallow: /diaxeirisi/\n\n'
             '# Φωτογραφίες μαθητών: όχι αναζήτηση εικόνων, όχι εκπαίδευση μοντέλων ΤΝ\n'
             'User-agent: Googlebot-Image\nDisallow: /\n\n'
             'User-agent: GPTBot\nDisallow: /\n\nUser-agent: Google-Extended\nDisallow: /\n\nUser-agent: CCBot\nDisallow: /\n\n'
@@ -647,6 +647,7 @@ class Istotopos:
         json.dump(self.search, open(self.out / 'search-index.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
         st = self.out / 'static'
         shutil.copytree(RIZA / 'static', st)
+        self.pinakas()
         h = hashlib.sha1(b''.join(p.read_bytes() for p in sorted(st.rglob('*')) if p.is_file())).hexdigest()[:8]
         base = self.base
         for f in self.out.rglob('*.html'):
@@ -684,10 +685,28 @@ class Istotopos:
         return self
 
 
+    def pinakas(self):
+        """Ο Πίνακας διαχείρισης ως σελίδα του ιστότοπου (/diaxeirisi/): ίδιο Index.html με το Apps Script,
+        με γέφυρα fetch αντί για google.script.run. Χωρίς ευρετηρίαση, εκτός sitemap."""
+        api = self.r.get('forma_url', '')
+        src = RIZA / 'diaxeirisi' / 'Index.html'
+        if not api or not src.exists():
+            return
+        t = src.read_text(encoding='utf-8').replace('<base target="_top">\n', '').replace('<base target="_top">', '')
+        t = t.replace('<html lang="el">', '<html lang="el" data-api="' + esc(api) + '">', 1)
+        t = t.replace('<head>', '<head>\n<meta name="robots" content="noindex,nofollow">\n<title>Διαχείριση ιστοσελίδας · '
+                      + esc(self.r['onoma']) + '</title>\n<link rel="icon" href="/favicon.svg" type="image/svg+xml">\n'
+                      '<script src="/static/pinakas-gefyra.js?v={V}"></script>', 1)
+        d = self.out / 'diaxeirisi'
+        d.mkdir(parents=True, exist_ok=True)
+        (d / 'index.html').write_text(t, encoding='utf-8')
+
+
 def onoma_arxeiou(f):
     s = os.path.splitext(f)[0]
     s = re.sub(r'[-_]+', ' ', s)
     return s[:1].upper() + s[1:]
+
 
 
 def main():

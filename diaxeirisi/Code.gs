@@ -43,6 +43,10 @@ var P = function () { return PropertiesService.getScriptProperties(); };
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Ιστοσελίδα')
+    .addItem('🔒 Άνοιγμα Πίνακα διαχείρισης', 'anoigmaPinaka')
+    .addItem('🚀 Δημοσίευση αλλαγών του Φύλλου στην ιστοσελίδα', 'dimosiefsiTora')
+    .addItem('📖 Οδηγίες: πώς σχετίζεται το Φύλλο με την ιστοσελίδα', 'odigiesFyllou')
+    .addSeparator()
     .addItem('1. Αρχικοποίηση (μία φορά)', 'arxikopoiisi')
     .addItem('2. Ορισμός κωδικών Συντάκτη και Διεύθυνσης', 'orismosKodikon')
     .addItem('3. Κλειδί GitHub', 'orismosGithub')
@@ -51,6 +55,60 @@ function onOpen() {
     .addItem('Αντίγραφο ασφαλείας τώρα', 'antigrafo')
     .addItem('Εμφάνιση κλειδιού API (για το GitHub)', 'deiksiApi')
     .addToUi();
+}
+
+var PINAKAS_URL = 'https://1dim-polichnis.gr/diaxeirisi/';
+
+function anoigmaPinaka() {
+  var h = HtmlService.createHtmlOutput(
+    '<div style="font:15px system-ui;line-height:1.5">' +
+    '<p>Ο Πίνακας ανοίγει σε νέα καρτέλα. Αν δεν άνοιξε, πατήστε:</p>' +
+    '<p><a href="' + PINAKAS_URL + '" target="_blank" style="font-size:17px;font-weight:700">' + PINAKAS_URL + '</a></p>' +
+    '<p style="color:#52606d">Σύνδεση με τον κωδικό Συντάκτη ή Διεύθυνσης. Δεν χρειάζεται λογαριασμός Google.</p></div>' +
+    '<script>window.open("' + PINAKAS_URL + '","_blank");</script>').setWidth(460).setHeight(190);
+  SpreadsheetApp.getUi().showModalDialog(h, 'Πίνακας διαχείρισης');
+}
+
+function dimosiefsiTora() {
+  var r = ksekinaDimosiefsi_(), ui = SpreadsheetApp.getUi();
+  if (r.ok) ui.alert('Η δημοσίευση ξεκίνησε', 'Σε 2–5 λεπτά η ιστοσελίδα θα δείχνει ό,τι υπάρχει τώρα στο Φύλλο.\n\n' +
+    'Δημοσιεύονται μόνο οι γραμμές με Κατάσταση «Δημοσιευμένη».', ui.ButtonSet.OK);
+  else ui.alert('Η δημοσίευση δεν ξεκίνησε', r.minima, ui.ButtonSet.OK);
+}
+
+function odigiesFyllou() {
+  var ss = SpreadsheetApp.getActive(), sh = ss.getSheetByName('Οδηγίες') || ss.insertSheet('Οδηγίες', 0);
+  sh.clear();
+  var g = [
+    ['Πώς σχετίζεται αυτό το Φύλλο με την ιστοσελίδα 1dim-polichnis.gr'],
+    [''],
+    ['1. Το Φύλλο είναι η «αποθήκη» της ιστοσελίδας. Κάθε γραμμή της καρτέλας «Αναρτήσεις» είναι μία ανάρτηση της ιστοσελίδας.'],
+    ['2. Στην ιστοσελίδα εμφανίζονται ΜΟΝΟ οι γραμμές με Κατάσταση «Δημοσιευμένη». «Πρόχειρο», «Προς έγκριση», «Επιστράφηκε», «Αποσυρμένη» δεν φαίνονται.'],
+    ['3. Η ιστοσελίδα ενημερώνεται όταν γίνει δημοσίευση: αυτόματα όταν η Διεύθυνση πατά «Δημοσίευση» στον Πίνακα, ή χειροκίνητα από το μενού Ιστοσελίδα → «🚀 Δημοσίευση αλλαγών του Φύλλου». Χρόνος: 2–5 λεπτά.'],
+    ['4. Συνιστάται όλες οι αλλαγές να γίνονται από τον Πίνακα διαχείρισης (μενού Ιστοσελίδα → «🔒 Άνοιγμα Πίνακα», ή ' + PINAKAS_URL + '). Εκεί φαίνονται οι φωτογραφίες, ανεβαίνουν αρχεία και γίνεται έλεγχος πριν από τη δημοσίευση.'],
+    ['5. Οι στήλες «Φωτογραφίες» και «Αρχεία» είναι τεχνικές (λίστα αρχείων του Drive). Μην τις αλλάζετε με το χέρι: προσθήκη, αφαίρεση, σειρά και εξώφυλλο γίνονται από τον Πίνακα.'],
+    ['6. Διόρθωση κειμένου ή τίτλου μπορεί να γίνει και εδώ στο Φύλλο. Μετά: μενού Ιστοσελίδα → «🚀 Δημοσίευση αλλαγών του Φύλλου».'],
+    ['7. Για να φύγει μια ανάρτηση από την ιστοσελίδα χωρίς να χαθεί: Κατάσταση «Αποσυρμένη» (ή «Αφαίρεση» από τον Πίνακα) και δημοσίευση.'],
+    ['8. Κάθε αλλαγή καταγράφεται στην καρτέλα «Ιστορικό». Αντίγραφο ασφαλείας: μενού Ιστοσελίδα → «Αντίγραφο ασφαλείας τώρα».']
+  ];
+  sh.getRange(1, 1, g.length, 1).setValues(g).setWrap(true).setVerticalAlignment('top');
+  sh.setColumnWidth(1, 900);
+  sh.getRange(1, 1).setFontSize(15).setFontWeight('bold');
+  sh.getRange(3, 1, g.length - 2, 1).setFontSize(12);
+  ['anartiseis', 'selides'].forEach(function (k) {
+    var f = fyllo_(k); if (!f || f.getLastColumn() < 1) return;
+    var hd = f.getRange(1, 1, 1, f.getLastColumn()).getValues()[0];
+    hd.forEach(function (h, i) {
+      var key = kleidi_(h);
+      if (key === 'fotografies' || key === 'arxeia') {
+        f.getRange(1, i + 1).setNote('Τεχνική στήλη: αλλάζει μόνο από τον Πίνακα διαχείρισης (' + PINAKAS_URL + ').');
+        f.setColumnWidth(i + 1, 110);
+        if (f.getLastRow() > 1) f.getRange(2, i + 1, f.getLastRow() - 1, 1).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP).setFontColor('#9aa5b1');
+      }
+      if (key === 'katastasi') f.getRange(1, i + 1).setNote('Στην ιστοσελίδα φαίνονται μόνο οι «Δημοσιευμένη».');
+    });
+  });
+  ss.setActiveSheet(sh);
 }
 
 function arxikopoiisi() {
@@ -136,6 +194,24 @@ function api_(q) {
     return out({ id: q.id, onoma: f.getName(), mime: blob.getContentType(), data: Utilities.base64Encode(blob.getBytes()) });
   }
   return out({ sfalma: 'άγνωστη κλήση' });
+}
+
+/* ═══════════════ Πίνακας μέσα στην ιστοσελίδα (1dim-polichnis.gr/diaxeirisi/) ═══════════════
+ * Η σελίδα στέλνει POST text/plain {fn, args}· απαντάμε {r} ή {sfalma}.
+ * Μόνο οι παρακάτω συναρτήσεις· όλες ελέγχουν μόνες τους τη συνεδρία (token).          */
+function rpc_(b) {
+  var out = function (o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); };
+  var F = { syndesi: syndesi, listaAnartiseon: listaAnartiseon, fereAnartisi: fereAnartisi, apothikefsi: apothikefsi,
+            apofasi: apofasi, anevasma: anevasma, mikrografia: mikrografia, mikrografies: mikrografies,
+            afairesiFotografias: afairesiFotografias, listaSelidon: listaSelidon, apothikefsiSelidas: apothikefsiSelidas,
+            rythmiseis: rythmiseis, allagiKodikou: allagiKodikou, allagiEmail: allagiEmail };
+  if (!b || !F[b.fn]) return out({ sfalma: 'άγνωστη κλήση' });
+  try {
+    var r = F[b.fn].apply(null, b.args || []);
+    return out({ r: r === undefined ? null : r });
+  } catch (e) {
+    return out({ sfalma: (e && e.message) || String(e) });
+  }
 }
 
 function gia_dimosiefsi_(r) {

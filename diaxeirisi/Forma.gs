@@ -28,6 +28,11 @@ var FORMA = {
 };
 
 function doPost(e) {
+  // Πίνακας διαχείρισης από την ιστοσελίδα: σώμα JSON (η φόρμα στέλνει multipart)
+  if (e && e.postData && /^\s*\{/.test(e.postData.contents || '')) {
+    var b; try { b = JSON.parse(e.postData.contents); } catch (x) { b = null; }
+    if (b && b.fn) return rpc_(b);
+  }
   try {
     var p = (e && e.parameter) || {};
     if (p._hp) return formaJson_({ result: 'success' });                     // ρομπότ: σιωπηλή αποδοχή
