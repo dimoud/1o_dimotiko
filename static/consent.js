@@ -101,10 +101,18 @@
         if (granted && GA_ID && !document.getElementById('ga4-script')) {
             var s = document.createElement('script');
             s.id = 'ga4-script'; s.async = true;
-            s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
-            document.head.appendChild(s);
-            gtag('js', new Date());
-            gtag('config', GA_ID);                 /* το anonymize_ip δεν κάνει τίποτα στο GA4 */
+            if (GA_ID.indexOf('GTM-') === 0) {        /* Google Tag Manager: το GA4 ρυθμίζεται μέσα στο container */
+                window.dataLayer = window.dataLayer || [];
+                window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+                s.src = 'https://www.googletagmanager.com/gtm.js?id=' + GA_ID;
+                document.head.appendChild(s);
+                gtag('js', new Date());
+            } else {
+                s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+                document.head.appendChild(s);
+                gtag('js', new Date());
+                gtag('config', GA_ID);             /* το anonymize_ip δεν κάνει τίποτα στο GA4 */
+            }
             flush();
         }
     }

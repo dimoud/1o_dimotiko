@@ -165,8 +165,8 @@ def omada_xromatos(path):
     return 'g1'
 
 
-GA_HEAD = ('<script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments);}}'
-           "gtag('consent','default',{{analytics_storage:'denied',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',wait_for_update:500}});</script>\n")
+GA_HEAD = ("<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}"
+           "gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',wait_for_update:500});</script>\n")
 
 
 def selida(*, r, nav_html, titlos, perigrafi, path, soma, h1_titlos=None, ld=None, og_eikona='', extra_tail='',
