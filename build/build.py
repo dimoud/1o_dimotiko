@@ -112,6 +112,11 @@ class Istotopos:
         self.etos = 2026
         # Αναρτήσεις: μόνο δημοσιευμένες, από 01/01/2024
         posts = [p for p in an if p.get('katastasi', DIMOSIEYMENI) == DIMOSIEYMENI and p['imerominia'] >= APO]
+        for p in posts:   # αναρτήσεις από τον Πίνακα: το σχολικό έτος βγαίνει από την ημερομηνία (1/9–31/8)
+            if not p.get('sxoliko_etos'):
+                y, m = int(p['imerominia'][:4]), int(p['imerominia'][5:7])
+                p['sxoliko_etos'] = f'{y}-{y + 1}' if m >= 9 else f'{y - 1}-{y}'
+            p.setdefault('diktya', []); p.setdefault('taxeis', []); p.setdefault('fotografies', []); p.setdefault('arxeia', [])
         posts.sort(key=lambda p: (p['imerominia'], p.get('id', '')), reverse=True)
         seen = set()
         for p in posts:

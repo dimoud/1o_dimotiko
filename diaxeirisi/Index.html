@@ -117,6 +117,30 @@ details.more summary{cursor:pointer;min-height:44px;display:flex;align-items:cen
 .modal{position:fixed;inset:0;background:rgba(20,30,45,.55);display:flex;align-items:flex-end;justify-content:center;z-index:50;padding:12px}
 .modal .card{max-width:880px;width:100%;max-height:92vh;overflow:auto;margin:0}
 @media(min-width:700px){.modal{align-items:center}}
+.pub{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:40;width:min(560px,calc(100% - 24px));background:#fff;border-radius:18px;box-shadow:0 12px 34px rgba(0,0,0,.18);padding:14px 16px 12px;border:2px solid var(--blue-bg)}
+.pub b{display:block;margin-bottom:8px}
+.pub .st{display:flex;gap:6px;align-items:center;font-size:.85rem;color:var(--ink2)}
+.pub .st span{flex:1;text-align:center;padding:6px 4px;border-radius:10px;background:var(--bg)}
+.pub .st span.on{background:var(--blue-bg);color:var(--blue-d);font-weight:700}
+.pub .st span.ok{background:var(--green-bg);color:var(--green);font-weight:700}
+.pub .st span.bad{background:var(--coral-bg);color:var(--coral);font-weight:700}
+.pub .bar{height:6px;border-radius:6px;background:var(--bg);margin-top:10px;overflow:hidden}
+.pub .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--green));transition:width 1s linear}
+.pub .x{position:absolute;right:10px;top:8px;border:0;background:none;font-size:1.1rem;cursor:pointer;color:var(--ink2)}
+.live{display:inline-block;margin-left:6px;font-size:.78rem;padding:2px 9px;border-radius:999px;font-weight:700}
+.live.ok{background:var(--green-bg);color:var(--green)}.live.on{background:var(--blue-bg);color:var(--blue-d)}.live.bad{background:var(--coral-bg);color:var(--coral)}
+/* δικό μας παράθυρο επιβεβαίωσης (αντί για το γκρι του περιηγητή) */
+.dlg{position:fixed;inset:0;background:rgba(20,30,45,.55);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px}
+.dlg .box{background:#fff;border-radius:22px;max-width:520px;width:100%;padding:26px 24px 20px;box-shadow:0 20px 50px rgba(0,0,0,.25);text-align:center;animation:dlgIn .18s ease-out}
+@keyframes dlgIn{from{transform:translateY(12px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.dlg .ic{font-size:2.6rem;line-height:1;margin-bottom:6px}
+.dlg h3{margin:0 0 8px;font-size:1.3rem}
+.dlg p{margin:0 0 16px;color:var(--ink2)}
+.dlg textarea,.dlg input{width:100%;border:2px solid var(--line);border-radius:14px;padding:12px 14px;font:inherit;margin:0 0 14px;text-align:left}
+.dlg textarea{min-height:110px;resize:vertical}
+.dlg textarea:focus,.dlg input:focus{outline:none;border-color:var(--blue)}
+.dlg .row{display:flex;flex-direction:column;gap:10px}
+@media(prefers-reduced-motion:reduce){.dlg .box{animation:none}}
 .login{max-width:460px;margin:10vh auto}
 .big-in{width:100%;min-height:60px;font-size:1.3rem;text-align:center;border:2px solid var(--line);border-radius:14px;letter-spacing:.1em}
 table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
@@ -294,6 +318,12 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
 </section>
 
 <div class="modal hidden" id="modal"><div class="card" id="modalBody"></div></div>
+<div class="pub hidden" id="pub" role="status" aria-live="polite"></div>
+<div class="dlg hidden" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgT"><div class="box">
+ <div class="ic" id="dlgI"></div><h3 id="dlgT"></h3><p id="dlgP"></p>
+ <div id="dlgIn"></div>
+ <div class="row"><button class="btn wide" id="dlgOk"></button><button class="btn light wide" id="dlgNo">Ακύρωση</button></div>
+</div></div>
 
 <script>
 var T = null, ROLE = null, OPT = null, ALL = [], CUR = null, FILTER = 'all', PAGES = [], PCUR = null, THUMBS = {}, BUSY = 0;
@@ -303,6 +333,63 @@ var $ = function (id) { return document.getElementById(id); };
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 function msg(el, text, kind) { $(el).innerHTML = text ? '<div class="msg ' + (kind || 'info') + '">' + esc(text) + '</div>' : ''; if (text) $(el).scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
 function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+/* dlg({icon, title, text, ok, kind:'green'|'coral'|'', cancel:false για απλή ειδοποίηση, input:{placeholder,value,multiline}}, cb(τιμή)) */
+function dlg(o, cb) {
+  $('dlgI').textContent = o.icon || '❓'; $('dlgT').textContent = o.title || ''; $('dlgP').textContent = o.text || '';
+  $('dlgP').classList.toggle('hidden', !o.text);
+  var ok = $('dlgOk'), no = $('dlgNo'), box = $('dlgIn');
+  ok.textContent = o.ok || 'Εντάξει'; ok.className = 'btn wide' + (o.kind ? ' ' + o.kind : '');
+  no.classList.toggle('hidden', o.cancel === false);
+  box.innerHTML = o.input ? (o.input.multiline ? '<textarea id="dlgV"></textarea>' : '<input id="dlgV" type="text">') : '';
+  if (o.input) { $('dlgV').placeholder = o.input.placeholder || ''; $('dlgV').value = o.input.value || ''; }
+  var close = function (v) { $('dlg').classList.add('hidden'); document.removeEventListener('keydown', key); if (v !== undefined && cb) cb(v); };
+  var key = function (e) { if (e.key === 'Escape') close(); if (e.key === 'Enter' && !(o.input && o.input.multiline)) { e.preventDefault(); ok.click(); } };
+  ok.onclick = function () { close(o.input ? $('dlgV').value : true); };
+  no.onclick = function () { close(); };
+  $('dlg').onclick = function (e) { if (e.target.id === 'dlg') close(); };
+  document.addEventListener('keydown', key);
+  $('dlg').classList.remove('hidden');
+  setTimeout(function () { (o.input ? $('dlgV') : ok).focus(); }, 30);
+}
+/* ─── πορεία δημοσίευσης: από την αποθήκευση μέχρι να φανεί στην ιστοσελίδα ─── */
+var RUNS = null, WATCH = null, WT = null;
+function fereRuns(cb) { run('katastasiDimosiefsis', [T], function (o) { RUNS = (o && o.runs) || []; if (cb) cb(); }, 'homeMsg'); }
+function zoniki(a) {   // πού βρίσκεται μια δημοσιευμένη/αποσυρμένη ανάρτηση σε σχέση με την ιστοσελίδα
+  if (!RUNS || !a.tropopoiisi || !/Δημοσιευμένη|Αποσυρμένη/.test(a.katastasi)) return '';
+  var t = new Date(a.tropopoiisi).getTime() - 5000;
+  var cov = RUNS.filter(function (r) { return new Date(r.created).getTime() >= t; });
+  if (cov.some(function (r) { return r.conclusion === 'success'; })) return a.katastasi === 'Αποσυρμένη' ? '<span class="live ok">Αφαιρέθηκε από την ιστοσελίδα</span>' : '<span class="live ok">🌐 Στην ιστοσελίδα</span>';
+  if (cov.some(function (r) { return r.status !== 'completed'; })) return '<span class="live on">⏳ Ανεβαίνει…</span>';
+  if (cov.length || Date.now() - t > 4 * 60000) return '<span class="live bad">⚠️ Δεν ανέβηκε ακόμα</span>';
+  return '<span class="live on">⏳ Σε αναμονή…</span>';
+}
+function parakolouthisi(titlos, afairesi) {
+  WATCH = { t: Date.now() - 5000, titlos: titlos, afairesi: !!afairesi };
+  vimaPub();
+}
+function vimaPub() {
+  clearTimeout(WT);
+  if (!WATCH || !T) return;
+  fereRuns(function () {
+    var cov = RUNS.filter(function (r) { return new Date(r.created).getTime() >= WATCH.t; });
+    var ok = cov.some(function (r) { return r.conclusion === 'success'; });
+    var trexei = cov.some(function (r) { return r.status !== 'completed'; });
+    var apot = !ok && !trexei && cov.length && cov.every(function (r) { return r.conclusion && r.conclusion !== 'success'; });
+    var lepta = (Date.now() - WATCH.t) / 60000;
+    var pos = ok ? 100 : Math.min(92, 8 + lepta * 30);
+    var s2 = ok ? 'ok' : apot ? 'bad' : 'on', s3 = ok ? 'ok' : '';
+    var tel = ok ? (WATCH.afairesi ? '✅ Αφαιρέθηκε από την ιστοσελίδα.' : '✅ Είναι στην ιστοσελίδα! Αν δεν τη βλέπετε ακόμα, ανανεώστε τη σελίδα (Ctrl+F5) σε λίγα λεπτά.')
+      : apot ? '⚠️ Η ενημέρωση της ιστοσελίδας δεν ολοκληρώθηκε. Η ανάρτηση είναι αποθηκευμένη· ενημερώστε τον τεχνικό υπεύθυνο.'
+      : lepta > 30 ? '⏳ Αργεί περισσότερο από το συνηθισμένο. Η ανάρτηση είναι αποθηκευμένη.'
+      : '⏳ Ανεβαίνει στην ιστοσελίδα… Μπορείτε να συνεχίσετε τη δουλειά σας ή να κλείσετε τη σελίδα.';
+    $('pub').innerHTML = '<button class="x" title="Κλείσιμο" onclick="WATCH=null;$(\'pub\').classList.add(\'hidden\')">✕</button><b>«' + esc(WATCH.titlos) + '»</b>' +
+      '<div class="st"><span class="ok">1. Αποθηκεύτηκε ✓</span><span class="' + s2 + '">2. Ενημερώνεται η σελίδα' + (ok ? ' ✓' : '') + '</span><span class="' + s3 + '">3. ' + (WATCH.afairesi ? 'Αφαιρέθηκε' : 'Στην ιστοσελίδα') + (ok ? ' ✓' : '') + '</span></div>' +
+      '<div class="bar"><i style="width:' + pos + '%"></i></div><p class="muted" style="margin:8px 0 0;font-size:.88rem">' + tel + '</p>';
+    $('pub').classList.remove('hidden');
+    if (!ok && !apot && lepta < 40) WT = setTimeout(vimaPub, 15000);
+    if (ok && !$('v-list').classList.contains('hidden')) drawList();
+  });
+}
 function hmer(d) { return d ? d.split('-').reverse().join('/') : ''; }
 function run(fn, args, ok, el, btn) {
   if (btn) btn.disabled = true;
@@ -370,7 +457,7 @@ function isWaiting(a) { return a.katastasi === 'Προς έγκριση' || a.ex
 
 /* ─── λίστα ─── */
 function openList(f) { FILTER = f; nav('list'); }
-function loadList() { msg('listMsg', 'Φόρτωση…', 'info'); run('listaAnartiseon', [T], function (l) { ALL = l; msg('listMsg', ''); drawList(); }, 'listMsg'); }
+function loadList() { msg('listMsg', 'Φόρτωση…', 'info'); run('listaAnartiseon', [T], function (l) { ALL = l; msg('listMsg', ''); drawList(); fereRuns(drawList); }, 'listMsg'); }
 function drawList() {
   var f = [['all', 'Όλες'], ['wait', 'Περιμένουν έγκριση'], ['Πρόχειρο', 'Πρόχειρα'], ['Επιστράφηκε', 'Επιστράφηκαν'], ['Δημοσιευμένη', 'Δημοσιευμένες'], ['Αποσυρμένη', 'Αποσυρμένες']];
   $('filters').innerHTML = f.map(function (x) {
@@ -387,7 +474,7 @@ function drawList() {
     var th = THUMBS[a.exofyllo];
     return '<div class="post" data-id="' + a.id + '"><div class="thumb" data-th="' + (a.exofyllo || '') + '"' + (th ? ' style="background-image:url(' + th + ')"' : '') + '>' + (a.exofyllo ? '' : (ICON[a.enotita] || '📌')) + '</div>' +
       '<div class="t"><b>' + esc(a.titlos) + '</b><span class="m">' + hmer(a.imerominia) + ' · ' + esc(en[a.enotita] || '') + (a.fotografies ? ' · 📷 ' + a.fotografies : '') + '</span>' +
-      (a.sxolio ? '<div class="m" style="color:var(--coral)">💬 ' + esc(a.sxolio) + '</div>' : '') + '<div>' + st + '</div></div></div>';
+      (a.sxolio ? '<div class="m" style="color:var(--coral)">💬 ' + esc(a.sxolio) + '</div>' : '') + '<div>' + st + zoniki(a) + '</div></div></div>';
   }).join('') : '<div class="empty">Δεν υπάρχουν αναρτήσεις εδώ.</div>';
   $('list').onclick = function (e) { var d = e.target.closest('.post'); if (d) openPost(d.dataset.id); };
   loadThumbs(l.map(function (a) { return a.exofyllo; }));
@@ -493,11 +580,16 @@ function initRte() {
     else if (c === 'h3') document.execCommand('formatBlock', false, 'h3');
     else if (c === 'clear') { document.execCommand('removeFormat'); document.execCommand('formatBlock', false, 'p'); }
     else if (c === 'mark') {
-      var s = window.getSelection(); if (!s.rangeCount || s.isCollapsed) { alert('Επιλέξτε πρώτα με το ποντίκι τις λέξεις που θέλετε να επισημάνετε.'); return; }
+      var s = window.getSelection(); if (!s.rangeCount || s.isCollapsed) { dlg({ icon: '🖍️', title: 'Επιλέξτε πρώτα τις λέξεις', text: 'Με το ποντίκι (ή το δάχτυλο) σημαδέψτε τις λέξεις που θέλετε να επισημάνετε και πατήστε ξανά «Επισήμανση».', cancel: false }); return; }
       var r = s.getRangeAt(0), mk = document.createElement('mark'); try { r.surroundContents(mk); } catch (x) { mk.appendChild(r.extractContents()); r.insertNode(mk); }
     } else if (c === 'link') {
-      var u = prompt('Επικολλήστε τη διεύθυνση (π.χ. https://…):', 'https://');
-      if (u && /^https?:\/\/\S+$/.test(u)) { if (window.getSelection().isCollapsed) document.execCommand('insertHTML', false, '<a href="' + esc(u) + '">' + esc(u) + '</a>'); else document.execCommand('createLink', false, u); }
+      var sel0 = window.getSelection(), rg = sel0.rangeCount ? sel0.getRangeAt(0).cloneRange() : null;
+      dlg({ icon: '🔗', title: 'Προσθήκη συνδέσμου', text: 'Επικολλήστε τη διεύθυνση της σελίδας (ξεκινά με https://).', ok: 'Προσθήκη', input: { value: 'https://', placeholder: 'https://…' } }, function (u) {
+        u = (u || '').trim();
+        if (!/^https?:\/\/\S+\.\S+$/.test(u)) { dlg({ icon: '⚠️', title: 'Η διεύθυνση δεν είναι σωστή', text: 'Πρέπει να ξεκινά με https:// , π.χ. https://www.minedu.gov.gr', cancel: false }); return; }
+        rte.focus(); var sl = window.getSelection(); if (rg) { sl.removeAllRanges(); sl.addRange(rg); }
+        if (sl.isCollapsed) document.execCommand('insertHTML', false, '<a href="' + esc(u) + '">' + esc(u) + '</a>'); else document.execCommand('createLink', false, u);
+      });
     }
   };
   // επικόλληση από Word/ιστοσελίδες: κρατάμε μόνο ό,τι υποστηρίζουμε
@@ -544,7 +636,7 @@ function edit(a, fromProp) {
   $('edActions').innerHTML = act;
   nav('edit');
 }
-function leave() { if (BUSY) { alert('Περιμένετε να ανέβουν οι φωτογραφίες.'); return; } home(); }
+function leave() { if (BUSY) { dlg({ icon: '⏳', title: 'Ανεβαίνουν ακόμα φωτογραφίες', text: 'Περιμένετε λίγα δευτερόλεπτα να τελειώσουν.', cancel: false }); return; } home(); }
 
 /* φωτογραφίες: μεγάλες μικρογραφίες, σειρά με βελάκια, η πρώτη = εξώφυλλο */
 function drawPhotos() {
@@ -565,11 +657,15 @@ function drawPhotos() {
 function mvPhoto(i, d) { var f = CUR.fotografies, j = i + d; if (j < 0 || j >= f.length) return; var t = f[i]; f[i] = f[j]; f[j] = t; drawPhotos(); }
 function rmPhoto(i) {
   var p = CUR.fotografies[i];
-  if (!confirm('Να βγει αυτή η φωτογραφία από την ανάρτηση;')) return;
-  if (ROLE === 'diefthynsi' && CUR.id && CUR.katastasi === 'Δημοσιευμένη' && p.id && confirm('Να σβηστεί οριστικά και από την ιστοσελίδα τώρα; (π.χ. αν ένας γονέας ανακάλεσε τη συγκατάθεση)')) {
-    run('afairesiFotografias', [T, CUR.id, p.id], function (r) { msg('edMsg', r.minima, 'ok'); }, 'edMsg');
-  }
-  CUR.fotografies.splice(i, 1); drawPhotos();
+  dlg({ icon: '🖼️', title: 'Να βγει αυτή η φωτογραφία;', text: 'Η φωτογραφία βγαίνει από την ανάρτηση. Οι υπόλοιπες μένουν.', ok: 'Ναι, να βγει', kind: 'coral' }, function () {
+    var i2 = CUR.fotografies.indexOf(p); if (i2 < 0) return;
+    CUR.fotografies.splice(i2, 1); drawPhotos();
+    if (ROLE === 'diefthynsi' && CUR.id && CUR.katastasi === 'Δημοσιευμένη' && p.id) {
+      dlg({ icon: '🗑️', title: 'Να φύγει και από την ιστοσελίδα τώρα;', text: 'Π.χ. αν ένας γονέας ανακάλεσε τη συγκατάθεση. Αλλιώς θα φύγει όταν αποθηκεύσετε την ανάρτηση.', ok: 'Ναι, αφαίρεση τώρα', kind: 'coral' }, function () {
+        run('afairesiFotografias', [T, CUR.id, p.id], function (r) { msg('edMsg', r.minima, 'ok'); }, 'edMsg');
+      });
+    }
+  });
 }
 /* μικραίνει στα 1600 px και ξαναγράφει ως JPEG: τα κρυφά στοιχεία (θέση, κινητό) δεν περνούν */
 function shrink(file) {
@@ -635,12 +731,18 @@ function save(en, btn) {
   if (!d.enotita) { msg('edMsg', 'Διαλέξτε πού ανήκει η ανάρτηση (βήμα 4).', 'bad'); return; }
   if (en !== 'proxeiro' && !d.syggrafeas) { msg('edMsg', 'Γράψτε το όνομά σας (βήμα 5).', 'bad'); $('f-syg').focus(); return; }
   if (en !== 'proxeiro' && d.fotografies.length && !d.synainesi) { msg('edMsg', 'Τσεκάρετε το κίτρινο κουτάκι για τη συγκατάθεση των κηδεμόνων (κάτω από τις φωτογραφίες).', 'bad'); return; }
-  if (en === 'dimosiefsi' && !confirm('Να δημοσιευτεί τώρα στην ιστοσελίδα;')) return;
+  if (en === 'dimosiefsi' && !btn._ok) {
+    dlg({ icon: '🌐', title: 'Δημοσίευση στην ιστοσελίδα', text: '«' + d.titlos.trim() + '» θα φανεί στην ιστοσελίδα μέσα σε μισή ώρα. Μπορείτε να τη διορθώσετε ή να την αφαιρέσετε όποτε θέλετε.', ok: '✅ Ναι, δημοσίευση', kind: 'green' },
+      function () { btn._ok = true; save(en, btn); });
+    return;
+  }
+  if (btn) btn._ok = false;
   if (d.syggrafeas) store('onoma', d.syggrafeas);
   run('apothikefsi', [T, d, en], function (r) {
     CUR.id = r.id;
     var t = r.minima + (r.github && !r.github.ok ? '\n' + r.github.minima : '');
     home(); msg('homeMsg', '✔ ' + t, r.github && !r.github.ok ? 'bad' : 'ok');
+    if (en === 'dimosiefsi' && r.github && r.github.ok) parakolouthisi(d.titlos);
   }, 'edMsg', btn);
 }
 function previewHtml(a, fot) {
@@ -667,16 +769,19 @@ function review(a) {
 }
 function editFromReview() { edit(CUR, true); }
 function returnPost() {
-  var s = prompt('Τι να διορθώσει ο συντάκτης; (θα το δει στην ανάρτησή του)');
-  if (s === null) return;
-  CUR._sx = s; decide('epistrofi');
+  dlg({ icon: '↩️', title: 'Επιστροφή στον συντάκτη', text: 'Γράψτε τι να διορθώσει. Θα το δει πάνω στην ανάρτησή του.', ok: 'Επιστροφή με σχόλιο', input: { multiline: true, placeholder: 'π.χ. Βάλτε και τη Γ΄ τάξη στις τάξεις.' } }, function (v) {
+    CUR._sx = v; decide('epistrofi', true);
+  });
 }
-function decide(p) {
-  var q = { egkrisi: 'Να δημοσιευτεί στην ιστοσελίδα;', epistrofi: null, aposyrsi: 'Να αφαιρεθεί από την ιστοσελίδα; (μπορείτε να την επαναφέρετε όποτε θέλετε)', epanafora: 'Να ξαναεμφανιστεί στην ιστοσελίδα;' }[p];
-  if (q && !confirm(q)) return;
+function decide(p, ok) {
+  var q = { egkrisi: { icon: '🌐', title: 'Δημοσίευση στην ιστοσελίδα', text: 'Θα φανεί στην ιστοσελίδα μέσα σε μισή ώρα.', ok: '✅ Ναι, δημοσίευση', kind: 'green' },
+            aposyrsi: { icon: '🗑️', title: 'Αφαίρεση από την ιστοσελίδα', text: 'Η ανάρτηση κρύβεται, δεν σβήνεται. Μπορείτε να την επαναφέρετε όποτε θέλετε.', ok: 'Ναι, αφαίρεση', kind: 'coral' },
+            epanafora: { icon: '♻️', title: 'Επαναφορά στην ιστοσελίδα', text: 'Θα ξαναφανεί μέσα σε μισή ώρα.', ok: 'Ναι, επαναφορά', kind: 'green' } }[p];
+  if (q && !ok) { dlg(q, function () { decide(p, true); }); return; }
   var el = $('v-review').classList.contains('hidden') ? 'edMsg' : 'rvMsg';
   run('apofasi', [T, CUR.id, p, CUR._sx || ''], function (r) {
     CUR._sx = ''; home(); msg('homeMsg', '✔ ' + r.minima + (r.github && !r.github.ok ? '\n' + r.github.minima : ''), 'ok');
+    if (p !== 'epistrofi' && r.github && r.github.ok) parakolouthisi(CUR.titlos || (CUR.protasi && CUR.protasi.titlos) || 'Ανάρτηση', p === 'aposyrsi');
   }, el);
 }
 
@@ -711,8 +816,9 @@ function loadSettings() {
   }, 'sMsg');
 }
 function chPass(who, id) {
-  if (!confirm('Αλλαγή κωδικού; Όλοι θα αποσυνδεθούν, και εσείς.')) return;
-  run('allagiKodikou', [T, who, $(id).value], function (r) { $(id).value = ''; alert(r.minima); logout(); }, 'sMsg');
+  dlg({ icon: '🔑', title: 'Αλλαγή κωδικού', text: 'Όλοι θα αποσυνδεθούν, και εσείς. Θα μπείτε ξανά με τους ισχύοντες κωδικούς.', ok: 'Ναι, αλλαγή' }, function () {
+    run('allagiKodikou', [T, who, $(id).value], function (r) { $(id).value = ''; logout(); msg('loginMsg', r.minima, 'ok'); }, 'sMsg');
+  });
 }
 function chMail() { run('allagiEmail', [T, $('s-mail').value], function (r) { msg('sMsg', r.minima, 'ok'); }, 'sMsg'); }
 

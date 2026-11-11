@@ -224,7 +224,8 @@ function rpc_(b) {
   var F = { syndesi: syndesi, listaAnartiseon: listaAnartiseon, fereAnartisi: fereAnartisi, apothikefsi: apothikefsi,
             apofasi: apofasi, anevasma: anevasma, mikrografia: mikrografia, mikrografies: mikrografies,
             afairesiFotografias: afairesiFotografias, listaSelidon: listaSelidon, apothikefsiSelidas: apothikefsiSelidas,
-            rythmiseis: rythmiseis, allagiKodikou: allagiKodikou, allagiEmail: allagiEmail };
+            rythmiseis: rythmiseis, allagiKodikou: allagiKodikou, allagiEmail: allagiEmail,
+            katastasiDimosiefsis: katastasiDimosiefsis };
   if (!b || !F[b.fn]) return out({ sfalma: 'άγνωστη κλήση' });
   try {
     var r = F[b.fn].apply(null, b.args || []);
@@ -312,6 +313,7 @@ function listaAnartiseon(token) {
     return { id: r.id, katastasi: r.katastasi, imerominia: hm_(r.imerominia), titlos: r.titlos, enotita: r.enotita,
              syggrafeas: r.syggrafeas, sxolio: r.sxolio, exei_protasi: !!r.protasi,
              fotografies: fot.length, exofyllo: fot.length ? fot[0].id : '',
+             tropopoiisi: r.tropopoiisi instanceof Date ? r.tropopoiisi.toISOString() : '',
              apospasma: String(r.keimeno || '').replace(/[*#|=\[\]()]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 140) };
   }).sort(function (a, b) { return a.imerominia < b.imerominia ? 1 : -1; });
 }
@@ -386,9 +388,9 @@ function apofasi(token, id, praxi, sxolio) {
       if (r.protasi) grapse_(sh, r._row, { protasi: '', sxolio: sxolio || '' });
       else grapse_(sh, r._row, { katastasi: 'Επιστράφηκε', sxolio: sxolio || '' });
     } else if (praxi === 'aposyrsi') {
-      grapse_(sh, r._row, { katastasi: 'Αποσυρμένη', protasi: '' });
+      grapse_(sh, r._row, { katastasi: 'Αποσυρμένη', protasi: '', tropopoiisi: new Date() });
     } else if (praxi === 'epanafora') {
-      grapse_(sh, r._row, { katastasi: 'Δημοσιευμένη' });
+      grapse_(sh, r._row, { katastasi: 'Δημοσιευμένη', tropopoiisi: new Date() });
     } else throw new Error('Άγνωστη ενέργεια.');
   } finally { lock.releaseLock(); }
   katagrafi_('διεύθυνση', 'Διεύθυνση', { egkrisi: 'Έγκριση και δημοσίευση', epistrofi: 'Επιστροφή με σχόλιο', aposyrsi: 'Απόσυρση', epanafora: 'Επαναφορά' }[praxi], id, r.titlos);
@@ -517,6 +519,22 @@ function allagiEmail(token, email) {
 }
 
 /* ═══════════════ Δημοσίευση: εντολή στο GitHub Actions ═══════════════ */
+
+/* Πού βρίσκεται η δημοσίευση στο GitHub: για την ένδειξη «Ανεβαίνει / Στην ιστοσελίδα» στον Πίνακα */
+function katastasiDimosiefsis(token) {
+  synedria_(token);
+  var c = CacheService.getScriptCache(), k = 'gh_runs', v = c.get(k);
+  if (v) return JSON.parse(v);
+  var p = P(), t = p.getProperty('GITHUB_TOKEN'), repo = p.getProperty('GITHUB_REPO');
+  if (!t) return { runs: [], xoris_kleidi: true };
+  var res = UrlFetchApp.fetch('https://api.github.com/repos/' + repo + '/actions/workflows/dimosieusi.yml/runs?per_page=6', {
+    muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + t, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' } });
+  if (res.getResponseCode() !== 200) return { runs: [], sfalma: res.getResponseCode() };
+  var o = { runs: JSON.parse(res.getContentText()).workflow_runs.map(function (r) {
+    return { status: r.status, conclusion: r.conclusion, created: r.created_at, updated: r.updated_at }; }) };
+  c.put(k, JSON.stringify(o), 20);
+  return o;
+}
 
 function ksekinaDimosiefsi_() {
   var p = P(), t = p.getProperty('GITHUB_TOKEN'), repo = p.getProperty('GITHUB_REPO');

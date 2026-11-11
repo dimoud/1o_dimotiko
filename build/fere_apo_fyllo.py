@@ -70,6 +70,14 @@ def main():
 
     dims_p = mm / 'fotografies' / 'diastaseis.json'
     dims = json.load(open(dims_p)) if dims_p.exists() else {}
+    # Ό,τι δεν είναι στο Drive (κεντρική φωτογραφία αρχικής, παλιά αρχεία) έρχεται από το meson/ του αποθετηρίου
+    for sub in ('fotografies', 'arxeia'):
+        if (RIZA / 'meson' / sub).exists():
+            shutil.copytree(RIZA / 'meson' / sub, mm / sub, dirs_exist_ok=True, ignore=shutil.ignore_patterns('diastaseis.json'))
+    rd = RIZA / 'meson' / 'fotografies' / 'diastaseis.json'
+    if rd.exists():
+        for k, v in json.load(open(rd)).items():
+            dims.setdefault(k, v)
     nea = 0
 
     def foto(fid):
