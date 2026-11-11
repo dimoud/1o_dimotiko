@@ -562,7 +562,7 @@ class Istotopos:
         r = self.r
         epiloges = ['Γενική ερώτηση', 'Εγγραφές μαθητών', 'Βεβαιώσεις και έγγραφα', 'Θέμα γονέων και κηδεμόνων', 'Συνεργασία ή πρόταση', 'Ιστοσελίδα']
         opts = '<option value="">Διαλέξτε…</option>' + ''.join(f'<option>{esc(o)}</option>' for o in epiloges)
-        return f'''<form id="clientContactForm" class="cform" novalidate>
+        return f'''<form id="clientContactForm" class="cform" novalidate data-endpoint="{esc(r.get('forma_url', ''))}">
   <input type="hidden" name="_to" value="{esc(r['email'])}">
   <input type="hidden" name="_key" value="{esc(r.get('forma_kleidi', ''))}">
   <input type="text" name="_hp" value="" autocomplete="off" tabindex="-1" aria-hidden="true" style="display:none;position:absolute;left:-9999px">

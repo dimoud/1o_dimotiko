@@ -15,8 +15,8 @@
   var TIMEOUT_MS = 60000;   // το Apps Script στέλνει δύο email (γραφείο + αντίγραφο)· στην πρώτη κλήση μπορεί να θέλει 15–30″
 
   var MSG = {
-    el: { sending: 'Αποστολή…', success: 'Το μήνυμά σας στάλθηκε. Θα επικοινωνήσουμε σύντομα.',
-          error: 'Κάτι πήγε στραβά. Δοκιμάστε ξανά ή καλέστε μας.', network: 'Σφάλμα δικτύου. Ελέγξτε τη σύνδεσή σας.',
+    el: { sending: 'Αποστολή…', success: 'Το μήνυμά σας στάλθηκε. Θα λάβετε αντίγραφο στο email σας και θα σας απαντήσουμε σύντομα.',
+          error: 'Το μήνυμα δεν στάλθηκε. Δοκιμάστε ξανά ή καλέστε στο 2310 654739.', network: 'Σφάλμα δικτύου. Ελέγξτε τη σύνδεσή σας.',
           timeout: 'Η αποστολή άργησε πολύ. Δοκιμάστε ξανά ή καλέστε μας.', invalid: 'Συμπληρώστε τα σημειωμένα πεδία.',
           notConfigured: 'Η φόρμα δεν έχει ρυθμιστεί ακόμα.' },
     en: { sending: 'Sending…', success: 'Your message was sent. We will be in touch soon.',
@@ -37,6 +37,8 @@
     var form   = document.getElementById('clientContactForm');
     var status = document.getElementById('formStatus');
     if (!form) return;
+    var ep = form.getAttribute('data-endpoint');           // διεύθυνση /exec από periexomeno/rythmiseis.json (forma_url)
+    if (ep) GOOGLE_SCRIPT_URL = ep;
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
