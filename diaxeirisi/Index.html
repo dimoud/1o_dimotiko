@@ -12,6 +12,8 @@ html{font-size:18px}
 body{margin:0;font:1rem/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
 button,input,select,textarea{font:inherit;color:inherit}
 .hidden{display:none!important}
+#tip{position:fixed;z-index:9999;max-width:300px;padding:9px 13px;border-radius:10px;background:#1b2a41;color:#fff;font-size:16px;line-height:1.4;font-weight:500;box-shadow:0 6px 20px rgba(0,0,0,.25);pointer-events:none;opacity:0;transition:opacity .15s;top:-999px;left:-999px}#tip.on{opacity:1}
+
 .wrap{max-width:880px;margin:0 auto;padding:16px}
 /* κεφαλίδα */
 header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
@@ -117,8 +119,8 @@ h2{font-size:1.35rem;margin:0 0 6px}
 .sec-btn{border:2px solid var(--line);background:#fff;border-radius:14px;padding:12px;min-height:60px;cursor:pointer;display:flex;align-items:center;gap:10px;text-align:left;font-weight:600;font-size:.95rem}
 .sec-btn .em{font-size:1.4rem}
 .sec-btn.on{border-color:var(--blue);background:var(--blue-bg);color:var(--blue-d)}
-details.more{margin-top:14px;background:#fff;border-radius:14px;padding:6px 16px;box-shadow:inset 0 0 0 1px var(--line)}
-details.more summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:700;color:var(--blue-d)}
+.more{margin-top:14px;background:#fff;border-radius:14px;padding:6px 16px 16px;box-shadow:inset 0 0 0 1px var(--line)}
+.more-h{min-height:44px;display:flex;align-items:center;margin:0;font-weight:700;color:var(--blue-d)}
 .tick{display:flex;gap:10px;align-items:center;margin:8px 0;font-weight:600}
 .tick input{width:26px;height:26px;flex:0 0 26px}
 .ckgrid{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
@@ -280,8 +282,8 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
   <div class="step"><span class="n">4</span><h3>Πού ανήκει;</h3></div>
   <div class="secs" id="secs"></div>
 
-  <details class="more">
-   <summary>➕ Περισσότερα (προαιρετικά): ημερομηνία, τάξεις, δίκτυα, έγγραφα, βίντεο</summary>
+  <div class="more">
+   <p class="more-h">Επιπλέον (προαιρετικά): ημερομηνία, τάξεις, δίκτυα, έγγραφα, βίντεο</p>
    <label style="font-weight:700">Ημερομηνία</label>
    <input class="field" id="f-imer" type="date" min="2024-01-01">
    <p style="font-weight:700;margin:14px 0 0">Τάξεις</p><div class="ckgrid" id="f-tax"></div>
@@ -292,7 +294,7 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
    <div id="docs"></div>
    <label style="font-weight:700;display:block;margin-top:14px" for="f-vid">Βίντεο YouTube (σύνδεσμος)</label>
    <input class="field" id="f-vid" type="text" placeholder="https://youtu.be/…">
-  </details>
+  </div>
 
   <div class="step"><span class="n">5</span><h3>Το όνομά σας</h3></div>
   <input class="field" id="f-syg" type="text" placeholder="π.χ. Μαρία Παπαδοπούλου, Γ2">
@@ -672,17 +674,100 @@ function mdToHtml(md) {
   return out.join('');
 }
 function wrap(m, x) { var t = x.trim(); if (!t) return x; var a = x.match(/^\s*/)[0] ? ' ' : '', b = x.match(/\s*$/)[0] ? ' ' : ''; return a + m + t + m + b; }
+/* ═══ Επικόλληση από Word / Google Docs / ιστοσελίδες: καθαρισμός και διόρθωση κωδικοποίησης ═══
+   1. Το Word στέλνει ολόκληρο έγγραφο HTML: <style> με τους ορισμούς του, σχόλια <!--[if mso]>, <o:p>, κουκκίδες λίστας ως κείμενο.
+   2. Παλιά έγγραφα γράφουν ελληνικά με γραμματοσειρά Symbol ή παλιές 8-bit «ελληνικές» γραμματοσειρές: στο πρόχειρο φτάνουν λατινικοί
+      χαρακτήρες (a→α) ή «ÁÈÇÍÁ» (= ΑΘΗΝΑ σε Windows-1253). Μετατρέπονται εδώ σε κανονικά ελληνικά Unicode.
+   3. Κείμενο UTF-8 που διαβάστηκε ως Windows-1252 («Î±Î¸Î®Î½Î±» = αθήνα) διορθώνεται επίσης. */
+var SYMBOL_GR = (function () {
+  var lat = 'abgdezhqiklmnxoprstufcyw' + 'ABGDEZHQIKLMNXOPRSTUFCYW' + 'jJvV', gr = 'αβγδεζηθικλμνξοπρστυφχψω' + 'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ' + 'ϕϑϖς', m = {};
+  for (var i = 0; i < lat.length; i++) m[lat[i]] = gr[i];
+  return m;
+})();
+var CP1253 = (function () {   // byte 0xA0–0xFF σε Windows-1253 → Unicode (ό,τι δεν ορίζεται μένει ίδιο)
+  var t = '\u00A0΅Ά£¤¥¦§¨©ª«¬\u00AD®―°±²³΄µ¶·ΈΉΊ»Ό½ΎΏΐΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡÒΣΤΥΦΧΨΩΪΫάέήίΰαβγδεζηθικλμνξοπρςστυφχψωϊϋόύώÿ', m = {};
+  for (var i = 0; i < t.length; i++) m[String.fromCharCode(0xA0 + i)] = t[i];
+  return m;
+})();
+function symbolSeEllinika(s) {
+  return s.replace(/[\uF020-\uF0FF]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xF000); })
+          .replace(/[A-Za-z]/g, function (c) { return SYMBOL_GR[c] || c; });
+}
+function diorthosiKeimenou(s) {
+  if (!s) return s;
+  s = s.normalize ? s.normalize('NFC') : s;
+  // UTF-8 που διαβάστηκε ως Windows-1252/Latin-1 (π.χ. «Î±Î¸Î®Î½Î±» = «αθήνα»)
+  var utf8 = /[ÎÏ][\u0080-¿ŒœŠšŸŽžƒˆ˜–-™]/.test(s);
+  if (utf8) {
+    try {
+      var W = { '€': 0x80, '‚': 0x82, 'ƒ': 0x83, '„': 0x84, '…': 0x85, '†': 0x86, '‡': 0x87, 'ˆ': 0x88, '‰': 0x89, 'Š': 0x8A, '‹': 0x8B, 'Œ': 0x8C, 'Ž': 0x8E,
+        '‘': 0x91, '’': 0x92, '“': 0x93, '”': 0x94, '•': 0x95, '–': 0x96, '—': 0x97, '˜': 0x98, '™': 0x99, 'š': 0x9A, '›': 0x9B, 'œ': 0x9C, 'ž': 0x9E, 'Ÿ': 0x9F };
+      var b = []; for (var i = 0; i < s.length; i++) { var c = s.charCodeAt(i); if (c < 256) b.push(c); else if (W[s[i]] != null) b.push(W[s[i]]); else throw 0; }
+      var u = new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(b));
+      if (/[Ͱ-Ͽ]/.test(u)) s = u;
+    } catch (x) {}
+  } else {
+    // Ελληνικά παλιών 8-bit γραμματοσειρών (Windows-1253 που διαβάστηκε ως Latin-1): ολόκληρες λέξεις μόνο από χαρακτήρες ¢, ¸–¿, À–þ.
+    // Ξένες λέξεις όπως «Größe» ή «Café» έχουν και κανονικά λατινικά γράμματα, οπότε δεν αγγίζονται.
+    var lex = function (min) { return new RegExp('(^|[^A-Za-z\\u00A2\\u00B8-\\u00BF\\u00C0-\\u00FE])([\\u00A2\\u00B8-\\u00BF\\u00C0-\\u00FE]{' + min + ',})(?=$|[^A-Za-z\\u00A2\\u00B8-\\u00BF\\u00C0-\\u00FE])', 'g'); };
+    var conv = function (m, pre, w) { return pre + w.replace(/[\u00A0-\u00FF]/g, function (c) { return CP1253[c] || c; }); };
+    var s2 = s.replace(lex(2), conv);
+    if (s2 !== s) s = s2.replace(lex(1), conv);   // μονογράμματες λέξεις (Η, ο) μόνο αν υπήρχαν ήδη τέτοιες λέξεις
+  }
+  return s.replace(/[\u200B\u200C\u200D\uFEFF\u00AD]/g, '');   // αόρατοι χαρακτήρες και «μαλακές» παύλες του Word
+}
+function apoWord(html) {
+  html = String(html || '')
+    .replace(/<!--\[if[\s\S]*?<!\[endif\]-->/gi, '').replace(/<!\[if[^\]]*\]>[\s\S]*?<!\[endif\]>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '').replace(/<(style|script|xml|title|head)\b[\s\S]*?<\/\1>/gi, '')
+    .replace(/<\/?(o|w|m|v):[^>]*>/gi, '').replace(/<(meta|link)\b[^>]*>/gi, '');
+  var d = document.createElement('div'); d.innerHTML = html;
+  // Google Docs: όλο το κείμενο τυλιγμένο σε <b style="font-weight:normal">
+  d.querySelectorAll('b[id^="docs-internal-guid"]').forEach(function (b) { while (b.firstChild) b.parentNode.insertBefore(b.firstChild, b); b.remove(); });
+  // γραμματοσειρές Symbol / Wingdings
+  d.querySelectorAll('[style*="font-family"],font[face]').forEach(function (el) {
+    var f = (el.getAttribute('face') || '') + ' ' + (el.style.fontFamily || '');
+    if (/wingdings|webdings/i.test(f)) { el.remove(); return; }
+    if (/(^|[\s,"'])symbol([\s,"']|$)/i.test(f)) {
+      var w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), n; while ((n = w.nextNode())) n.nodeValue = symbolSeEllinika(n.nodeValue);
+    }
+  });
+  // λίστες του Word: <p class="MsoListParagraph…"> με κουκκίδα ως κείμενο (mso-list:Ignore) → <ul>/<ol>
+  var list = null;
+  Array.prototype.slice.call(d.querySelectorAll('p')).forEach(function (p) {
+    var st = p.getAttribute('style') || '', isLi = /mso-list:\s*l\d/i.test(st) || /MsoListParagraph/i.test(p.className);
+    if (!isLi) { list = null; return; }
+    var ign = p.querySelector('[style*="mso-list:Ignore"],[style*="mso-list: Ignore"]'), num = false;
+    if (ign) { num = /^\s*\(?[0-9a-zα-ω]{1,3}[.)]/i.test(ign.textContent); ign.remove(); }
+    else p.firstChild && p.firstChild.nodeType === 3 && (p.firstChild.nodeValue = p.firstChild.nodeValue.replace(/^[\s·•▪●\-–o§]+/, ''));
+    var tag = num ? 'OL' : 'UL';
+    if (!list || list.tagName !== tag || list.nextElementSibling !== p) { list = document.createElement(tag); p.parentNode.insertBefore(list, p); }
+    var li = document.createElement('li'); while (p.firstChild) li.appendChild(p.firstChild); list.appendChild(li); p.remove();
+  });
+  // κωδικοποίηση σε κάθε κομμάτι κειμένου
+  var tw = document.createTreeWalker(d, NodeFilter.SHOW_TEXT), t; while ((t = tw.nextNode())) t.nodeValue = diorthosiKeimenou(t.nodeValue);
+  return d;
+}
+document.addEventListener('paste', function (e) {   // τίτλοι και πεδία κειμένου (όχι οι επεξεργαστές, που έχουν δικό τους χειρισμό)
+  var el = e.target;
+  if (!el || !(el.tagName === 'INPUT' && /^(text|search|)$/.test(el.type) || el.tagName === 'TEXTAREA')) return;
+  var t = e.clipboardData && e.clipboardData.getData('text/plain'); if (!t) return;
+  var n = diorthosiKeimenou(t); if (n === t) return;
+  e.preventDefault();
+  var a = el.selectionStart, b = el.selectionEnd; el.value = el.value.slice(0, a) + n + el.value.slice(b);
+  el.selectionStart = el.selectionEnd = a + n.length; el.dispatchEvent(new Event('input', { bubbles: true }));
+}, true);
 function htmlToMd(root) {
   function inl(n) {
     var s = '';
     n.childNodes.forEach(function (c) {
       if (c.nodeType === 3) { s += c.nodeValue.replace(/\s+/g, ' '); return; }
-      if (c.nodeType !== 1) return;
+      if (c.nodeType !== 1 || /^(STYLE|SCRIPT|META|LINK|TITLE|XML|HEAD|TEMPLATE)$/.test(c.tagName)) return;
       var t = c.tagName, x = inl(c), st = c.getAttribute('style') || '';
       if (t === 'BR') s += '  \n';
-      else if (/^(B|STRONG)$/.test(t) || /font-weight:\s*(bold|[6-9]00)/.test(st)) s += wrap('**', x);
-      else if (/^(I|EM)$/.test(t) || /font-style:\s*italic/.test(st)) s += wrap('*', x);
-      else if (t === 'MARK' || /background/.test(st)) s += wrap('==', x);
+      else if ((/^(B|STRONG)$/.test(t) && !/(^|;)\s*font-weight:\s*(normal|[1-4]00)/i.test(st)) || /(^|;)\s*font-weight:\s*(bold|[6-9]00)/i.test(st)) s += wrap('**', x);
+      else if ((/^(I|EM)$/.test(t) && !/(^|;)\s*font-style:\s*normal/i.test(st)) || /(^|;)\s*font-style:\s*italic/i.test(st)) s += wrap('*', x);
+      else if (t === 'MARK' || /(^|;)\s*background(-color)?:\s*(yellow|#ff0\b|#ffff00|#fff1b8)/i.test(st)) s += wrap('==', x);
       else if (t === 'A' && /^(https?:|mailto:)/.test(c.getAttribute('href') || '')) s += '[' + x.trim() + '](' + c.getAttribute('href') + ')';
       else if (/^(P|DIV|H\d|UL|OL|LI|TABLE|TR)$/.test(t)) s += '\n' + block(c) + '\n';
       else s += x;
@@ -695,7 +780,7 @@ function htmlToMd(root) {
     function fl() { var x = buf.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim(); if (x) parts.push(x); buf = ''; }
     n.childNodes.forEach(function (c) {
       if (c.nodeType === 3) { buf += c.nodeValue.replace(/\s+/g, ' '); return; }
-      if (c.nodeType !== 1) return;
+      if (c.nodeType !== 1 || /^(STYLE|SCRIPT|META|LINK|TITLE|XML|HEAD|TEMPLATE)$/.test(c.tagName)) return;
       var t = c.tagName;
       if (!/^(H[1-6]|UL|OL|P|DIV|BLOCKQUOTE|SECTION|ARTICLE|BR|TABLE)$/.test(t)) {
         var w = document.createElement('span'); w.appendChild(c.cloneNode(true)); buf += inl(w); return;
@@ -774,8 +859,8 @@ function bindEditor(tbar, rte) {
     var t = e.clipboardData && e.clipboardData.getData('text/plain');
     e.preventDefault();
     var md;
-    if (h) { var d = document.createElement('div'); d.innerHTML = h; md = htmlToMd(d); } else md = t || '';
-    document.execCommand('insertHTML', false, mdToHtml(md) || esc(t));
+    if (h) md = htmlToMd(apoWord(h)); else md = diorthosiKeimenou(t || '');
+    document.execCommand('insertHTML', false, mdToHtml(md) || esc(diorthosiKeimenou(t || '')));
   });
 }
 
@@ -1037,6 +1122,107 @@ window.addEventListener('beforeunload', function (e) { if (BUSY) { e.preventDefa
   try { T = sessionStorage.getItem('t'); ROLE = sessionStorage.getItem('r'); OPT = JSON.parse(sessionStorage.getItem('o') || 'null'); } catch (x) {}
   var em0 = store('em'); if (em0) $('lemail').value = em0;
   if (T && OPT) start(); else nav('login');
+})();
+
+/* ═══ Βοηθητικές ενδείξεις (tooltips): μεγάλα γράμματα, εμφανίζονται όταν σταθεί το ποντίκι ή το πλήκτρο Tab ═══ */
+var TIPS = [
+  ['.iconbtn[onclick="nav(\'odigies\')"]', 'Ανοίγει τις οδηγίες χρήσης του Πίνακα'],
+  ['.iconbtn[onclick="home()"]', 'Επιστροφή στην αρχική οθόνη του Πίνακα'],
+  ['.iconbtn[onclick="logout()"]', 'Αποσύνδεση. Πατήστε το όταν τελειώσετε, ιδίως σε κοινόχρηστο υπολογιστή'],
+  ['button[onclick="katevasmaOdigou()"]', 'Κατεβάζει τον οδηγό με εικόνες σε PDF, για να τον έχετε ή να τον τυπώσετε'],
+  ['button[onclick="ektyposiOdigion()"]', 'Ανοίγει την εκτύπωση. Για αρχείο, επιλέξτε «Αποθήκευση ως PDF»'],
+  ['#sideL > summary', 'Πατήστε για να εμφανίσετε ή να κρύψετε τα φίλτρα θεματολογίας'],
+  ['#sideR > summary', 'Πατήστε για να εμφανίσετε ή να κρύψετε τα φίλτρα τάξεων και σχολικού έτους'],
+  ['#q', 'Γράψτε μια λέξη από τον τίτλο ή τον αριθμό (Νο) της ανάρτησης'],
+  ['.tile.t-new', 'Γράψτε νέα ανάρτηση με κείμενο και φωτογραφίες'],
+  ['.tile.t-list', 'Όλες οι αναρτήσεις: αναζήτηση, διόρθωση, αφαίρεση'],
+  ['.tile.t-wait', 'Αναρτήσεις που περιμένουν έγκριση από τη Διευθύντρια'],
+  ['.tile.t-pages', 'Οι μόνιμες σελίδες της ιστοσελίδας, π.χ. Σύλλογος Γονέων, Χρήσιμα έντυπα'],
+  ['.tile.t-set', 'Κωδικοί, email ειδοποιήσεων και εκπαιδευτικοί με πρόσβαση'],
+  ['.tile.t-help', 'Οδηγίες χρήσης του Πίνακα'],
+  ['.chip[data-f]', 'Δείχνει μόνο τις αναρτήσεις με αυτή την κατάσταση'],
+  ['button.fo', 'Φιλτράρει τη λίστα. Πατήστε ξανά για να το αφαιρέσετε'],
+  ['button[data-k="all"]', 'Αφαιρεί όλα τα φίλτρα'],
+  ['button[data-k][data-v=""]', 'Αφαιρεί αυτό το φίλτρο'],
+  ['#f-titl', 'Σύντομος τίτλος που λέει τι έγινε. Εμφανίζεται ως επικεφαλίδα της ανάρτησης'],
+  ['#f-syn', 'Τσεκάρετε μόνο αν υπάρχει γραπτή συγκατάθεση των κηδεμόνων για όλους τους μαθητές που φαίνονται'],
+  ['.sec-btn', 'Η ενότητα της ιστοσελίδας όπου θα εμφανιστεί η ανάρτηση'],
+  ['#f-imer', 'Η ημερομηνία της δράσης'],
+  ['button[onclick="$(\'f-pdf\').click()"], button[onclick="$(\'p-pdf\').click()"]', 'Επισυνάψτε έγγραφο PDF, Word ή Excel, έως 15 MB'],
+  ['#f-vid', 'Επικολλήστε τον σύνδεσμο του βίντεο από το YouTube'],
+  ['#f-syg', 'Το όνομα του εκπαιδευτικού που γράφει την ανάρτηση'],
+  ['button[onclick*="save(\'dimosiefsi\'"]', 'Η ανάρτηση βγαίνει στην ιστοσελίδα σε λίγα λεπτά'],
+  ['button[onclick*="save(\'egkrisi\'"]', 'Στέλνει την ανάρτηση στη Διευθύντρια, για έγκριση πριν δημοσιευτεί'],
+  ['button[onclick="showPreview()"]', 'Δείτε πώς θα φαίνεται η ανάρτηση, χωρίς να δημοσιευτεί'],
+  ['button[onclick*="save(\'proxeiro\'"]', 'Κρατά την ανάρτηση ως πρόχειρο, για να τη συνεχίσετε αργότερα'],
+  ['button[onclick*="decide(\'aposyrsi\')"]', 'Βγάζει την ανάρτηση από την ιστοσελίδα και τη βάζει στον κάδο. Επαναφέρεται μέσα σε 40 ημέρες'],
+  ['button[onclick*="decide(\'epanafora\')"]', 'Ξαναβάζει την ανάρτηση στην ιστοσελίδα'],
+  ['button[onclick*="decide(\'diagrafi\')"]', 'Σβήνει οριστικά την ανάρτηση και τις φωτογραφίες της. Δεν αναιρείται'],
+  ['button[onclick="leave()"]', 'Κλείνει την ανάρτηση χωρίς να κρατήσει τις αλλαγές'],
+  ['button[onclick*="decide(\'egkrisi\')"]', 'Η ανάρτηση βγαίνει στην ιστοσελίδα σε λίγα λεπτά'],
+  ['button[onclick="editFromReview()"]', 'Ανοίγει την ανάρτηση για διορθώσεις πριν δημοσιευτεί'],
+  ['button[onclick="returnPost()"]', 'Στέλνει την ανάρτηση πίσω στον εκπαιδευτικό, με σχόλιο για το τι να αλλάξει'],
+  ['#p-titl', 'Ο τίτλος της σελίδας'],
+  ['#p-per', 'Σύντομη περιγραφή της σελίδας, σε μία πρόταση'],
+  ['#p-draft', 'Τσεκαρισμένο: η σελίδα δεν φαίνεται στην ιστοσελίδα μέχρι να το ξετσεκάρετε'],
+  ['button[onclick="savePage(true)"]', 'Αποθηκεύει τις αλλαγές. Η σελίδα ενημερώνεται στην ιστοσελίδα σε λίγα λεπτά'],
+  ['button[onclick="nav(\'pages\')"]', 'Επιστροφή στη λίστα σελίδων χωρίς αποθήκευση'],
+  ['button[onclick*="rmDoc("]', 'Βγάζει το έγγραφο από τη λίστα. Η αλλαγή κρατιέται όταν αποθηκεύσετε'],
+  ['#s-syn, #s-dir', 'Γράψτε τον νέο κωδικό. Μετά την αλλαγή όλοι αποσυνδέονται'],
+  ['button[onclick^="chPass("]', 'Ορίζει τον νέο κωδικό. Ενημερώστε όσους τον χρησιμοποιούν'],
+  ['#s-mail', 'Σε αυτό το email έρχονται οι ειδοποιήσεις για νέες αναρτήσεις'],
+  ['button[onclick="chMail()"]', 'Αποθηκεύει το email των ειδοποιήσεων'],
+  ['#emNew', 'Το email του εκπαιδευτικού που θα μπορεί να συνδέεται'],
+  ['#emOn', 'Το ονοματεπώνυμο, για να ξέρετε ποιος είναι'],
+  ['button[onclick="emAdd()"]', 'Προσθέτει τον εκπαιδευτικό στη λίστα όσων μπορούν να συνδεθούν'],
+  ['button[onclick^="emDel("]', 'Αφαιρεί τον εκπαιδευτικό. Δεν θα μπορεί πλέον να συνδεθεί'],
+  ['#dlgNo', 'Κλείνει χωρίς να γίνει καμία αλλαγή'],
+  ['.post[data-id]', 'Πατήστε για να ανοίξετε την ανάρτηση: διόρθωση, δημοσίευση ή αφαίρεση'],
+  ['.post[data-i]', 'Πατήστε για να ανοίξετε και να αλλάξετε τη σελίδα'],
+  ['.photos .acts button', null]
+];
+(function () {
+  if (!window.matchMedia || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;   // κινητά/αφή: χωρίς ενδείξεις
+  var box = document.createElement('div'); box.id = 'tip'; box.setAttribute('role', 'tooltip'); document.body.appendChild(box);
+  var timer = null, cur = null;
+  function apply(root) {
+    TIPS.forEach(function (t) {
+      (root.querySelectorAll ? root : document).querySelectorAll(t[0]).forEach(function (el) {
+        if (!el.dataset.tip && (t[1] || el.title)) el.dataset.tip = t[1] || el.title;
+      });
+    });
+    (root.querySelectorAll ? root : document).querySelectorAll('[title]').forEach(function (el) {
+      if (!el.dataset.tip) el.dataset.tip = el.title;
+    });
+    (root.querySelectorAll ? root : document).querySelectorAll('[data-tip][title]').forEach(function (el) {
+      if (!el.getAttribute('aria-label') && !el.textContent.trim()) el.setAttribute('aria-label', el.title);
+      el.removeAttribute('title');   // όχι διπλή ένδειξη (η μικρή του περιηγητή + η μεγάλη)
+    });
+  }
+  function show(el) {
+    cur = el; box.textContent = el.dataset.tip; box.className = 'on';
+    var r = el.getBoundingClientRect(), b = box.getBoundingClientRect(), W = innerWidth, H = innerHeight;
+    var top = r.bottom + 8; if (top + b.height > H - 8) top = r.top - b.height - 8;
+    var left = Math.min(Math.max(8, r.left + r.width / 2 - b.width / 2), W - b.width - 8);
+    box.style.top = top + 'px'; box.style.left = left + 'px';
+  }
+  function hide() { clearTimeout(timer); cur = null; box.className = ''; }
+  function arm(e) {
+    var el = e.target.closest && e.target.closest('[data-tip]');
+    if (!el || el === cur) return;
+    hide(); timer = setTimeout(function () { show(el); }, 350);
+  }
+  document.addEventListener('mouseover', arm);
+  document.addEventListener('focusin', arm);
+  document.addEventListener('mouseout', function (e) { if (cur && !cur.contains(e.relatedTarget)) hide(); else if (!cur) clearTimeout(timer); });
+  document.addEventListener('focusout', hide);
+  document.addEventListener('mousedown', hide, true);
+  addEventListener('scroll', hide, true);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hide(); });
+  apply(document);
+  var pend = false;
+  new MutationObserver(function () { if (pend) return; pend = true; requestAnimationFrame(function () { pend = false; apply(document); }); })
+    .observe(document.body, { childList: true, subtree: true });
 })();
 </script>
 </body>
