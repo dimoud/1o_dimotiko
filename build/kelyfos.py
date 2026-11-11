@@ -128,8 +128,27 @@ def ypo(r, etos):
   </div>
  </div>
  <div class="wrap foot-base">
-  <p>© {etos} {esc(r['onoma'])}. Τα κείμενα και οι φωτογραφίες ανήκουν στη σχολική μονάδα· η αναδημοσίευση φωτογραφιών μαθητών δεν επιτρέπεται.</p>
-  <p class="credit">Σχεδιασμός <a href="https://expertease.eu/webdesign/" target="_blank" rel="noopener">Expertease Designs<span class="sr-only"> (ανοίγει σε νέα καρτέλα)</span></a></p>
+  <p>Τα κείμενα και οι φωτογραφίες ανήκουν στη σχολική μονάδα· η αναδημοσίευση φωτογραφιών μαθητών δεν επιτρέπεται.</p>
+ </div>
+ <hr class="ec-rule">
+ <div class="expertease-credit">
+  <div class="ec-layer ec-layer--credit">
+   <span class="ec-copy">© {etos} · Με επιφύλαξη παντός δικαιώματος</span>
+   <span class="ec-divider"></span>
+   <a href="https://expertease.eu/webdesign" target="_blank" rel="noopener" class="ec-brand">
+    <span class="ec-label">Designed by</span>
+    <img src="/static/logo_expertease.png" alt="" class="ec-logo" width="20" height="20">
+    <span class="ec-name">Expertease Designs</span><span class="sr-only"> (ανοίγει σε νέα καρτέλα)</span>
+   </a>
+  </div>
+  <div class="ec-layer ec-layer--ad" aria-hidden="true">
+   <div class="ec-ad-ring"><div class="ec-ad-logo"><img src="/static/logo_expertease.png" alt=""></div></div>
+   <div class="ec-ad-text">
+    <span class="ec-ad-question">Like this site?</span>
+    <a href="https://expertease.eu/webdesign" target="_blank" rel="noopener" class="ec-ad-cta" tabindex="-1">Let's build yours
+     <span class="ec-ad-arrow"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="6.5" x2="11" y2="6.5"/><polyline points="7,2.5 11,6.5 7,10.5"/></svg></span></a>
+   </div>
+  </div>
  </div>
 </footer>'''
 
@@ -143,7 +162,7 @@ def omada_xromatos(path):
     return 'g1'
 
 
-def selida(*, r, nav_html, titlos, perigrafi, path, soma, h1_titlos=None, ld=None, og_eikona='',
+def selida(*, r, nav_html, titlos, perigrafi, path, soma, h1_titlos=None, ld=None, og_eikona='', extra_tail='',
            diadromi=None, etos=2026, extra_head='', robots='index,follow', lorida=''):
     """Πλήρης σελίδα HTML. path: σχετική διεύθυνση π.χ. /zoi/anakoinoseis/."""
     tomeas = r['tomeas'].rstrip('/')
@@ -177,6 +196,7 @@ def selida(*, r, nav_html, titlos, perigrafi, path, soma, h1_titlos=None, ld=Non
 <link rel="preload" href="/static/fonts/commissioner-greek-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/static/fonts/commissioner-greek-700.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/static/site.css?v={{V}}">
+<link rel="stylesheet" href="/static/expertease-credit.css?v={{V}}">
 <script>if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('anim-ready');setTimeout(function(){{document.documentElement.classList.add('rv-fallback')}},2500)</script>
 {extra_head}{lds}</head>
 <body class="{omada_xromatos(path)}">
@@ -189,6 +209,6 @@ def selida(*, r, nav_html, titlos, perigrafi, path, soma, h1_titlos=None, ld=Non
 {f'<aside class="net-strip" aria-label="Τα Δίκτυα και τα Προγράμματά μας"><div class="wrap"><p class="ns-h">Τα Δίκτυα και τα Προγράμματά μας</p><ul>{lorida}</ul></div></aside>' if lorida else ''}
 {ypo(r, etos)}
 <script src="/static/site.js?v={{V}}" defer></script>
-</body>
+{extra_tail}</body>
 </html>
 '''

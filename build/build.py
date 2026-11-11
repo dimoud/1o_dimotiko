@@ -364,6 +364,11 @@ class Istotopos:
                     except Exception:
                         pass
                 return f'<img src="/logotypa/{src.name}"{wh} alt="Λογότυπο: {esc(d["titlos"])}" loading="lazy" decoding="async">'
+        il = RIZA / 'static' / 'eikones' / 'diktya' / f'{d["id"]}.webp'
+        if il.exists():
+            from PIL import Image
+            with Image.open(il) as im:
+                return f'<img class="net-il" src="/static/eikones/diktya/{d["id"]}.webp" width="{im.width}" height="{im.height}" alt="" loading="lazy" decoding="async">'
         arxika = ''.join(w[0] for w in re.findall(r'[A-Za-zΑ-Ωα-ωά-ώ]+', d['titlos'])[:3]).upper()
         return f'<span class="logo-ph" aria-hidden="true">{esc(arxika)}</span>'
 
@@ -527,10 +532,30 @@ class Istotopos:
   </ul>
   <p><a class="link-more" href="https://www.google.com/maps/dir/?api=1&amp;destination={q}" target="_blank" rel="noopener">Οδηγίες στο Google Maps<span class="sr-only"> (ανοίγει σε νέα καρτέλα)</span><span aria-hidden="true"> ›</span></a></p>
  </div>
- <div class="map" data-map="https://www.google.com/maps?q={q}&amp;z=16&amp;output=embed">
-  <button type="button" class="map-btn"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
-  <span>Εμφάνιση χάρτη</span><small>Φορτώνει από το Google Maps μόνο αν το πατήσετε</small></button>
- </div>
+ <div class="map"><iframe src="https://www.google.com/maps?q={q}&amp;z=16&amp;output=embed" title="Χάρτης: θέση του σχολείου" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe></div>
+</div></section>'''
+
+    def forma_html(self):
+        r = self.r
+        epiloges = ['Γενική ερώτηση', 'Εγγραφές μαθητών', 'Βεβαιώσεις και έγγραφα', 'Θέμα γονέων και κηδεμόνων', 'Συνεργασία ή πρόταση', 'Ιστοσελίδα']
+        opts = '<option value="">Διαλέξτε…</option>' + ''.join(f'<option>{esc(o)}</option>' for o in epiloges)
+        return f'''<section class="sec" aria-labelledby="h-forma"><div class="wrap form-wrap">
+ <div class="form-intro"><h2 id="h-forma" class="h-sec rv">Στείλτε μας μήνυμα</h2>
+  <p>Το μήνυμα φτάνει στο email του σχολείου (<span class="nw">{esc(r["email"])}</span>). Θα λάβετε αντίγραφο στο email σας. Για κάτι επείγον, καλέστε στο <a href="tel:{r['tilefono'].replace(' ', '')}">{esc(r['tilefono'])}</a>.</p>
+  <p class="form-note">Μην γράφετε ευαίσθητα στοιχεία μαθητών (π.χ. θέματα υγείας) στη φόρμα· για αυτά επικοινωνήστε με τη Διεύθυνση.</p></div>
+ <form id="clientContactForm" class="cform" novalidate>
+  <input type="hidden" name="_to" value="{esc(r['email'])}">
+  <input type="hidden" name="_key" value="{esc(r.get('forma_kleidi', ''))}">
+  <input type="text" name="_hp" value="" autocomplete="off" tabindex="-1" aria-hidden="true" style="display:none;position:absolute;left:-9999px">
+  <div class="cf-row"><div class="cf-f"><label for="f-name">Ονοματεπώνυμο</label><input id="f-name" name="name" type="text" autocomplete="name" required></div>
+   <div class="cf-f"><label for="f-email">Email</label><input id="f-email" name="email" type="email" autocomplete="email" required></div></div>
+  <div class="cf-row"><div class="cf-f"><label for="f-phone">Τηλέφωνο <span class="opt">(προαιρετικό)</span></label><input id="f-phone" name="phone" type="tel" autocomplete="tel"></div>
+   <div class="cf-f"><label for="serviceSelect">Θέμα</label><select id="serviceSelect" name="subject">{opts}</select></div></div>
+  <div class="cf-f"><label for="f-message">Μήνυμα</label><textarea id="f-message" name="message" rows="6" required></textarea></div>
+  <p class="cf-gdpr">Τα στοιχεία σας χρησιμοποιούνται μόνο για να σας απαντήσουμε (<a href="/aporrito/">απόρρητο</a>).</p>
+  <button type="submit" class="btn">Αποστολή</button>
+  <p id="formStatus" role="status" aria-live="polite"></p>
+ </form>
 </div></section>'''
 
     def mikres(self):
@@ -538,7 +563,8 @@ class Istotopos:
         self.grapse('/syndesmoi/', titlos='Χρήσιμοι Σύνδεσμοι', perigrafi='Ψηφιακά βιβλία, εκπαιδευτικές πλατφόρμες, φορείς και ασφάλεια στο διαδίκτυο: χρήσιμοι σύνδεσμοι για μαθητές και γονείς.',
                     soma=self.kefali('', 'Χρήσιμοι Σύνδεσμοι', 'Οι σύνδεσμοι ανοίγουν σε νέα καρτέλα.') + f'<div class="wrap">{self.syndesmoi_html()}</div>')
         self.grapse('/epikoinonia/', titlos='Επικοινωνία', perigrafi=f'Διεύθυνση, τηλέφωνο και χάρτης του {r["onoma"]}: {r["dieythynsi"]}, τηλ. {r["tilefono"]}.',
-                    soma=self.kefali('', 'Επικοινωνία και χάρτης') + self.epikoinonia_html(h='h2'))
+                    soma=self.kefali('', 'Επικοινωνία και χάρτης') + self.epikoinonia_html(h='h2') + self.forma_html(),
+                    extra_tail='<script src="/static/contact-form.js?v={V}" defer></script>\n')
         self.grapse('/anazitisi/', titlos='Αναζήτηση', perigrafi='Αναζήτηση σε όλες τις αναρτήσεις και σελίδες του 1ου Δημοτικού Σχολείου Πολίχνης.',
                     soma=self.kefali('', 'Αναζήτηση') + f'''<div class="wrap">
 <form class="search" role="search" data-site-search data-index="/search-index.json" data-empty-el="Δεν βρέθηκε κάτι. Δοκιμάστε άλλη λέξη ή καλέστε στο {esc(r['tilefono'])}.">
@@ -565,9 +591,11 @@ class Istotopos:
 <h2>Υπεύθυνος επεξεργασίας</h2>
 <p>Υπεύθυνη για το περιεχόμενο του ιστότοπου είναι η σχολική μονάδα {esc(r['onoma_epiftimo'])}, {esc(r['dieythynsi'])}, τηλ. {esc(r['tilefono'])}.</p>
 <h2>Τι δεν συλλέγουμε</h2>
-<p>Ο ιστότοπος δεν χρησιμοποιεί cookies, εργαλεία στατιστικών ή διαφημίσεων και δεν ζητά στοιχεία από τους επισκέπτες. Οι γραμματοσειρές φορτώνουν από τον ίδιο τον ιστότοπο.</p>
+<p>Ο ιστότοπος δεν χρησιμοποιεί δικά του cookies ούτε εργαλεία στατιστικών ή διαφημίσεων. Οι γραμματοσειρές φορτώνουν από τον ίδιο τον ιστότοπο.</p>
 <h2>Περιεχόμενο τρίτων</h2>
-<p>Ο χάρτης (Google Maps) και τα βίντεο (YouTube, σε λειτουργία περιορισμένων cookies) φορτώνουν <strong>μόνο αν τα πατήσετε</strong>. Τότε ισχύουν οι όροι της Google.</p>
+<p>Στις σελίδες «Αρχική» και «Επικοινωνία» εμφανίζεται ενσωματωμένος χάρτης Google Maps· η Google μπορεί να ορίσει δικά της cookies και ισχύουν οι όροι της. Τα βίντεο (YouTube, σε λειτουργία περιορισμένων cookies) φορτώνουν μόνο αν τα πατήσετε.</p>
+<h2>Φόρμα επικοινωνίας</h2>
+<p>Όσα γράφετε στη φόρμα (όνομα, email, τηλέφωνο, μήνυμα) στέλνονται με email στο σχολείο μέσω υπηρεσίας της Google και χρησιμοποιούνται μόνο για την απάντηση. Δεν αποθηκεύονται στον ιστότοπο.</p>
 <h2>Φωτογραφίες μαθητών</h2>
 <p>Δημοσιεύουμε φωτογραφίες από σχολικές δράσεις μόνο με τη συγκατάθεση των κηδεμόνων και χωρίς ονοματεπώνυμα μαθητών. Από τις φωτογραφίες αφαιρούνται τα μεταδεδομένα (π.χ. θέση λήψης). Ζητάμε από τις μηχανές αναζήτησης να μην τις ευρετηριάζουν και από τα ρομπότ τεχνητής νοημοσύνης να μην τις χρησιμοποιούν.</p>
 <p>Ο κηδεμόνας που θέλει να αφαιρεθεί μια φωτογραφία ή να ανακαλέσει τη συγκατάθεσή του επικοινωνεί με τη Διεύθυνση· η φωτογραφία αφαιρείται χωρίς καθυστέρηση. Η αναδημοσίευση φωτογραφιών μαθητών από τον ιστότοπο δεν επιτρέπεται.</p>
@@ -608,6 +636,7 @@ class Istotopos:
                 p['u'] = base + p['u']
             json.dump(self.search, open(self.out / 'search-index.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
         shutil.copy2(RIZA / 'static' / 'favicon.svg', self.out / 'favicon.svg')
+        shutil.copy2(RIZA / 'static' / 'email-logo.png', self.out / 'email-logo.png')
         if self.r.get('cname'):
             (self.out / 'CNAME').write_text(self.r['cname'] + '\n')
         (self.out / '.nojekyll').write_text('')

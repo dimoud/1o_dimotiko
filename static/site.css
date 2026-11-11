@@ -524,3 +524,29 @@ html.rv-fallback .pc,html.rv-fallback .kite{transform:none;opacity:1}
 @media (max-width:734px){.foot-art{height:96px}.pc{width:16px;height:70px}.pc2{height:60px}.pc4{height:64px}.pc5{height:56px}.pc6{height:66px}.kite{width:56px;height:80px;right:6%}}
 @media (prefers-reduced-motion:reduce){.pc,.kite{transform:none!important;opacity:1!important}.kite-b{animation:none!important}}
 @media (max-width:560px){.zone-art .zone-pic{display:none}}
+
+/* ── φόρμα επικοινωνίας */
+.form-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:40px;align-items:start}
+.form-intro p{color:var(--ink2)}
+.form-note{background:var(--sun-bg,#fff4d6);border-radius:10px;padding:12px 14px;font-size:var(--fs-note)}
+.cform{background:#fff;border-radius:var(--r);padding:28px;box-shadow:0 10px 30px rgba(27,38,51,.08);border:1px solid var(--line)}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+.cf-f{margin-bottom:16px}
+.cf-f label{display:block;font-weight:600;margin-bottom:6px}
+.cf-f .opt{font-weight:400;color:var(--ink2);font-size:var(--fs-note)}
+.cform input,.cform select,.cform textarea{width:100%;min-height:48px;padding:10px 14px;border:1px solid #b6c4d2;border-radius:10px;font:inherit;color:var(--ink);background:#fbfdff;transition:border-color .2s,box-shadow .2s}
+.cform textarea{min-height:150px;resize:vertical}
+.cform input:focus,.cform select:focus,.cform textarea:focus{outline:0;border-color:var(--blue);box-shadow:0 0 0 4px rgba(30,100,168,.15)}
+.cf-gdpr{font-size:var(--fs-note);color:var(--ink2);margin:4px 0 16px}
+#formStatus{display:none;margin:14px 0 0;padding:12px 14px;border-radius:10px}
+#formStatus.status-success{background:#e6f4ea;color:#1d5a2b}#formStatus.status-error{background:#fdebe5;color:#7c2e1d}
+@media (max-width:860px){.form-wrap{grid-template-columns:1fr;gap:16px}.cf-row{grid-template-columns:1fr}.cform{padding:20px}.cform .btn{width:100%;justify-content:center}}
+
+/* ── υπογραφή σχεδιασμού: ίδιο μπάνερ με τους άλλους ιστότοπους */
+.site-foot .expertease-credit{background:#0f2740;margin-bottom:0}
+.site-foot hr.ec-rule{margin:0}
+.foot-base{padding-bottom:18px}
+.net-logo img.net-il{max-height:76px;transition:transform .45s cubic-bezier(.34,1.56,.64,1)}
+.net-tile:hover .net-il{transform:scale(1.08) rotate(-4deg)}
+@media (prefers-reduced-motion:reduce){.net-tile:hover .net-il{transform:none}}
+.nw{white-space:nowrap}
