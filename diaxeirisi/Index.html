@@ -346,7 +346,7 @@ function start() {
   home();
 }
 function home() {
-  nav('home');
+  nav('home'); msg('homeMsg', '');
   var onoma = store('onoma');
   $('hello').textContent = 'Καλώς ήρθατε' + (onoma ? ', ' + onoma.split(/[ ,]/)[0] : '');
   var t = '<button class="tile t-new" onclick="edit(null)"><span class="em">✏️</span><b>Νέα ανάρτηση</b><span>Γράψτε για μια δράση, μια γιορτή, μια ανακοίνωση</span></button>' +
@@ -362,7 +362,8 @@ function home() {
     ALL = l;
     if ($('waitN')) $('waitN').textContent = l.filter(isWaiting).length;
     var ret = l.filter(function (a) { return a.katastasi === 'Επιστράφηκε'; }).length;
-    msg('homeMsg', ret && ROLE !== 'diefthynsi' ? ret + ' ανάρτηση(-εις) επιστράφηκαν για μικρή διόρθωση. Δείτε τις στο «Οι αναρτήσεις».' : '', 'info');
+    // δεν σβήνουμε το μήνυμα «✔ Στάλθηκε/Εγκρίθηκε» που μόλις έδειξε το save()/decide()
+    if (ret && ROLE !== 'diefthynsi') msg('homeMsg', ret + ' ανάρτηση(-εις) επιστράφηκαν για μικρή διόρθωση. Δείτε τις στο «Οι αναρτήσεις».', 'info');
   }, 'homeMsg');
 }
 function isWaiting(a) { return a.katastasi === 'Προς έγκριση' || a.exei_protasi; }
@@ -455,11 +456,17 @@ function htmlToMd(root) {
     return s;
   }
   function block(n) {
-    var parts = [];
+    // διαδοχικά κείμενα/έντονα/πλάγια/σύνδεσμοι μένουν ΜΙΑ παράγραφος (πριν: η πρώτη γραμμή με έντονη λέξη έσπαγε σε 3)
+    var parts = [], buf = '';
+    function fl() { var x = buf.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim(); if (x) parts.push(x); buf = ''; }
     n.childNodes.forEach(function (c) {
-      if (c.nodeType === 3) { if (c.nodeValue.trim()) parts.push(c.nodeValue.trim()); return; }
+      if (c.nodeType === 3) { buf += c.nodeValue.replace(/\s+/g, ' '); return; }
       if (c.nodeType !== 1) return;
       var t = c.tagName;
+      if (!/^(H[1-6]|UL|OL|P|DIV|BLOCKQUOTE|SECTION|ARTICLE|BR|TABLE)$/.test(t)) {
+        var w = document.createElement('span'); w.appendChild(c.cloneNode(true)); buf += inl(w); return;
+      }
+      fl();
       if (/^H[1-6]$/.test(t)) parts.push('### ' + inl(c).trim());
       else if (t === 'UL' || t === 'OL') {
         var k = 0;
@@ -469,6 +476,7 @@ function htmlToMd(root) {
       else if (t === 'BR') parts.push('');
       else { var y = inl(c).trim(); if (y) parts.push(y); }
     });
+    fl();
     return parts.join('\n\n');
   }
   return block(root).replace(/[ \t]+\n/g, function (m) { return /  \n/.test(m) ? '  \n' : '\n'; }).replace(/\n{3,}/g, '\n\n').replace(/\*\* +\*\*/g, ' ').replace(/ {2,}(?!\n)/g, ' ').trim();

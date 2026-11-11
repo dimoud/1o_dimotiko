@@ -21,6 +21,10 @@ from PIL import Image, ImageOps
 RIZA = Path(__file__).resolve().parent.parent
 
 
+class Oristiko(RuntimeError):
+    pass
+
+
 def fere(url, params, prospatheies=4):
     q = url + ('&' if '?' in url else '?') + urllib.parse.urlencode(params)
     for i in range(prospatheies):
@@ -28,8 +32,10 @@ def fere(url, params, prospatheies=4):
             with urllib.request.urlopen(q, timeout=120) as r:
                 d = json.loads(r.read().decode('utf-8'))
             if d.get('sfalma'):
-                raise RuntimeError(d['sfalma'])
+                raise Oristiko(d['sfalma'])       # απάντηση του Πίνακα: δεν έχει νόημα νέα προσπάθεια
             return d
+        except Oristiko:
+            raise
         except Exception as e:
             if i == prospatheies - 1:
                 raise
@@ -71,6 +77,8 @@ def main():
         rel = f'drive/{fid}.jpg'
         if (mm / 'fotografies' / f'drive/{fid}-1600.webp').exists() and rel in dims:
             return rel
+        if fid in apotyximena:
+            return None
         x = fere(a.url, {'api': 'arxeio', 'id': fid, 'k': a.kleidi})
         im = ImageOps.exif_transpose(Image.open(io.BytesIO(base64.b64decode(x['data'])))).convert('RGB')
         for w in (1600, 800):
@@ -94,6 +102,7 @@ def main():
 
     # Προφόρτωση όλων των νέων φωτογραφιών παράλληλα (πρώτη φορά: εκατοντάδες, μία-μία θα έπαιρνε ~40΄)
     kleidaria = threading.Lock()
+    apotyximena = set()
     ola = [f['id'] for r in an for f in (r.get('fotografies') or [])]
     ola += [x['id'] for s in d.get('selides', []) for x in (s.get('fotografies') or [])]
     leipoun = []
@@ -123,7 +132,8 @@ def main():
                     with kleidaria:
                         dims[f'drive/{fid}.jpg'] = list(c.size)
         except Exception as e:
-            print(f'  φωτογραφία {fid}: {e}', file=sys.stderr, flush=True)
+            apotyximena.add(fid)
+            print(f'  φωτογραφία {fid}: {e} (παραλείπεται)', file=sys.stderr, flush=True)
     with ThreadPoolExecutor(8) as ex:
         for n, _ in enumerate(ex.map(proforosi, leipoun), 1):
             if n % 25 == 0:
@@ -134,7 +144,7 @@ def main():
         try:
             out.append({
                 'id': r['id'], 'imerominia': str(r['imerominia'])[:10], 'titlos': r['titlos'], 'keimeno': r.get('keimeno') or '',
-                'fotografies': [{'arxeio': foto(f['id']), 'perigrafi': f.get('perigrafi', '')} for f in r.get('fotografies') or []],
+                'fotografies': [x for x in ({'arxeio': foto(f['id']), 'perigrafi': f.get('perigrafi', '')} for f in r.get('fotografies') or []) if x['arxeio']],
                 'arxeia': [arxeio(f) for f in r.get('arxeia') or []],
                 'video': r.get('video') or [], 'syggrafeas': r.get('syggrafeas') or '', 'enotita': r['enotita'],
                 'taxeis': r.get('taxeis') or [], 'diktya': r.get('diktya') or [], 'katastasi': 'Δημοσιευμένη'})
@@ -152,7 +162,7 @@ def main():
         for k in ('titlos', 'perigrafi', 'keimeno', 'simeiosi', 'katastasi'):
             if f.get(k) not in (None, ''):
                 s[k] = f[k]
-        s['fotografies'] = [{'arxeio': foto(x['id']), 'perigrafi': x.get('perigrafi', '')} for x in f.get('fotografies') or []]
+        s['fotografies'] = [y for y in ({'arxeio': foto(x['id']), 'perigrafi': x.get('perigrafi', '')} for x in f.get('fotografies') or []) if y['arxeio']]
         s['arxeia'] = [arxeio(x) for x in f.get('arxeia') or []]
         s.pop('apo_wp', None)
     if (RIZA / 'periexomeno' / 'selides-wp.json').exists():

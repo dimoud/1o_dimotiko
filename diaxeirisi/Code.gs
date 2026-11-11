@@ -35,7 +35,7 @@ var ENOTITES = [
 var TAXEIS = ['Α', 'Β', 'Γ', 'Δ', 'Ε', 'ΣΤ', 'Ένταξη', 'Ολοήμερο'];
 var DIKTYA = [['asfaleia-diadiktyo', 'Ασφάλεια στο Διαδίκτυο'], ['sima-aep', 'ΣΗ.ΜΑ.-Α.Ε.Π.'], ['oikologika', 'Οικολογικά Σχολεία'],
   ['thriving', 'Thriving Schools'], ['laxanokipoi', 'Σχολικοί Λαχανόκηποι'], ['kids-save-lives', 'KIDS SAVE LIVES']];
-var SYNEDRIA_ORES = 8, MEGISTES_APOTYXIES = 8;
+var SYNEDRIA_ORES = 6, MEGISTES_APOTYXIES = 8;
 
 var P = function () { return PropertiesService.getScriptProperties(); };
 
