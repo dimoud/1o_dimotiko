@@ -83,7 +83,7 @@ function anoigmaPinaka() {
 
 function dimosiefsiTora() {
   var r = ksekinaDimosiefsi_(), ui = SpreadsheetApp.getUi();
-  if (r.ok) ui.alert('Η δημοσίευση ξεκίνησε', 'Σε 2–5 λεπτά η ιστοσελίδα θα δείχνει ό,τι υπάρχει τώρα στο Φύλλο.\n\n' +
+  if (r.ok) ui.alert('Η δημοσίευση ξεκίνησε', 'Μέσα σε μισή ώρα η ιστοσελίδα θα δείχνει ό,τι υπάρχει τώρα στο Φύλλο.\n\n' +
     'Δημοσιεύονται μόνο οι γραμμές με Κατάσταση «Δημοσιευμένη».', ui.ButtonSet.OK);
   else ui.alert('Η δημοσίευση δεν ξεκίνησε', r.minima, ui.ButtonSet.OK);
 }
@@ -98,7 +98,7 @@ function odigiesFyllou(siopi) {
     [''],
     ['1. Το Φύλλο είναι η «αποθήκη» της ιστοσελίδας. Κάθε γραμμή της καρτέλας «Αναρτήσεις» είναι μία ανάρτηση της ιστοσελίδας.'],
     ['2. Στην ιστοσελίδα εμφανίζονται ΜΟΝΟ οι γραμμές με Κατάσταση «Δημοσιευμένη». «Πρόχειρο», «Προς έγκριση», «Επιστράφηκε», «Αποσυρμένη» δεν φαίνονται.'],
-    ['3. Η ιστοσελίδα ενημερώνεται όταν γίνει δημοσίευση: αυτόματα όταν η Διεύθυνση πατά «Δημοσίευση» στον Πίνακα, ή χειροκίνητα από το μενού Ιστοσελίδα → «🚀 Δημοσίευση αλλαγών του Φύλλου». Χρόνος: 2–5 λεπτά.'],
+    ['3. Η ιστοσελίδα ενημερώνεται όταν γίνει δημοσίευση: αυτόματα όταν η Διεύθυνση πατά «Δημοσίευση» στον Πίνακα, ή χειροκίνητα από το μενού Ιστοσελίδα → «🚀 Δημοσίευση αλλαγών του Φύλλου». Χρόνος: έως μισή ώρα.'],
     ['4. Συνιστάται όλες οι αλλαγές να γίνονται από τον Πίνακα διαχείρισης (μενού Ιστοσελίδα → «🔒 Άνοιγμα Πίνακα», ή ' + PINAKAS_URL + '). Εκεί φαίνονται οι φωτογραφίες, ανεβαίνουν αρχεία και γίνεται έλεγχος πριν από τη δημοσίευση.'],
     ['5. Οι στήλες «Φωτογραφίες» και «Αρχεία» είναι τεχνικές (λίστα αρχείων του Drive). Μην τις αλλάζετε με το χέρι: προσθήκη, αφαίρεση, σειρά και εξώφυλλο γίνονται από τον Πίνακα.'],
     ['6. Διόρθωση κειμένου ή τίτλου μπορεί να γίνει και εδώ στο Φύλλο. Μετά: μενού Ιστοσελίδα → «🚀 Δημοσίευση αλλαγών του Φύλλου».'],
@@ -364,7 +364,7 @@ function apothikefsi(token, d, energeia) {
     katagrafi_(s.rolos, pedia.syggrafeas, { proxeiro: 'Αποθήκευση προχείρου', egkrisi: 'Αποστολή για έγκριση', dimosiefsi: 'Δημοσίευση' }[energeia], id, pedia.titlos);
     if (energeia === 'egkrisi') eidopoiisi_('Νέα ανάρτηση προς έγκριση: ' + pedia.titlos, (pedia.syggrafeas || 'Συντάκτης') + ' έστειλε ανάρτηση για έγκριση.');
   } finally { lock.releaseLock(); }
-  var apot = { ok: true, id: id, minima: { proxeiro: 'Αποθηκεύτηκε ως πρόχειρο.', egkrisi: 'Στάλθηκε στη Διεύθυνση για έγκριση.', dimosiefsi: 'Δημοσιεύεται. Θα είναι στον ιστότοπο σε 2–4 λεπτά.' }[energeia] };
+  var apot = { ok: true, id: id, minima: { proxeiro: 'Αποθηκεύτηκε ως πρόχειρο.', egkrisi: 'Στάλθηκε στη Διεύθυνση για έγκριση.', dimosiefsi: 'Δημοσιεύεται. Θα φανεί στον ιστότοπο μέσα σε μισή ώρα.' }[energeia] };
   if (energeia === 'dimosiefsi') apot.github = ksekinaDimosiefsi_();
   return apot;
 }
@@ -392,7 +392,7 @@ function apofasi(token, id, praxi, sxolio) {
     } else throw new Error('Άγνωστη ενέργεια.');
   } finally { lock.releaseLock(); }
   katagrafi_('διεύθυνση', 'Διεύθυνση', { egkrisi: 'Έγκριση και δημοσίευση', epistrofi: 'Επιστροφή με σχόλιο', aposyrsi: 'Απόσυρση', epanafora: 'Επαναφορά' }[praxi], id, r.titlos);
-  var ap = { ok: true, minima: { egkrisi: 'Εγκρίθηκε. Θα είναι στον ιστότοπο σε 2–4 λεπτά.', epistrofi: 'Επιστράφηκε στον συντάκτη.', aposyrsi: 'Αποσύρθηκε. Θα φύγει από τον ιστότοπο σε 2–4 λεπτά.', epanafora: 'Επανήλθε. Θα φανεί σε 2–4 λεπτά.' }[praxi] };
+  var ap = { ok: true, minima: { egkrisi: 'Εγκρίθηκε. Θα φανεί στον ιστότοπο μέσα σε μισή ώρα.', epistrofi: 'Επιστράφηκε στον συντάκτη.', aposyrsi: 'Αποσύρθηκε. Θα φύγει από τον ιστότοπο μέσα σε μισή ώρα.', epanafora: 'Επανήλθε. Θα φανεί μέσα σε μισή ώρα.' }[praxi] };
   if (praxi !== 'epistrofi') ap.github = ksekinaDimosiefsi_();
   return ap;
 }
@@ -460,7 +460,7 @@ function afairesiFotografias(token, anartisiId, fotoId) {
   grapse_(fyllo_('anartiseis'), r._row, { fotografies: JSON.stringify(fot) });
   try { DriveApp.getFileById(fotoId).setTrashed(true); } catch (e) {}
   katagrafi_('διεύθυνση', 'Διεύθυνση', 'Αφαίρεση φωτογραφίας', anartisiId, r.titlos);
-  var ap = { ok: true, minima: 'Η φωτογραφία αφαιρέθηκε. Θα φύγει από τον ιστότοπο σε 2–4 λεπτά.' };
+  var ap = { ok: true, minima: 'Η φωτογραφία αφαιρέθηκε. Θα φύγει από τον ιστότοπο μέσα σε μισή ώρα.' };
   if (r.katastasi === 'Δημοσιευμένη') ap.github = ksekinaDimosiefsi_();
   return ap;
 }
@@ -482,7 +482,7 @@ function apothikefsiSelidas(token, d, dimosiefsi) {
   grapse_(fyllo_('selides'), r._row, { titlos: d.titlos, perigrafi: d.perigrafi, keimeno: d.keimeno, simeiosi: d.simeiosi || '',
     katastasi: d.katastasi, arxeia: JSON.stringify(d.arxeia || []), fotografies: JSON.stringify(d.fotografies || []), tropopoiisi: new Date() });
   katagrafi_('διεύθυνση', 'Διεύθυνση', 'Αλλαγή σελίδας', d.id, d.titlos);
-  var ap = { ok: true, minima: dimosiefsi ? 'Δημοσιεύεται σε 2–4 λεπτά.' : 'Αποθηκεύτηκε.' };
+  var ap = { ok: true, minima: dimosiefsi ? 'Δημοσιεύεται. Θα φανεί μέσα σε μισή ώρα.' : 'Αποθηκεύτηκε.' };
   if (dimosiefsi) ap.github = ksekinaDimosiefsi_();
   return ap;
 }

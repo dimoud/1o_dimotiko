@@ -96,8 +96,20 @@ def main():
     kleidaria = threading.Lock()
     ola = [f['id'] for r in an for f in (r.get('fotografies') or [])]
     ola += [x['id'] for s in d.get('selides', []) for x in (s.get('fotografies') or [])]
-    leipoun = [i for i in dict.fromkeys(ola) if not ((mm / 'fotografies' / f'drive/{i}-1600.webp').exists() and f'drive/{i}.jpg' in dims)]
-    print(f'Φωτογραφίες: {len(set(ola))} συνολικά, {len(leipoun)} νέες για λήψη.', flush=True)
+    leipoun = []
+    for i in dict.fromkeys(ola):
+        w1600 = mm / 'fotografies' / f'drive/{i}-1600.webp'
+        if w1600.exists() and (mm / 'fotografies' / f'drive/{i}-800.webp').exists():
+            if f'drive/{i}.jpg' not in dims:          # η κρυφή μνήμη έχει την εικόνα αλλά όχι τις διαστάσεις
+                try:
+                    with Image.open(w1600) as im0:
+                        dims[f'drive/{i}.jpg'] = list(im0.size)
+                except Exception:
+                    leipoun.append(i)
+            continue
+        leipoun.append(i)
+    yparxoun = len(list((mm / 'fotografies' / 'drive').glob('*-1600.webp')))
+    print(f'Φωτογραφίες: {len(set(ola))} συνολικά, {yparxoun} ήδη στην κρυφή μνήμη, {len(leipoun)} νέες για λήψη.', flush=True)
 
     def proforosi(fid):
         try:
@@ -146,7 +158,8 @@ def main():
     if (RIZA / 'periexomeno' / 'selides-wp.json').exists():
         shutil.copy2(RIZA / 'periexomeno' / 'selides-wp.json', dd / 'selides-wp.json')
     json.dump(base, open(dd / 'selides.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-    json.dump(dims, open(dims_p, 'w'))
+    with open(dims_p, 'w') as fh:
+        json.dump(dims, fh)
     print(f'Από το Φύλλο: {len(out)} αναρτήσεις, {len(apo)} σελίδες, {nea} νέες φωτογραφίες.')
 
 
