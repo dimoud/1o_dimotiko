@@ -98,6 +98,7 @@ h2{font-size:1.35rem;margin:0 0 6px}
 .toolbar button:hover{background:var(--blue-bg)}
 .rte{min-height:220px;border:2px solid var(--line);border-radius:14px;padding:14px 16px;background:#fff;line-height:1.65}
 .rte:empty:before{content:attr(data-ph);color:#9aa7b4}
+.rte table{width:100%;border-collapse:collapse;margin:.4em 0 1em;font-size:1rem}.rte th,.rte td{border:1px solid #b9c6d3;padding:8px 10px;min-width:60px;vertical-align:top}.rte th{background:var(--blue-bg);text-align:left}.rte td:focus-within,.rte th:focus-within{outline:2px solid #f2b233}
 .rte h3{font-size:1.15rem;margin:.6em 0 .3em}.rte p{margin:0 0 .7em}.rte mark{background:#fff1b8}
 .plain{width:100%;min-height:240px;border:2px solid var(--line);border-radius:14px;padding:14px 16px;font-family:inherit}
 .drop{border:3px dashed #9fc0e3;border-radius:18px;background:var(--blue-bg);padding:26px;text-align:center;cursor:pointer;color:var(--blue-d);font-weight:700}
@@ -187,9 +188,8 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
  <div class="card login" style="text-align:center">
   <svg style="width:84px;height:84px"><use href="#emb"/></svg>
   <h2 style="margin-top:10px">1ο Δημοτικό Σχολείο Πολίχνης</h2>
-  <p class="muted">Διαχείριση ιστοσελίδας. Γράψτε τον κωδικό που σας έδωσε η Διεύθυνση.</p>
   <form onsubmit="login(event)">
-   <label for="lemail" style="display:block;text-align:left;font-weight:700;margin:0 0 4px">Email σας <span class="muted" style="font-weight:400">(εκπαιδευτικοί· η Διεύθυνση το αφήνει κενό)</span></label>
+   <label for="lemail" style="display:block;text-align:left;font-weight:700;margin:0 0 4px">Email</label>
    <input id="lemail" class="big-in" type="email" autocomplete="email" inputmode="email" placeholder="όνομα@sch.gr" style="letter-spacing:0;font-size:1.05rem;margin-bottom:10px">
    <label for="kod" style="display:block;text-align:left;font-weight:700;margin:0 0 4px">Κωδικός</label>
    <input id="kod" class="big-in" type="password" autocomplete="current-password" placeholder="Κωδικός" required>
@@ -257,6 +257,11 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
    <button type="button" data-c="h3" title="Υπότιτλος">Υπότιτλος</button>
    <button type="button" data-c="ul" title="Λίστα">• Λίστα</button>
    <button type="button" data-c="link" title="Σύνδεσμος">🔗 Σύνδεσμος</button>
+   <button type="button" data-c="table" title="Νέος πίνακας">▦ Πίνακας</button>
+   <button type="button" data-c="row+" title="Νέα γραμμή κάτω από αυτή που είστε">＋ Γραμμή</button>
+   <button type="button" data-c="row-" title="Σβήσιμο της γραμμής που είστε">− Γραμμή</button>
+   <button type="button" data-c="col+" title="Νέα στήλη δεξιά από αυτή που είστε">＋ Στήλη</button>
+   <button type="button" data-c="col-" title="Σβήσιμο της στήλης που είστε">− Στήλη</button>
    <button type="button" data-c="clear" title="Καθαρισμός μορφής">Καθαρισμός</button>
   </div>
   <div class="rte" id="rte" contenteditable="true" data-ph="Γράψτε εδώ τι έγινε, όπως θα το λέγατε στους γονείς…"></div>
@@ -327,8 +332,19 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
   <div class="step"><span class="n">2</span><h3>Σύντομη περιγραφή <span class="opt">(μία πρόταση)</span></h3></div>
   <input class="field" id="p-per" type="text">
   <div class="step"><span class="n">3</span><h3>Κείμενο</h3></div>
-  <p class="muted" style="margin:0 0 6px">Σε αυτές τις σελίδες υπάρχουν και πίνακες· γράφονται ως γραμμές με «|», π.χ. <code>| Α1 | Παπαδοπούλου | Τρίτη |</code></p>
-  <textarea class="plain" id="p-keim" style="min-height:320px"></textarea>
+  <p class="muted" style="margin:0 0 6px">Για πίνακα: πατήστε μέσα σε ένα κελί και γράψτε. Με «＋ Γραμμή» / «＋ Στήλη» μεγαλώνει. Μπορείτε και να επικολλήσετε πίνακα από το Word.</p>
+  <div class="toolbar" id="ptb">   <button type="button" data-c="bold" title="Έντονα"><b>Ε</b></button>
+   <button type="button" data-c="h3" title="Υπότιτλος">Υπότιτλος</button>
+   <button type="button" data-c="ul" title="Λίστα">• Λίστα</button>
+   <button type="button" data-c="link" title="Σύνδεσμος">🔗 Σύνδεσμος</button>
+   <button type="button" data-c="table" title="Νέος πίνακας">▦ Πίνακας</button>
+   <button type="button" data-c="row+" title="Νέα γραμμή κάτω από αυτή που είστε">＋ Γραμμή</button>
+   <button type="button" data-c="row-" title="Σβήσιμο της γραμμής που είστε">− Γραμμή</button>
+   <button type="button" data-c="col+" title="Νέα στήλη δεξιά από αυτή που είστε">＋ Στήλη</button>
+   <button type="button" data-c="col-" title="Σβήσιμο της στήλης που είστε">− Στήλη</button>
+   <button type="button" data-c="clear" title="Καθαρισμός μορφής">Καθαρισμός</button>
+  </div>
+  <div class="rte" id="prte" contenteditable="true" style="min-height:320px"></div>
   <div class="step"><span class="n">4</span><h3>Έγγραφα PDF</h3></div>
   <button type="button" class="btn light" onclick="$('p-pdf').click()">📄 Προσθήκη PDF</button>
   <input type="file" id="p-pdf" accept="application/pdf" multiple class="hidden" onchange="addPdfs(this,'page')">
@@ -634,11 +650,17 @@ function inlineMd(s) {
   return s.replace(/ {2}\n/g, '<br>');
 }
 function mdToHtml(md) {
-  var out = [], lines = String(md || '').replace(/\r/g, '').split('\n'), para = [], list = null;
+  var out = [], lines = String(md || '').replace(/\r/g, '').split('\n'), para = [], list = null, tab = null;
+  function ft() { if (tab) { out.push('<table>' + tab.map(function (r, i) { var c = i ? 'td' : 'th'; return '<tr>' + r.map(function (x) { return '<' + c + '>' + (inlineMd(x) || '<br>') + '</' + c + '>'; }).join('') + '</tr>'; }).join('') + '</table>'); tab = null; } }
   function fp() { if (para.length) { out.push('<p>' + inlineMd(para.join('\n')).replace(/\n/g, ' ') + '</p>'); para = []; } }
   function fl() { if (list) { out.push('<' + list.t + '>' + list.i.map(function (x) { return '<li>' + inlineMd(x) + '</li>'; }).join('') + '</' + list.t + '>'); list = null; } }
   lines.forEach(function (g) {
     var t = g.trim(), m;
+    if (/^\|/.test(t)) {
+      fp(); fl(); if (/^\|?[\s:|-]+\|?$/.test(t) && /-/.test(t)) return;   // γραμμή |---|
+      (tab = tab || []).push(t.replace(/^\|/, '').replace(/\|$/, '').split('|').map(function (x) { return x.trim(); })); return;
+    }
+    ft();
     if (!t) { fp(); fl(); return; }
     if ((m = t.match(/^#{1,4}\s+(.*)/))) { fp(); fl(); out.push('<h3>' + inlineMd(m[1]) + '</h3>'); return; }
     if ((m = t.match(/^(?:[-•*]|(\d+)[.)])\s+(.*)/)) && t.indexOf('**') !== 0) {
@@ -646,7 +668,7 @@ function mdToHtml(md) {
     }
     fl(); para.push(g.replace(/\s+$/, '') + (/ {2}$/.test(g) ? '  ' : ''));
   });
-  fp(); fl();
+  fp(); fl(); ft();
   return out.join('');
 }
 function wrap(m, x) { var t = x.trim(); if (!t) return x; var a = x.match(/^\s*/)[0] ? ' ' : '', b = x.match(/\s*$/)[0] ? ' ' : ''; return a + m + t + m + b; }
@@ -679,7 +701,13 @@ function htmlToMd(root) {
         var w = document.createElement('span'); w.appendChild(c.cloneNode(true)); buf += inl(w); return;
       }
       fl();
-      if (/^H[1-6]$/.test(t)) parts.push('### ' + inl(c).trim());
+      if (t === 'TABLE') {
+        var rows = Array.prototype.filter.call(c.querySelectorAll('tr'), function (tr) { return tr.closest('table') === c; });
+        var md = rows.map(function (tr) { return '| ' + Array.prototype.map.call(tr.children, function (td) { return inl(td).replace(/\s+/g, ' ').trim().replace(/\|/g, '/'); }).join(' | ') + ' |'; })
+          .filter(function (l) { return l.replace(/[|\s]/g, ''); }).join('\n');
+        if (md) parts.push(md);
+      }
+      else if (/^H[1-6]$/.test(t)) parts.push('### ' + inl(c).trim());
       else if (t === 'UL' || t === 'OL') {
         var k = 0;
         parts.push(Array.prototype.map.call(c.children, function (li) { k++; return (t === 'OL' ? k + '. ' : '- ') + inl(li).trim(); }).join('\n'));
@@ -694,12 +722,35 @@ function htmlToMd(root) {
   return block(root).replace(/[ \t]+\n/g, function (m) { return /  \n/.test(m) ? '  \n' : '\n'; }).replace(/\n{3,}/g, '\n\n').replace(/\*\* +\*\*/g, ' ').replace(/ {2,}(?!\n)/g, ' ').trim();
 }
 var rte = null;
+function cellNow(ed) {
+  var s = window.getSelection(); if (!s.rangeCount) return null;
+  var n = s.anchorNode; n = n && (n.nodeType === 1 ? n : n.parentNode);
+  var td = n && n.closest && n.closest('td,th'); return td && ed.contains(td) ? td : null;
+}
+function tableCmd(ed, c) {
+  if (c === 'table') {
+    document.execCommand('insertHTML', false, '<table><tr><th>Στήλη 1</th><th>Στήλη 2</th></tr><tr><td><br></td><td><br></td></tr><tr><td><br></td><td><br></td></tr></table><p><br></p>');
+    return;
+  }
+  var td = cellNow(ed);
+  if (!td) { dlg({ icon: '▦', title: 'Πατήστε πρώτα μέσα σε ένα κελί του πίνακα', text: 'Μετά πατήστε ξανά το κουμπί. Η γραμμή ή η στήλη προστίθεται δίπλα στο κελί που είστε.', cancel: false }); return; }
+  var tr = td.parentNode, tb = td.closest('table'), ci = Array.prototype.indexOf.call(tr.children, td), rows = tb.querySelectorAll('tr');
+  if (c === 'row+') { var nr = document.createElement('tr'); for (var i = 0; i < tr.children.length; i++) { var x = document.createElement('td'); x.innerHTML = '<br>'; nr.appendChild(x); } tr.parentNode.insertBefore(nr, tr.nextSibling); }
+  else if (c === 'row-') { if (rows.length <= 1) tb.remove(); else tr.remove(); }
+  else if (c === 'col+') rows.forEach(function (r, k) { var x = document.createElement(k ? 'td' : 'th'); x.innerHTML = k ? '<br>' : 'Στήλη'; var ref = r.children[ci]; r.insertBefore(x, ref ? ref.nextSibling : null); });
+  else if (c === 'col-') { if (tr.children.length <= 1) tb.remove(); else rows.forEach(function (r) { if (r.children[ci]) r.children[ci].remove(); }); }
+}
 function initRte() {
   rte = $('rte');
-  $('tb').onmousedown = function (e) { if (e.target.closest('button')) e.preventDefault(); };
-  $('tb').onclick = function (e) {
+  bindEditor($('tb'), rte);
+  bindEditor($('ptb'), $('prte'));
+}
+function bindEditor(tbar, rte) {
+  tbar.onmousedown = function (e) { if (e.target.closest('button')) e.preventDefault(); };
+  tbar.onclick = function (e) {
     var b = e.target.closest('button'); if (!b) return;
     var c = b.dataset.c; rte.focus();
+    if (/^(table|row[+-]|col[+-])$/.test(c)) { tableCmd(rte, c); return; }
     if (c === 'bold' || c === 'italic') document.execCommand(c);
     else if (c === 'ul') document.execCommand('insertUnorderedList');
     else if (c === 'h3') document.execCommand('formatBlock', false, 'h3');
@@ -742,7 +793,7 @@ function edit(a, fromProp) {
   $('edState').className = 'badge b-' + CUR.katastasi.replace(' ', '_'); $('edState').textContent = CUR.katastasi;
   $('f-titl').value = CUR.titlos; $('f-imer').value = CUR.imerominia; $('f-vid').value = CUR.video || ''; $('f-syg').value = CUR.syggrafeas || store('onoma') || '';
   $('f-syn').checked = !!CUR.synainesi; setChips('f-tax', CUR.taxeis); setChips('f-dik', CUR.diktya); setSec(CUR.enotita);
-  var hasTable = /^\s*\|/m.test(CUR.keimeno || '');
+  var hasTable = false;   // οι πίνακες υποστηρίζονται πλέον στον επεξεργαστή
   $('rte').classList.toggle('hidden', hasTable); $('tb').classList.toggle('hidden', hasTable); $('plain').classList.toggle('hidden', !hasTable);
   if (hasTable) $('plain').value = CUR.keimeno; else $('rte').innerHTML = mdToHtml(CUR.keimeno);
   var n = '';
@@ -927,12 +978,13 @@ function loadPages() {
   }, 'pList');
 }
 function editPage(s) {
+  if (!rte) initRte();
   PCUR = JSON.parse(JSON.stringify(s));
-  $('pT').textContent = s.titlos; $('p-titl').value = s.titlos; $('p-per').value = s.perigrafi || ''; $('p-keim').value = s.keimeno || '';
+  $('pT').textContent = s.titlos; $('p-titl').value = s.titlos; $('p-per').value = s.perigrafi || ''; $('prte').innerHTML = mdToHtml(s.keimeno || '');
   $('p-draft').checked = s.katastasi === 'Πρόχειρο'; drawDocs('pDocs', PCUR.arxeia); msg('pMsg', ''); nav('page');
 }
 function savePage(pub) {
-  var d = { id: PCUR.id, titlos: $('p-titl').value, perigrafi: $('p-per').value, keimeno: $('p-keim').value, simeiosi: PCUR.simeiosi || '',
+  var d = { id: PCUR.id, titlos: $('p-titl').value, perigrafi: $('p-per').value, keimeno: htmlToMd($('prte')), simeiosi: PCUR.simeiosi || '',
             katastasi: $('p-draft').checked ? 'Πρόχειρο' : 'Δημοσιευμένη', arxeia: PCUR.arxeia, fotografies: PCUR.fotografies };
   run('apothikefsiSelidas', [T, d, pub], function (r) { msg('pMsg', '✔ ' + r.minima, 'ok'); }, 'pMsg');
 }
