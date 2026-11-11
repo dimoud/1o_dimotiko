@@ -13,7 +13,8 @@
 Ασφάλεια: αν το Φύλλο δεν επιστρέψει καμία ανάρτηση, σταματά με κωδικό 3 και η παραγωγή
 γίνεται από τα δεδομένα του αποθετηρίου (δεν «αδειάζει» ποτέ ο ιστότοπος).
 """
-import argparse, base64, io, json, os, re, shutil, sys, time, urllib.parse, urllib.request
+import argparse, base64, io, json, os, re, shutil, sys, threading, time, urllib.parse, urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from PIL import Image, ImageOps
 
@@ -90,6 +91,31 @@ def main():
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_bytes(base64.b64decode(x['data']))
         return rel
+
+    # Προφόρτωση όλων των νέων φωτογραφιών παράλληλα (πρώτη φορά: εκατοντάδες, μία-μία θα έπαιρνε ~40΄)
+    kleidaria = threading.Lock()
+    ola = [f['id'] for r in an for f in (r.get('fotografies') or [])]
+    ola += [x['id'] for s in d.get('selides', []) for x in (s.get('fotografies') or [])]
+    leipoun = [i for i in dict.fromkeys(ola) if not ((mm / 'fotografies' / f'drive/{i}-1600.webp').exists() and f'drive/{i}.jpg' in dims)]
+    print(f'Φωτογραφίες: {len(set(ola))} συνολικά, {len(leipoun)} νέες για λήψη.', flush=True)
+
+    def proforosi(fid):
+        try:
+            x = fere(a.url, {'api': 'arxeio', 'id': fid, 'k': a.kleidi})
+            im = ImageOps.exif_transpose(Image.open(io.BytesIO(base64.b64decode(x['data'])))).convert('RGB')
+            for w in (1600, 800):
+                c = im.copy()
+                c.thumbnail((w, w * 2))
+                c.save(mm / 'fotografies' / f'drive/{fid}-{w}.webp', 'WEBP', quality=82, method=4)  # χωρίς EXIF
+                if w == 1600:
+                    with kleidaria:
+                        dims[f'drive/{fid}.jpg'] = list(c.size)
+        except Exception as e:
+            print(f'  φωτογραφία {fid}: {e}', file=sys.stderr, flush=True)
+    with ThreadPoolExecutor(8) as ex:
+        for n, _ in enumerate(ex.map(proforosi, leipoun), 1):
+            if n % 25 == 0:
+                print(f'  {n}/{len(leipoun)}', flush=True)
 
     out = []
     for r in an:
