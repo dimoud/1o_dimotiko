@@ -208,10 +208,10 @@ main:focus{outline:none}
 .lt-d{display:block;font-size:var(--fs-note);color:var(--ink2)}
 
 /* επικοινωνία */
-.contact{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
+.contact{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:40px;align-items:stretch}
 @media (max-width:900px){.contact{grid-template-columns:1fr}}
 .contact-list{list-style:none;padding:0;margin:0 0 16px}
-.contact-list li{display:grid;grid-template-columns:120px 1fr;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.contact-list li{display:flex;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
 .ci-l{color:var(--ink2);font-size:16px}
 .map{aspect-ratio:4/3;border-radius:var(--r);overflow:hidden;background:#fff;border:1px solid var(--line)}
 .map iframe{width:100%;height:100%;border:0}
@@ -550,3 +550,18 @@ html.rv-fallback .pc,html.rv-fallback .kite{transform:none;opacity:1}
 .net-tile:hover .net-il{transform:scale(1.08) rotate(-4deg)}
 @media (prefers-reduced-motion:reduce){.net-tile:hover .net-il{transform:none}}
 .nw{white-space:nowrap}
+
+/* ── ενότητα επικοινωνίας σε κάθε σελίδα */
+.ci-ic{flex:0 0 44px;width:44px;height:44px;border-radius:12px;background:#fff;box-shadow:0 4px 12px rgba(30,100,168,.12);display:flex;align-items:center;justify-content:center;color:var(--blue)}
+.contact-list li:nth-child(2) .ci-ic{color:var(--green)}.contact-list li:nth-child(3) .ci-ic{color:#8a5a00}.contact-list li:nth-child(4) .ci-ic{color:#a8432d}.contact-list li:nth-child(5) .ci-ic{color:#5b4a9e}
+.ci-ic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ci-t{display:flex;flex-direction:column;line-height:1.35;min-width:0}
+.ci-t .ci-l{font-size:var(--fs-note);color:var(--ink2)}
+.ci-v{font-weight:600;overflow-wrap:anywhere}
+.contact-info .form-note{margin-top:16px}
+.contact-form{display:flex;flex-direction:column}
+.contact-form .cform{flex:1}
+.cf-h{font-size:22px;margin:0 0 14px}
+.map-wide{aspect-ratio:auto;height:380px;margin-top:32px;box-shadow:0 10px 30px rgba(27,38,51,.08)}
+.map-link{margin:8px 0 0}
+@media (max-width:900px){.contact{gap:24px}.map-wide{height:300px}}

@@ -149,6 +149,9 @@ class Istotopos:
                 ('Επικοινωνία', '/epikoinonia/', [])]
 
     def grapse(self, path, k='', **kw):
+        if not path.startswith('/404'):
+            kw['soma'] = kw['soma'] + self.epikoinonia_html('h2')
+            kw['extra_tail'] = kw.get('extra_tail', '') + '<script src="/static/contact-form.js?v={V}" defer></script>\n'
         page = selida(r=self.r, nav_html=self.nav, path=path, etos=self.etos, lorida=self.lorida if path != '/' else '', **kw)
         f = self.out / path.strip('/') / 'index.html' if path.endswith('/') else self.out / path
         f.parent.mkdir(parents=True, exist_ok=True)
@@ -194,8 +197,11 @@ class Istotopos:
             e = self.meson.eikona(f['arxeio'])
             if not e:
                 continue
-            alt = f.get('perigrafi') or f'{titlos}: φωτογραφία {i + 1}'
-            cap = f'<figcaption>{esc(f["perigrafi"])}</figcaption>' if f.get('perigrafi') else ''
+            per = (f.get('perigrafi') or '').strip()
+            if re.fullmatch(r'[\w.\-]+', per) and re.search(r'[\d_-]', per):
+                per = ''          # όνομα αρχείου από το παλιό WordPress, όχι λεζάντα
+            alt = per or f'{titlos}: φωτογραφία {i + 1}'
+            cap = f'<figcaption>{esc(per)}</figcaption>' if per else ''
             items.append(f'<figure><a href="{e["1600"]}" data-lb data-w="{e["w"]}" data-h="{e["h"]}">'
                          f'{img_tag(e, alt, sizes="(max-width: 734px) 50vw, 300px")}</a>{cap}</figure>')
         if not items:
@@ -308,7 +314,7 @@ class Istotopos:
         adelfes = [x for x in sorted(self.sel, key=lambda x: x['seira']) if x['omada'] == s['omada']]
         side = ('<aside class="side"><div class="side-card rv"><p class="side-h">' + esc(omada_titlos) + '</p><ul class="side-list side-nav">'
                 + ''.join(('<li class="on"><a aria-current="page" ' if x is s else '<li><a ') + f'href="{omada_url}{x["id"]}/">{esc(x["titlos"])}</a></li>' for x in adelfes)
-                + '</ul></div>' + self.epikoinonia_mikro() + '</aside>')
+                + '</ul></div>' + '</aside>')
         soma = (self.kefali(omada_titlos, s['titlos'], esc(s.get('perigrafi', ''))) +
                 f'<div class="wrap page-grid"><div class="main"><div class="prose">{sim}{md.pros_html(s.get("keimeno", ""))}</div>'
                 f'{self.arxeia(s.get("arxeia", []))}</div>{side}</div>'
@@ -510,8 +516,7 @@ class Istotopos:
 <section class="sec" aria-labelledby="h-lnk"><div class="wrap">
  <div class="zone-head"><h2 id="h-lnk" class="h-sec rv">Χρήσιμοι σύνδεσμοι</h2><a class="more" href="/syndesmoi/">Όλοι οι σύνδεσμοι<span aria-hidden="true"> ›</span></a></div>
  {self.syndesmoi_html(True)}
-</div></section>
-{self.epikoinonia_html(h='h2')}'''
+</div></section>'''
         ld = [{'@context': 'https://schema.org', '@type': ['EducationalOrganization', 'ElementarySchool'], 'name': r['onoma'],
                'alternateName': r['onoma_epiftimo'], 'url': r['tomeas'], 'telephone': '+30' + r['tilefono'].replace(' ', ''),
                'faxNumber': '+30' + r['fax'].replace(' ', ''),
@@ -524,30 +529,40 @@ class Istotopos:
 
     def epikoinonia_html(self, h='h2'):
         r = self.r
-        email = f'<li><span class="ci-l">Email</span><a href="mailto:{esc(r["email"])}">{esc(r["email"])}</a></li>' if r.get('email') else ''
         q = f'{r["xartis_lat"]},{r["xartis_lng"]}'
-        return f'''<section class="sec band" aria-labelledby="h-epik"><div class="wrap contact">
- <div><{h} id="h-epik" class="h-sec rv">Επικοινωνία</{h}>
-  <ul class="contact-list">
-   <li><span class="ci-l">Διεύθυνση</span>{esc(r['dieythynsi'])}</li>
-   <li><span class="ci-l">Τηλέφωνο</span><a href="tel:{r['tilefono'].replace(' ', '')}">{esc(r['tilefono'])}</a></li>
-   <li><span class="ci-l">Fax</span>{esc(r['fax'])}</li>{email}
-   <li><span class="ci-l">Υπαγωγή</span>{esc(r['ypagogi'])}</li>
-  </ul>
-  <p><a class="link-more" href="https://www.google.com/maps/dir/?api=1&amp;destination={q}" target="_blank" rel="noopener">Οδηγίες στο Google Maps<span class="sr-only"> (ανοίγει σε νέα καρτέλα)</span><span aria-hidden="true"> ›</span></a></p>
+        ic = {
+            'dieythynsi': '<path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+            'tilefono': '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/>',
+            'fax': '<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M7 14h10v7H7z"/>',
+            'email': '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+            'ypagogi': '<path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/>',
+        }
+        def li(k, label, value):
+            return (f'<li><span class="ci-ic" aria-hidden="true"><svg viewBox="0 0 24 24">{ic[k]}</svg></span>'
+                    f'<span class="ci-t"><span class="ci-l">{label}</span><span class="ci-v">{value}</span></span></li>')
+        rows = [li('dieythynsi', 'Διεύθυνση', esc(r['dieythynsi'])),
+                li('tilefono', 'Τηλέφωνο', f'<a href="tel:{r["tilefono"].replace(" ", "")}">{esc(r["tilefono"])}</a>'),
+                li('fax', 'Fax', esc(r['fax']))]
+        if r.get('email'):
+            rows.append(li('email', 'Email', f'<a class="nw" href="mailto:{esc(r["email"])}">{esc(r["email"])}</a>'))
+        rows.append(li('ypagogi', 'Υπαγωγή', esc(r['ypagogi'])))
+        return f'''<section class="sec band epik" aria-labelledby="h-epik"><div class="wrap">
+ <div class="contact">
+  <div class="contact-info"><{h} id="h-epik" class="h-sec rv">Επικοινωνία</{h}>
+   <ul class="contact-list">{"".join(rows)}</ul>
+   <p class="form-note">Για κάτι επείγον καλέστε στο <a href="tel:{r['tilefono'].replace(' ', '')}">{esc(r['tilefono'])}</a>. Μην γράφετε στη φόρμα ευαίσθητα στοιχεία μαθητών (π.χ. θέματα υγείας).</p>
+  </div>
+  <div class="contact-form"><h3 class="cf-h">Στείλτε μας μήνυμα</h3>{self.forma_html()}</div>
  </div>
- <div class="map"><iframe src="https://www.google.com/maps?q={q}&amp;z=16&amp;output=embed" title="Χάρτης: θέση του σχολείου" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe></div>
+ <div class="map map-wide"><iframe src="https://www.google.com/maps?q={q}&amp;z=16&amp;output=embed" title="Χάρτης: θέση του σχολείου" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe></div>
+ <p class="map-link"><a class="link-more" href="https://www.google.com/maps/dir/?api=1&amp;destination={q}" target="_blank" rel="noopener">Οδηγίες στο Google Maps<span class="sr-only"> (ανοίγει σε νέα καρτέλα)</span><span aria-hidden="true"> ›</span></a></p>
 </div></section>'''
 
     def forma_html(self):
         r = self.r
         epiloges = ['Γενική ερώτηση', 'Εγγραφές μαθητών', 'Βεβαιώσεις και έγγραφα', 'Θέμα γονέων και κηδεμόνων', 'Συνεργασία ή πρόταση', 'Ιστοσελίδα']
         opts = '<option value="">Διαλέξτε…</option>' + ''.join(f'<option>{esc(o)}</option>' for o in epiloges)
-        return f'''<section class="sec" aria-labelledby="h-forma"><div class="wrap form-wrap">
- <div class="form-intro"><h2 id="h-forma" class="h-sec rv">Στείλτε μας μήνυμα</h2>
-  <p>Το μήνυμα φτάνει στο email του σχολείου (<span class="nw">{esc(r["email"])}</span>). Θα λάβετε αντίγραφο στο email σας. Για κάτι επείγον, καλέστε στο <a href="tel:{r['tilefono'].replace(' ', '')}">{esc(r['tilefono'])}</a>.</p>
-  <p class="form-note">Μην γράφετε ευαίσθητα στοιχεία μαθητών (π.χ. θέματα υγείας) στη φόρμα· για αυτά επικοινωνήστε με τη Διεύθυνση.</p></div>
- <form id="clientContactForm" class="cform" novalidate>
+        return f'''<form id="clientContactForm" class="cform" novalidate>
   <input type="hidden" name="_to" value="{esc(r['email'])}">
   <input type="hidden" name="_key" value="{esc(r.get('forma_kleidi', ''))}">
   <input type="text" name="_hp" value="" autocomplete="off" tabindex="-1" aria-hidden="true" style="display:none;position:absolute;left:-9999px">
@@ -555,20 +570,18 @@ class Istotopos:
    <div class="cf-f"><label for="f-email">Email</label><input id="f-email" name="email" type="email" autocomplete="email" required></div></div>
   <div class="cf-row"><div class="cf-f"><label for="f-phone">Τηλέφωνο <span class="opt">(προαιρετικό)</span></label><input id="f-phone" name="phone" type="tel" autocomplete="tel"></div>
    <div class="cf-f"><label for="serviceSelect">Θέμα</label><select id="serviceSelect" name="subject">{opts}</select></div></div>
-  <div class="cf-f"><label for="f-message">Μήνυμα</label><textarea id="f-message" name="message" rows="6" required></textarea></div>
-  <p class="cf-gdpr">Τα στοιχεία σας χρησιμοποιούνται μόνο για να σας απαντήσουμε (<a href="/aporrito/">απόρρητο</a>).</p>
+  <div class="cf-f"><label for="f-message">Μήνυμα</label><textarea id="f-message" name="message" rows="5" required></textarea></div>
+  <p class="cf-gdpr">Το μήνυμα φτάνει στο email του σχολείου και λαμβάνετε αντίγραφο. Τα στοιχεία χρησιμοποιούνται μόνο για την απάντηση (<a href="/aporrito/">απόρρητο</a>).</p>
   <button type="submit" class="btn">Αποστολή</button>
   <p id="formStatus" role="status" aria-live="polite"></p>
- </form>
-</div></section>'''
+ </form>'''
 
     def mikres(self):
         r = self.r
         self.grapse('/syndesmoi/', titlos='Χρήσιμοι Σύνδεσμοι', perigrafi='Ψηφιακά βιβλία, εκπαιδευτικές πλατφόρμες, φορείς και ασφάλεια στο διαδίκτυο: χρήσιμοι σύνδεσμοι για μαθητές και γονείς.',
                     soma=self.kefali('', 'Χρήσιμοι Σύνδεσμοι', 'Οι σύνδεσμοι ανοίγουν σε νέα καρτέλα.') + f'<div class="wrap">{self.syndesmoi_html()}</div>')
         self.grapse('/epikoinonia/', titlos='Επικοινωνία', perigrafi=f'Διεύθυνση, τηλέφωνο και χάρτης του {r["onoma"]}: {r["dieythynsi"]}, τηλ. {r["tilefono"]}.',
-                    soma=self.kefali('', 'Επικοινωνία και χάρτης') + self.epikoinonia_html(h='h2') + self.forma_html(),
-                    extra_tail='<script src="/static/contact-form.js?v={V}" defer></script>\n')
+                    soma=self.kefali('', 'Επικοινωνία και χάρτης'))
         self.grapse('/anazitisi/', titlos='Αναζήτηση', perigrafi='Αναζήτηση σε όλες τις αναρτήσεις και σελίδες του 1ου Δημοτικού Σχολείου Πολίχνης.',
                     soma=self.kefali('', 'Αναζήτηση') + f'''<div class="wrap">
 <form class="search" role="search" data-site-search data-index="/search-index.json" data-empty-el="Δεν βρέθηκε κάτι. Δοκιμάστε άλλη λέξη ή καλέστε στο {esc(r['tilefono'])}.">
