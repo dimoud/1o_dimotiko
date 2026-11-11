@@ -283,3 +283,13 @@ hr.ec-rule {
 @media (max-width: 1024px) {
   .ec-copy, .ec-label, .ec-name, .ec-ad-question, .ec-ad-cta { font-size: 12px; }
 }
+
+/* ── όλη η λωρίδα είναι σύνδεσμος (11/2026): ο σύνδεσμος του credit τεντώνεται σε όλο το πλάτος·
+      το στρώμα της διαφήμισης δεν πιάνει κλικ, για να μην κρύβει τον σύνδεσμο από κάτω ── */
+.ec-layer--ad, .ec-layer--ad * { pointer-events: none; }
+.ec-brand::after { content: ""; position: absolute; inset: 0; z-index: 1; cursor: pointer; }
+.expertease-credit:hover .ec-name { color: var(--ec-white); }
+.expertease-credit:hover .ec-logo { opacity: 1; }
+.expertease-credit:hover .ec-copy, .expertease-credit:hover .ec-label { color: var(--ec-accent); }
+.ec-brand:focus-visible { outline: none; }
+.ec-brand:focus-visible::after { outline: 2px solid rgba(255,255,255,.7); outline-offset: -4px; border-radius: 4px; }
