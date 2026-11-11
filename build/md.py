@@ -4,6 +4,9 @@
 κενή γραμμή = νέα παράγραφος, «- » = λίστα. Επιπλέον: **έντονα**, *πλάγια*, ==επισήμανση==,
 [κείμενο](https://…), ### υπότιτλος, γραμμές «| α | β |» = πίνακας,
 δύο κενά στο τέλος γραμμής = αλλαγή γραμμής. Γυμνές διευθύνσεις και email γίνονται σύνδεσμοι.
+Μορφοποίηση από τον Πίνακα (τύπου Word), μόνο από σταθερή λίστα επιλογών, ως κλάσεις CSS:
+  {{kokkino,megalo:κείμενο}}  χρώμα / μέγεθος / γραμματοσειρά / υπογράμμιση (ΜΟΡΦΕΣ)
+  {kentro} στην αρχή παραγράφου ή υπότιτλου  στοίχιση (ΣΤΟΙΧΙΣΕΙΣ)
 Όλο το HTML του χρήστη διαφεύγει: ποτέ ακατέργαστο HTML από το Φύλλο στη σελίδα.
 """
 import html
@@ -11,6 +14,20 @@ import re
 
 _URL = re.compile(r'(?<![\("\w])(https?://[^\s<>"\')\]]+[^\s<>"\')\].,;:!?«»])')
 _MAIL = re.compile(r'(?<![\w/:.\-])([\w.+-]+@[\w-]+\.[\w.-]*\w)')
+
+# Ίδια λίστα με τον Πίνακα (diaxeirisi/Index.html, MORFES) και τις κλάσεις .t-* / .al-* του site.css
+MORFES = {'kokkino', 'mple', 'prasino', 'portokali', 'mov', 'kafe', 'gkri',          # χρώματα
+          'mikro', 'megalo', 'polymegalo',                                          # μεγέθη
+          'patoures', 'grafomixani', 'paidiki',                                     # γραμματοσειρές
+          'ypogrammisi'}
+STOIXISEIS = ('aristera', 'kentro', 'dexia', 'plires')
+_MORFI = re.compile(r'\{\{([a-z0-9,]+):(.+?)\}\}', re.S)
+_STOIXISI = re.compile(r'^\{(' + '|'.join(STOIXISEIS) + r')\}\s*')
+
+
+def _morfi(m):
+    kl = [t for t in m.group(1).split(',') if t in MORFES]
+    return f'<span class="{" ".join("t-" + t for t in kl)}">{m.group(2)}</span>' if kl else m.group(2)
 
 
 def _syndesmos(url, keimeno):
@@ -32,6 +49,7 @@ def inline(s):
                lambda m: krata(_syndesmos(html.escape(m.group(2), quote=True), m.group(1))), s)
     s = _URL.sub(lambda m: krata(_syndesmos(m.group(1), m.group(1).split('//', 1)[1].rstrip('/'))), s)
     s = _MAIL.sub(lambda m: krata(f'<a href="mailto:{m.group(1)}">{m.group(1)}</a>'), s)
+    s = _MORFI.sub(_morfi, s)
     s = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', s)
     s = re.sub(r'==(.+?)==', r'<mark>\1</mark>', s)
     s = re.sub(r'(?<![\w*])\*(?!\s)(.+?)(?<!\s)\*(?![\w*])', r'<em>\1</em>', s)
@@ -66,11 +84,16 @@ def pros_html(keimeno, epipedo_titlou=2):
         return ''
     grammes = keimeno.replace('\r\n', '\n').split('\n')
     out, para, lista, pinakas = [], [], None, []
+    stoix = {'para': ''}
+
+    def kl(al):
+        return f' class="al-{al}"' if al and al != 'aristera' else ''
 
     def kleise_para():
         if para:
-            out.append('<p>' + inline('\n'.join(para)).replace('\n', ' ') + '</p>')
+            out.append(f'<p{kl(stoix["para"])}>' + inline('\n'.join(para)).replace('\n', ' ') + '</p>')
             para.clear()
+        stoix['para'] = ''
 
     def kleise_lista():
         nonlocal lista
@@ -91,11 +114,19 @@ def pros_html(keimeno, epipedo_titlou=2):
         kleise_pinaka()
         if not gs:
             kleise_para(); kleise_lista(); continue
+        al = ''
+        ms = _STOIXISI.match(gs)
+        if ms:
+            al = ms.group(1)
+            gs = gs[ms.end():]
+            g = gs + ('  ' if g.endswith('  ') else '')
+            if not gs:
+                continue
         m = re.match(r'^(#{1,4})\s+(.*)', gs)
         if m:
             kleise_para(); kleise_lista()
             h = min(6, epipedo_titlou + max(0, len(m.group(1)) - 3))
-            out.append(f'<h{h}>{inline(m.group(2).strip("* "))}</h{h}>')
+            out.append(f'<h{h}{kl(al)}>{inline(m.group(2).strip("* "))}</h{h}>')
             continue
         m = re.match(r'^(?:[-•·*]|(\d+)[.)])\s+(.*)', gs)
         if m and not gs.startswith('**'):
@@ -106,6 +137,10 @@ def pros_html(keimeno, epipedo_titlou=2):
             lista[1].append(m.group(2))
             continue
         kleise_lista()
+        if al and para:
+            kleise_para()
+        if al:
+            stoix['para'] = al
         para.append(g.rstrip(' ') + ('  ' if g.endswith('  ') else ''))
     kleise_para(); kleise_lista(); kleise_pinaka()
     return '\n'.join(out)
@@ -114,5 +149,7 @@ def pros_html(keimeno, epipedo_titlou=2):
 def keimeno_xoris_morfi(keimeno):
     """Για περιγραφές/ευρετήριο: χωρίς σύμβολα Markdown."""
     s = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', keimeno or '')
+    s = _MORFI.sub(lambda m: m.group(2), s)
+    s = re.sub(r'(^|\n)\s*\{(' + '|'.join(STOIXISEIS) + r')\}', r'\1', s)
     s = re.sub(r'[*#|=]+', ' ', s)
     return re.sub(r'\s+', ' ', s).strip()

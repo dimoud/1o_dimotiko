@@ -567,3 +567,31 @@ html.rv-fallback .pc,html.rv-fallback .kite{transform:none;opacity:1}
 @media (max-width:900px){.contact{gap:24px}.map-wide{height:300px}}
 .prose mark{background:#fff1b8;color:inherit;padding:0 .2em;border-radius:3px}
 .foot-admin{color:#c8d6e4!important;text-decoration:none;font-size:13px;display:inline-flex;align-items:center;min-height:44px}.foot-admin:hover{color:#fff!important;text-decoration:underline}
+
+/* ── Μορφοποίηση κειμένου από τον Πίνακα (md.py: MORFES / STOIXISEIS) — ίδιες κλάσεις και στον Πίνακα ── */
+.t-kokkino{color:#c62828}.t-mple{color:#1565c0}.t-prasino{color:#2e7d32}.t-portokali{color:#bf360c}
+.t-mov{color:#6a1b9a}.t-kafe{color:#6d4c41}.t-gkri{color:#546e7a}
+.t-mikro{font-size:.875em}.t-megalo{font-size:1.25em}.t-polymegalo{font-size:1.6em;line-height:1.25}
+.t-patoures{font-family:Georgia,"Times New Roman","Noto Serif",serif}
+.t-grafomixani{font-family:"Courier New",Courier,"Noto Sans Mono",monospace}
+.t-paidiki{font-family:"Comic Sans MS","Comic Neue","Segoe Print",sans-serif}
+.t-ypogrammisi{text-decoration:underline;text-underline-offset:.15em}
+.al-kentro{text-align:center}.al-dexia{text-align:right}.al-plires{text-align:justify;hyphens:auto}
+
+/* ── Εξώφυλλο αρχικής: εναλλαγή πρόσφατων δράσεων ── */
+.hero-rot{position:relative;width:100%;height:100%}
+.hr-s{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .9s ease,visibility 0s linear .9s;color:#fff;text-decoration:none}
+.hr-s.on{opacity:1;visibility:visible;transition:opacity .9s ease;z-index:1}
+.hr-s .hero-img{width:100%;height:100%;object-fit:cover;display:block}
+.hr-cap{position:absolute;left:0;right:0;bottom:0;padding:40px 16px 48px;background:linear-gradient(180deg,transparent,rgba(10,20,35,.78));display:flex;flex-direction:column;gap:2px}
+.hr-d{font-size:13px;opacity:.9}
+.hr-t{font-weight:700;font-size:17px;line-height:1.3;text-shadow:0 1px 2px rgba(0,0,0,.4);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hr-s:hover .hr-t,.hr-s:focus-visible .hr-t{text-decoration:underline}
+.hr-ctl{position:absolute;z-index:2;left:10px;bottom:8px;display:flex;align-items:center;gap:2px}
+.hr-ctl button{width:32px;height:32px;border:0;padding:0;background:none;cursor:pointer;display:grid;place-items:center}
+.hr-dot::before{content:"";width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.55);box-shadow:0 0 0 1px rgba(0,0,0,.25);transition:transform .2s,background .2s}
+.hr-dot.on::before{background:#fff;transform:scale(1.35)}
+.hr-p span{width:10px;height:12px;border-left:3px solid #fff;border-right:3px solid #fff;filter:drop-shadow(0 0 1px rgba(0,0,0,.6))}
+.hr-paused .hr-p span{width:0;height:0;border:0;border-left:11px solid #fff;border-top:7px solid transparent;border-bottom:7px solid transparent}
+.hr-ctl button:focus-visible{outline:2px solid #fff;outline-offset:-2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){.hr-s,.hr-s.on{transition:none}}

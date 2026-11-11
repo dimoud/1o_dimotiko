@@ -154,7 +154,7 @@ def main():
                 'id': r['id'], 'imerominia': str(r['imerominia'])[:10], 'titlos': r['titlos'], 'keimeno': r.get('keimeno') or '',
                 'fotografies': [x for x in ({'arxeio': foto(f['id']), 'perigrafi': f.get('perigrafi', '')} for f in r.get('fotografies') or []) if x['arxeio']],
                 'arxeia': [arxeio(f) for f in r.get('arxeia') or []],
-                'video': r.get('video') or [], 'syggrafeas': r.get('syggrafeas') or '', 'enotita': r['enotita'],
+                'video': r.get('video') or [], 'syggrafeas': r.get('syggrafeas') or '', 'enotita': r['enotita'], 'alles_enotites': r.get('alles_enotites') or [],
                 'taxeis': r.get('taxeis') or [], 'diktya': r.get('diktya') or [], 'katastasi': 'Δημοσιευμένη'})
         except Exception as e:
             print(f'  παράλειψη ανάρτησης {r.get("id")}: {e}', file=sys.stderr)
@@ -173,6 +173,20 @@ def main():
         s['fotografies'] = [y for y in ({'arxeio': foto(x['id']), 'perigrafi': x.get('perigrafi', '')} for x in f.get('fotografies') or []) if y['arxeio']]
         s['arxeia'] = [arxeio(x) for x in f.get('arxeia') or []]
         s.pop('apo_wp', None)
+    # Νέες σελίδες που έφτιαξε η Διεύθυνση από τον Πίνακα (υπάρχουν μόνο στο Φύλλο)
+    yparxoun = {s['id'] for s in base}
+    for f in d.get('selides', []):
+        if not f.get('id') or f['id'] in yparxoun or f.get('omada') not in ('sxoleio', 'goneis'):
+            continue
+        try:
+            seira = float(f.get('seira') or 99)
+        except (TypeError, ValueError):
+            seira = 99
+        base.append({'id': f['id'], 'omada': f['omada'], 'seira': seira, 'titlos': f.get('titlos') or f['id'],
+                     'perigrafi': f.get('perigrafi') or f.get('titlos') or '', 'keimeno': f.get('keimeno') or '',
+                     'simeiosi': f.get('simeiosi') or '', 'katastasi': f.get('katastasi') or 'Πρόχειρο',
+                     'fotografies': [y for y in ({'arxeio': foto(x['id']), 'perigrafi': x.get('perigrafi', '')} for x in f.get('fotografies') or []) if y['arxeio']],
+                     'arxeia': [arxeio(x) for x in f.get('arxeia') or []]})
     if (RIZA / 'periexomeno' / 'selides-wp.json').exists():
         shutil.copy2(RIZA / 'periexomeno' / 'selides-wp.json', dd / 'selides-wp.json')
     json.dump(base, open(dd / 'selides.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)

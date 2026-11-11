@@ -89,6 +89,23 @@ def img_tag(e, alt, cls='', sizes='(max-width: 734px) 100vw, 400px', lazy=True, 
             f'width="{e["w"]}" height="{e["h"]}" alt="{esc(alt)}"{lz} decoding="async"{fp}{cl}>')
 
 
+HERO_ROT_JS = (
+    "(function(){var r=document.currentScript.previousElementSibling,S=r.querySelectorAll('.hr-s'),D=r.querySelectorAll('.hr-dot'),P=r.querySelector('.hr-p'),i=0,t=null,"
+    "stop=matchMedia('(prefers-reduced-motion: reduce)').matches,paused=stop,hover=false,vis=true;"
+    "function go(n){S[i].classList.remove('on');S[i].setAttribute('tabindex','-1');S[i].setAttribute('aria-hidden','true');D[i].classList.remove('on');D[i].removeAttribute('aria-current');"
+    "i=(n+S.length)%S.length;S[i].classList.add('on');S[i].removeAttribute('tabindex');S[i].removeAttribute('aria-hidden');D[i].classList.add('on');D[i].setAttribute('aria-current','true');"
+    "var im=S[i].querySelector('img');if(im&&im.loading==='lazy')im.loading='eager';var nx=S[(i+1)%S.length].querySelector('img');if(nx)nx.loading='eager';}"
+    "function arm(){clearInterval(t);t=null;if(!paused&&!hover&&vis&&!document.hidden)t=setInterval(function(){go(i+1)},6000);}"
+    "D.forEach(function(d,n){d.onclick=function(){go(n);arm();};});"
+    "P.onclick=function(){paused=!paused;P.setAttribute('aria-pressed',String(paused));P.setAttribute('aria-label',paused?'Συνέχεια της εναλλαγής':'Παύση της εναλλαγής');r.classList.toggle('hr-paused',paused);arm();};"
+    "if(stop){P.setAttribute('aria-pressed','true');P.setAttribute('aria-label','Συνέχεια της εναλλαγής');r.classList.add('hr-paused');}"
+    "r.addEventListener('mouseenter',function(){hover=true;arm();});r.addEventListener('mouseleave',function(){hover=false;arm();});"
+    "r.addEventListener('focusin',function(){hover=true;arm();});r.addEventListener('focusout',function(){hover=false;arm();});"
+    "document.addEventListener('visibilitychange',arm);"
+    "if('IntersectionObserver'in window)new IntersectionObserver(function(e){vis=e[0].isIntersecting;arm();}).observe(r);"
+    "setTimeout(function(){var nx=S[1]&&S[1].querySelector('img');if(nx)nx.loading='eager';},2500);arm();})();")
+
+
 def imerologio(d):
     return (f'<time class="cal" datetime="{d}"><span class="cal-d">{int(d[8:10])}</span>'
             f'<span class="cal-m">{imerominia(d, False).split(" ")[1]}</span><span class="sr-only"> {d[:4]}</span></time>')
@@ -129,8 +146,10 @@ class Istotopos:
         self.posts = posts
         self.etos = max(int(p['imerominia'][:4]) for p in posts) if posts else 2026
         self.ana_enotita = defaultdict(list)
-        for p in posts:
-            self.ana_enotita[p['enotita']].append(p)
+        for p in posts:   # μία κύρια ενότητα (διεύθυνση, διαδρομή) + όσες ακόμα επέλεξε ο συντάκτης (εμφάνιση και εκεί)
+            p['alles_enotites'] = [k for k in OrderedDict.fromkeys(p.get('alles_enotites') or []) if k in ENOTITES and k != p['enotita']]
+            for k in [p['enotita']] + p['alles_enotites']:
+                self.ana_enotita[k].append(p)
         self.ana_diktyo = defaultdict(list)
         for p in posts:
             for d in p.get('diktya', []):
@@ -244,7 +263,7 @@ class Istotopos:
     def anartisi(self, p, i):
         r = self.r
         fot = p.get('fotografies') or []
-        tags = [f'<a class="tag" href="{url_enotitas(p["enotita"])}">{esc(ENOTITES.get(p["enotita"], ""))}</a>']
+        tags = [f'<a class="tag" href="{url_enotitas(k)}">{esc(ENOTITES.get(k, ""))}</a>' for k in [p["enotita"]] + p.get("alles_enotites", [])]
         tags += [f'<span class="tag tag-g">{esc(t if t in ("Ένταξη", "Ολοήμερο") else t + "΄ τάξη")}</span>' for t in p.get('taxeis', [])]
         dk = {d['id']: d for d in self.diktya}
         tags += [f'<a class="tag tag-g" href="/diktya/{d}/">{esc(dk[d]["titlos"])}</a>' for d in p.get('diktya', []) if d in dk]
@@ -266,7 +285,7 @@ class Istotopos:
         side = (f'<aside class="side"><div class="side-card rv"><p class="side-h">Στοιχεία</p><dl class="facts">'
                 f'<dt>Ημερομηνία</dt><dd>{imerominia(p["imerominia"])}</dd>'
                 f'<dt>Σχολικό έτος</dt><dd><a href="/arxeio/{p["sxoliko_etos"]}/">{p["sxoliko_etos"].replace("-", "–")}</a></dd>'
-                f'<dt>Ενότητα</dt><dd><a href="{url_enotitas(p["enotita"])}">{esc(ENOTITES.get(p["enotita"], ""))}</a></dd>'
+                f'<dt>{"Ενότητες" if p.get("alles_enotites") else "Ενότητα"}</dt><dd>' + ', '.join(f'<a href="{url_enotitas(k)}">{esc(ENOTITES.get(k, ""))}</a>' for k in [p["enotita"]] + p.get("alles_enotites", [])) + '</dd>'
                 + (f'<dt>Τάξεις</dt><dd>{esc(tax)}</dd>' if tax else '') + '</dl>'
                 + (f'<p class="side-h">Δίκτυα</p><ul class="side-list">{dk_html}</ul>' if dk_html else '') + '</div>'
                 + (f'<div class="side-card rv"><p class="side-h">Από την ίδια ενότητα</p><ul class="side-list">'
@@ -452,6 +471,29 @@ class Istotopos:
                 if hero_e:
                     break
         hero_img = img_tag(hero_e, r['fotografia_kentriki_perigrafi'], cls='hero-img', sizes='(max-width: 734px) 100vw, 560px', lazy=False, fetchprio='high')
+        # Εξώφυλλο που εναλλάσσει τις πιο πρόσφατες δράσεις (φωτογραφία + τίτλος + σύνδεσμος)· αν δεν υπάρχουν, η σταθερή φωτογραφία
+        slides = []
+        for p in self.posts:
+            if p['enotita'] in ('anakoinoseis', 'goneis'):
+                continue
+            for f in (p.get('fotografies') or [])[:3]:
+                e = self.meson.eikona(f['arxeio'])
+                if e and e['w'] >= e['h']:
+                    slides.append((p, e))
+                    break
+            if len(slides) == 6:
+                break
+        if len(slides) >= 2:
+            sl = []
+            for n, (p, e) in enumerate(slides):
+                im = img_tag(e, '', cls='hero-img', sizes='(max-width: 734px) 100vw, 560px', lazy=n > 0, fetchprio='high' if n == 0 else '')
+                sl.append(f'<a class="hr-s{" on" if n == 0 else ""}" href="{p["url"]}"{"" if n == 0 else " tabindex=\"-1\" aria-hidden=\"true\""}>{im}'
+                          f'<span class="hr-cap"><span class="hr-d">{imerominia(p["imerominia"])}</span><span class="hr-t">{esc(p["titlos"])}</span></span></a>')
+            dots = ''.join(f'<button type="button" class="hr-dot{" on" if n == 0 else ""}" aria-label="Δράση {n + 1}: {esc(p["titlos"])}"{" aria-current=\"true\"" if n == 0 else ""}></button>'
+                           for n, (p, e) in enumerate(slides))
+            hero_img = (f'<div class="hero-rot" role="region" aria-roledescription="εναλλαγή" aria-label="Πρόσφατες δράσεις του σχολείου">{"".join(sl)}'
+                        f'<div class="hr-ctl"><button type="button" class="hr-p" aria-label="Παύση της εναλλαγής" aria-pressed="false"><span aria-hidden="true"></span></button>{dots}</div></div>'
+                        '<script>' + HERO_ROT_JS + '</script>')
         sel = {s['id']: s for s in self.sel}
         IC = {'vivliothiki': '<path d="M4 19V5a2 2 0 012-2h12v18H6a2 2 0 01-2-2zm0 0a2 2 0 012-2h12"/>',
               'kipos': '<path d="M12 21v-8M12 13c0-4 3-7 7-7 0 4-3 7-7 7zM12 13c0-3-2.5-5.5-6-5.5 0 3 2.5 5.5 6 5.5"/>',

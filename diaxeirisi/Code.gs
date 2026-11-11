@@ -11,14 +11,14 @@
  */
 
 var FYLLA = {
-  anartiseis: ['id', 'katastasi', 'imerominia', 'titlos', 'enotita', 'taxeis', 'diktya', 'keimeno',
+  anartiseis: ['id', 'katastasi', 'imerominia', 'titlos', 'enotita', 'alles_enotites', 'taxeis', 'diktya', 'keimeno',
                'fotografies', 'arxeia', 'video', 'syggrafeas', 'synainesi', 'sxolio', 'url_slug',
                'protasi', 'dimiourgia', 'tropopoiisi', 'arithmos'],
   selides: ['id', 'omada', 'seira', 'titlos', 'perigrafi', 'keimeno', 'fotografies', 'arxeia', 'simeiosi', 'katastasi', 'tropopoiisi'],
   istoriko: ['xronos', 'rolos', 'onoma', 'energeia', 'id', 'titlos']
 };
 // Επικεφαλίδες στηλών στο Φύλλο (ελληνικά). Ο κώδικας δουλεύει με τα λατινικά κλειδιά.
-var ETIKETES = { id: 'Κωδικός', katastasi: 'Κατάσταση', imerominia: 'Ημερομηνία', titlos: 'Τίτλος', enotita: 'Ενότητα',
+var ETIKETES = { id: 'Κωδικός', katastasi: 'Κατάσταση', imerominia: 'Ημερομηνία', titlos: 'Τίτλος', enotita: 'Ενότητα', alles_enotites: 'Και σε ενότητες',
   taxeis: 'Τάξεις', diktya: 'Δίκτυα', keimeno: 'Κείμενο', fotografies: 'Φωτογραφίες', arxeia: 'Αρχεία', video: 'Βίντεο',
   syggrafeas: 'Συντάκτης', synainesi: 'Συγκατάθεση κηδεμόνων', sxolio: 'Σχόλιο Διεύθυνσης', url_slug: 'Διεύθυνση σελίδας',
   protasi: 'Πρόταση αλλαγής', dimiourgia: 'Δημιουργία', tropopoiisi: 'Τελευταία αλλαγή', omada: 'Ομάδα', seira: 'Σειρά',
@@ -227,7 +227,8 @@ function rpc_(b) {
             afairesiFotografias: afairesiFotografias, listaSelidon: listaSelidon, apothikefsiSelidas: apothikefsiSelidas,
             rythmiseis: rythmiseis, allagiKodikou: allagiKodikou, allagiEmail: allagiEmail,
             katastasiDimosiefsis: katastasiDimosiefsis, odigies: odigies, odigosPdf: odigosPdf,
-            emailSyntakton: emailSyntakton, apothikefsiEmailSyntakton: apothikefsiEmailSyntakton };
+            emailSyntakton: emailSyntakton, apothikefsiEmailSyntakton: apothikefsiEmailSyntakton,
+            neaSelida: neaSelida, afairesiSelidas: afairesiSelidas };
   if (!b || !F[b.fn]) return out({ sfalma: 'άγνωστη κλήση' });
   try {
     var r = F[b.fn].apply(null, b.args || []);
@@ -244,6 +245,7 @@ function gia_dimosiefsi_(r) {
     o[k] = /^(fotografies|arxeia)$/.test(k) ? json_(r[k], []) : r[k];
   });
   o.taxeis = (r.taxeis || '').toString().split(',').map(function (x) { return x.trim(); }).filter(String);
+  o.alles_enotites = (r.alles_enotites || '').toString().split(',').map(function (x) { return x.trim(); }).filter(String);
   o.diktya = (r.diktya || '').toString().split(',').map(function (x) { return x.trim(); }).filter(String);
   o.video = (r.video || '').toString().split(/\s+/).map(youtubeId_).filter(String).map(function (id) { return { eidos: 'youtube', id: id }; });
   if (r.imerominia instanceof Date) o.imerominia = Utilities.formatDate(r.imerominia, 'Europe/Athens', 'yyyy-MM-dd');
@@ -332,12 +334,12 @@ function listaAnartiseon(token) {
   return diavase_('anartiseis').map(function (r) {
     var fot = json_(r.fotografies, []);
     return { id: r.id, katastasi: r.katastasi, imerominia: hm_(r.imerominia), titlos: r.titlos, enotita: r.enotita,
-             taxeis: String(r.taxeis || ''), diktya: String(r.diktya || ''),
+             taxeis: String(r.taxeis || ''), diktya: String(r.diktya || ''), alles_enotites: String(r.alles_enotites || ''),
              syggrafeas: r.syggrafeas, sxolio: r.sxolio, exei_protasi: !!r.protasi,
              fotografies: fot.length, exofyllo: fot.length ? fot[0].id : '',
              tropopoiisi: r.tropopoiisi instanceof Date ? r.tropopoiisi.toISOString() : '',
              arithmos: Number(r.arithmos) || 0, meres_kadou: r.katastasi === 'Αποσυρμένη' ? meresKadou_(r) : null,
-             apospasma: String(r.keimeno || '').replace(/[*#|=\[\]()]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 140) };
+             apospasma: String(r.keimeno || '').replace(/\{\{[a-z0-9,]+:|\}\}|\{(aristera|kentro|dexia|plires)\}/g, ' ').replace(/[*#|=\[\]()]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 140) };
   }).sort(function (a, b) { return a.imerominia < b.imerominia ? 1 : -1; });
 }
 
@@ -352,7 +354,7 @@ function fereAnartisi(token, id) {
 
 function morfi_(r) {
   return { id: r.id, katastasi: r.katastasi, imerominia: hm_(r.imerominia), titlos: r.titlos, enotita: r.enotita,
-           taxeis: (r.taxeis || '').toString(), diktya: (r.diktya || '').toString(), keimeno: r.keimeno,
+           taxeis: (r.taxeis || '').toString(), diktya: (r.diktya || '').toString(), alles_enotites: (r.alles_enotites || '').toString(), keimeno: r.keimeno,
            fotografies: json_(r.fotografies, []), arxeia: json_(r.arxeia, []), video: r.video || '',
            syggrafeas: r.syggrafeas, synainesi: r.synainesi === true || r.synainesi === 'TRUE', sxolio: r.sxolio || '',
            arithmos: Number(r.arithmos) || 0, meres_kadou: r.katastasi === 'Αποσυρμένη' ? meresKadou_(r) : null };
@@ -369,9 +371,12 @@ function apothikefsi(token, d, energeia) {
   if (energeia === 'dimosiefsi' && s.rolos !== 'diefthynsi') throw new Error('Μόνο η Διεύθυνση δημοσιεύει.');
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    var sh = fyllo_('anartiseis'), r = d.id ? vres_('anartiseis', d.id) : null, now = new Date();
+    var sh = fyllo_('anartiseis'); stili_(sh, 'alles_enotites');
+    var r = d.id ? vres_('anartiseis', d.id) : null, now = new Date();
     var pedia = {
-      imerominia: d.imerominia, titlos: d.titlos.trim(), enotita: d.enotita, taxeis: (d.taxeis || []).join(','),
+      imerominia: d.imerominia, titlos: d.titlos.trim(), enotita: d.enotita,
+      alles_enotites: (d.alles_enotites || []).filter(function (k) { return k && k !== d.enotita && ENOTITES.some(function (e) { return e[0] === k; }); }).join(','),
+      taxeis: (d.taxeis || []).join(','),
       diktya: (d.diktya || []).join(','), keimeno: d.keimeno || '', fotografies: JSON.stringify(d.fotografies || []),
       arxeia: JSON.stringify(d.arxeia || []), video: d.video || '', syggrafeas: (d.syggrafeas || '').trim(),
       synainesi: !!d.synainesi, tropopoiisi: now
@@ -518,6 +523,46 @@ function apothikefsiSelidas(token, d, dimosiefsi) {
   var ap = { ok: true, minima: dimosiefsi ? 'Δημοσιεύεται. Θα φανεί μέσα σε μισή ώρα.' : 'Αποθηκεύτηκε.' };
   if (dimosiefsi) ap.github = ksekinaDimosiefsi_();
   return ap;
+}
+
+/** Λατινική διεύθυνση σελίδας από τον τίτλο (ίδια λογική με το slug του build/kelyfos.py). */
+function slugSelidas_(t) {
+  var TR = { 'α': 'a', 'β': 'v', 'γ': 'g', 'δ': 'd', 'ε': 'e', 'ζ': 'z', 'η': 'i', 'θ': 'th', 'ι': 'i', 'κ': 'k', 'λ': 'l', 'μ': 'm', 'ν': 'n', 'ξ': 'x',
+    'ο': 'o', 'π': 'p', 'ρ': 'r', 'σ': 's', 'ς': 's', 'τ': 't', 'υ': 'y', 'φ': 'f', 'χ': 'ch', 'ψ': 'ps', 'ω': 'o' };
+  var s = String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  s = s.split('').map(function (c) { return TR[c] !== undefined ? TR[c] : c; }).join('');
+  return s.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50).replace(/-+$/, '');
+}
+
+/** Νέα σελίδα (μόνο Διεύθυνση). Ξεκινά ως «Πρόχειρο»: φαίνεται στην ιστοσελίδα όταν αποθηκευτεί με «Αποθήκευση και δημοσίευση». */
+function neaSelida(token, d) {
+  synedria_(token, 'diefthynsi');
+  var tit = String((d && d.titlos) || '').trim();
+  if (tit.length < 3) throw new Error('Γράψτε τίτλο για τη νέα σελίδα (τουλάχιστον 3 γράμματα).');
+  var om = d.omada === 'goneis' ? 'goneis' : 'sxoleio';
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var rows = diavase_('selides'), ids = rows.map(function (r) { return String(r.id); });
+    var base = slugSelidas_(tit) || 'selida', id = base, n = 2;
+    while (ids.indexOf(id) >= 0 || id === 'enimeroseis') id = base + '-' + n++;
+    var seira = 0; rows.forEach(function (r) { if (r.omada === om && Number(r.seira) > seira) seira = Number(r.seira); });
+    var o = { id: id, omada: om, seira: seira + 1, titlos: tit, perigrafi: '', keimeno: '', fotografies: '[]', arxeia: '[]', simeiosi: '', katastasi: 'Πρόχειρο', tropopoiisi: new Date() };
+    prosthese_(fyllo_('selides'), 'selides', o);
+    katagrafi_('διεύθυνση', 'Διεύθυνση', 'Νέα σελίδα', id, tit);
+    o.fotografies = []; o.arxeia = []; delete o.tropopoiisi;
+    return o;
+  } finally { lock.releaseLock(); }
+}
+
+/** Αφαίρεση σελίδας από την ιστοσελίδα (κατάσταση «Αποσυρμένη») ή επαναφορά. Το κείμενο μένει στο Φύλλο. */
+function afairesiSelidas(token, id, epanafora) {
+  synedria_(token, 'diefthynsi');
+  var r = vres_('selides', id);
+  if (!r) throw new Error('Δεν βρέθηκε η σελίδα.');
+  grapse_(fyllo_('selides'), r._row, { katastasi: epanafora ? 'Δημοσιευμένη' : 'Αποσυρμένη', tropopoiisi: new Date() });
+  katagrafi_('διεύθυνση', 'Διεύθυνση', epanafora ? 'Επαναφορά σελίδας' : 'Αφαίρεση σελίδας', id, r.titlos);
+  return { ok: true, minima: epanafora ? 'Η σελίδα θα ξαναφανεί στην ιστοσελίδα μέσα σε μισή ώρα.' : 'Η σελίδα θα αφαιρεθεί από την ιστοσελίδα μέσα σε μισή ώρα. Μπορείτε να την επαναφέρετε όποτε θέλετε.',
+           github: ksekinaDimosiefsi_() };
 }
 
 /* ═══════════════ Ρυθμίσεις Διεύθυνσης ═══════════════ */
@@ -823,6 +868,11 @@ function grapse_(sh, row, pedia) {
     var c = kef.indexOf(k);
     if (c >= 0) sh.getRange(row, c + 1).setValue(pedia[k]);
   });
+}
+
+function stili_(sh, k) {   // νέα στήλη στο τέλος, αν λείπει (π.χ. «Και σε ενότητες»)
+  var kef = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(kleidi_);
+  if (kef.indexOf(k) < 0) sh.getRange(1, kef.length + 1).setValue(etiketa_(k)).setFontWeight('bold').setBackground('#eef5fc');
 }
 
 function prosthese_(sh, k, pedia) {   // κατά τις επικεφαλίδες του Φύλλου (όχι κατά θέση: στήλες μπορεί να προστεθούν)
