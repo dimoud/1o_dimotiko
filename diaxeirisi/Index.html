@@ -128,6 +128,7 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
 <header class="hidden" id="hdr"><div class="top">
  <svg class="logo"><use href="#emb"/></svg>
  <h1>Ιστοσελίδα σχολείου<small id="roleLbl"></small></h1>
+ <a class="iconbtn" href="https://1dim-polichnis.gr/diaxeirisi/odigies/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;text-decoration:none">❓ Οδηγίες</a>
  <button class="iconbtn" onclick="home()">Αρχική</button>
  <button class="iconbtn" onclick="logout()">Έξοδος</button>
 </div></header>
@@ -144,6 +145,7 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
    <p><button class="btn wide" id="bLogin">Είσοδος</button></p>
   </form>
   <div id="loginMsg"></div>
+  <p style="margin:14px 0 0"><a href="https://1dim-polichnis.gr/diaxeirisi/odigies/" target="_blank" rel="noopener">📖 Οδηγίες χρήσης</a></p>
  </div>
 </section>
 
@@ -354,6 +356,7 @@ function home() {
         '<button class="tile t-pages" onclick="nav(\'pages\')"><span class="em">🏫</span><b>Σελίδες του σχολείου</b><span>Διδάσκοντες, ωράριο, βιβλιοθήκη, έντυπα</span></button>' +
         '<button class="tile t-set" onclick="nav(\'settings\')"><span class="em">⚙️</span><b>Ρυθμίσεις</b><span>Κωδικοί, email, ιστορικό</span></button>';
   }
+  t += '<a class="tile t-help" href="https://1dim-polichnis.gr/diaxeirisi/odigies/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;background:#fff"><span class="em">📖</span><b>Οδηγίες χρήσης</b><span>Βήμα-βήμα: αναρτήσεις, φωτογραφίες, έλεγχος, Φύλλο</span></a>';
   $('tiles').innerHTML = t;
   run('listaAnartiseon', [T], function (l) {
     ALL = l;

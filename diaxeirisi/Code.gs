@@ -45,7 +45,8 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu('Ιστοσελίδα')
     .addItem('🔒 Άνοιγμα Πίνακα διαχείρισης', 'anoigmaPinaka')
     .addItem('🚀 Δημοσίευση αλλαγών του Φύλλου στην ιστοσελίδα', 'dimosiefsiTora')
-    .addItem('📖 Οδηγίες: πώς σχετίζεται το Φύλλο με την ιστοσελίδα', 'odigiesFyllou')
+    .addItem('📖 Οδηγίες χρήσης (πλήρεις, στην ιστοσελίδα)', 'anoigmaOdigion')
+    .addItem('📄 Ανανέωση καρτέλας «Οδηγίες» στο Φύλλο', 'odigiesFyllou')
     .addSeparator()
     .addItem('1. Αρχικοποίηση (μία φορά)', 'arxikopoiisi')
     .addItem('2. Ορισμός κωδικών Συντάκτη και Διεύθυνσης', 'orismosKodikon')
@@ -55,9 +56,20 @@ function onOpen() {
     .addItem('Αντίγραφο ασφαλείας τώρα', 'antigrafo')
     .addItem('Εμφάνιση κλειδιού API (για το GitHub)', 'deiksiApi')
     .addToUi();
+  // Η καρτέλα «Οδηγίες» δημιουργείται μόνη της την πρώτη φορά, για όποιον ανοίξει το Φύλλο
+  try { if (!SpreadsheetApp.getActive().getSheetByName('Οδηγίες')) odigiesFyllou(true); } catch (e) {}
 }
 
 var PINAKAS_URL = 'https://1dim-polichnis.gr/diaxeirisi/';
+var ODIGIES_URL = 'https://1dim-polichnis.gr/diaxeirisi/odigies/';
+
+function anoigmaOdigion() {
+  var h = HtmlService.createHtmlOutput(
+    '<div style="font:15px system-ui;line-height:1.5"><p>Οι οδηγίες ανοίγουν σε νέα καρτέλα. Αν δεν άνοιξαν, πατήστε:</p>' +
+    '<p><a href="' + ODIGIES_URL + '" target="_blank" style="font-size:17px;font-weight:700">' + ODIGIES_URL + '</a></p></div>' +
+    '<script>window.open("' + ODIGIES_URL + '","_blank");</script>').setWidth(480).setHeight(150);
+  SpreadsheetApp.getUi().showModalDialog(h, 'Οδηγίες χρήσης');
+}
 
 function anoigmaPinaka() {
   var h = HtmlService.createHtmlOutput(
@@ -76,11 +88,13 @@ function dimosiefsiTora() {
   else ui.alert('Η δημοσίευση δεν ξεκίνησε', r.minima, ui.ButtonSet.OK);
 }
 
-function odigiesFyllou() {
+function odigiesFyllou(siopi) {
   var ss = SpreadsheetApp.getActive(), sh = ss.getSheetByName('Οδηγίες') || ss.insertSheet('Οδηγίες', 0);
   sh.clear();
   var g = [
     ['Πώς σχετίζεται αυτό το Φύλλο με την ιστοσελίδα 1dim-polichnis.gr'],
+    [''],
+    [''],
     [''],
     ['1. Το Φύλλο είναι η «αποθήκη» της ιστοσελίδας. Κάθε γραμμή της καρτέλας «Αναρτήσεις» είναι μία ανάρτηση της ιστοσελίδας.'],
     ['2. Στην ιστοσελίδα εμφανίζονται ΜΟΝΟ οι γραμμές με Κατάσταση «Δημοσιευμένη». «Πρόχειρο», «Προς έγκριση», «Επιστράφηκε», «Αποσυρμένη» δεν φαίνονται.'],
@@ -94,7 +108,13 @@ function odigiesFyllou() {
   sh.getRange(1, 1, g.length, 1).setValues(g).setWrap(true).setVerticalAlignment('top');
   sh.setColumnWidth(1, 900);
   sh.getRange(1, 1).setFontSize(15).setFontWeight('bold');
-  sh.getRange(3, 1, g.length - 2, 1).setFontSize(12);
+  sh.getRange(5, 1, g.length - 4, 1).setFontSize(12);
+  sh.getRange(2, 1).setFormula('=HYPERLINK("' + ODIGIES_URL + '","📖  ΠΛΗΡΕΙΣ ΟΔΗΓΙΕΣ ΧΡΗΣΗΣ (πατήστε εδώ)")');
+  sh.getRange(3, 1).setFormula('=HYPERLINK("' + PINAKAS_URL + '","🔒  ΠΙΝΑΚΑΣ ΔΙΑΧΕΙΡΙΣΗΣ: εδώ γίνεται η καθημερινή δουλειά (πατήστε εδώ)")');
+  sh.getRange(2, 1, 2, 1).setFontSize(14).setFontWeight('bold').setBackground('#e8f1fa');
+  sh.setRowHeights(2, 2, 34);
+  sh.setFrozenRows(3);
+  sh.setTabColor('#1e64a8');
   ['anartiseis', 'selides'].forEach(function (k) {
     var f = fyllo_(k); if (!f || f.getLastColumn() < 1) return;
     var hd = f.getRange(1, 1, 1, f.getLastColumn()).getValues()[0];
@@ -108,7 +128,7 @@ function odigiesFyllou() {
       if (key === 'katastasi') f.getRange(1, i + 1).setNote('Στην ιστοσελίδα φαίνονται μόνο οι «Δημοσιευμένη».');
     });
   });
-  ss.setActiveSheet(sh);
+  if (!siopi) ss.setActiveSheet(sh);
 }
 
 function arxikopoiisi() {
