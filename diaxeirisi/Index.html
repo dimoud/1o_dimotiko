@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+:root{--blue:#1e64a8;--blue-d:#164d82;--bg:#f4f7fb;--line:#d9e2ec;--ink:#1b2633;--ink2:#52606d;--ok:#2a7a3b;--warn:#8a5a00;--bad:#a8432d;--r:12px}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.top{max-width:1100px;margin:auto;display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+.top h1{font-size:18px;margin:0;flex:1}
+.role{font-size:13px;padding:4px 10px;border-radius:99px;background:#e8f1fa;color:var(--blue-d);font-weight:600}
+main{max-width:1100px;margin:auto;padding:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:16px}
+h2{font-size:20px;margin:0 0 12px}
+label{display:block;font-weight:600;margin:14px 0 6px}
+.hint{font-weight:400;color:var(--ink2);font-size:14px}
+input[type=text],input[type=password],input[type=date],input[type=email],select,textarea{width:100%;padding:10px 12px;border:1px solid #b9c6d3;border-radius:8px;font:inherit;background:#fff}
+textarea{min-height:220px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:3px solid #f2b233;outline-offset:1px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:99px;border:0;background:var(--blue);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.btn:hover{background:var(--blue-d)}
+.btn.g{background:#fff;color:var(--blue-d);box-shadow:inset 0 0 0 2px var(--blue)}
+.btn.ok{background:var(--ok)}.btn.bad{background:var(--bad)}
+.btn[disabled]{opacity:.5;cursor:wait}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips label{margin:0;font-weight:500;border:1px solid var(--line);border-radius:99px;padding:6px 12px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:8px 14px;font:inherit;cursor:pointer}
+.tabs button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.list{list-style:none;margin:0;padding:0}
+.list li{display:flex;gap:12px;align-items:center;padding:12px;border-bottom:1px solid var(--line);cursor:pointer}
+.list li:hover{background:#f7fafd}
+.list .t{flex:1;min-width:0}.list .t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list .m{font-size:14px;color:var(--ink2)}
+.st{font-size:12.5px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.st-Πρόχειρο{background:#eef1f4;color:#52606d}.st-Προς_έγκριση,.st-prop{background:#fff4d6;color:var(--warn)}
+.st-Επιστράφηκε{background:#fdebe5;color:var(--bad)}.st-Δημοσιευμένη{background:#e6f4ea;color:var(--ok)}.st-Αποσυρμένη{background:#eee;color:#555}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:10px}
+.ph{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#f0f3f7}
+.ph img{width:100%;height:100px;object-fit:cover;display:block}
+.ph input{border:0;border-top:1px solid var(--line);border-radius:0;padding:6px;font-size:13px}
+.ph button{position:absolute;top:4px;right:4px;width:30px;height:30px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;font-size:18px;line-height:1}
+.ph .up{height:100px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ink2)}
+.docs li{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)}
+.msg{padding:12px 14px;border-radius:10px;margin:12px 0;white-space:pre-line}
+.msg.ok{background:#e6f4ea;color:#1d5a2b}.msg.bad{background:#fdebe5;color:#7c2e1d}.msg.info{background:#e8f1fa;color:var(--blue-d)}
+.note{background:#fff4d6;border-radius:10px;padding:10px 14px;margin:10px 0}
+.hidden{display:none!important}
+.login{max-width:420px;margin:12vh auto}
+table{width:100%;border-collapse:collapse;font-size:14px}td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
+.prev{border:1px dashed var(--line);border-radius:10px;padding:14px;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<header class="hidden" id="hdr"><div class="top">
+ <h1>Ιστοσελίδα σχολείου · Διαχείριση</h1>
+ <span class="role" id="roleLbl"></span>
+ <button class="btn g" onclick="nav('list')">Αναρτήσεις</button>
+ <button class="btn g dir" onclick="nav('pages')">Σελίδες</button>
+ <button class="btn g dir" onclick="nav('settings')">Ρυθμίσεις</button>
+ <button class="btn g" onclick="logout()">Έξοδος</button>
+</div></header>
+
+<main>
+ <!-- Σύνδεση -->
+ <section id="v-login" class="card login">
+  <h2>Σύνδεση</h2>
+  <p class="hint">Γράψτε τον κωδικό που σας έδωσε η Διεύθυνση του σχολείου.</p>
+  <form onsubmit="login(event)">
+   <label for="kod">Κωδικός</label>
+   <input id="kod" type="password" autocomplete="current-password" required>
+   <p><button class="btn" id="bLogin">Είσοδος</button></p>
+  </form>
+  <div id="loginMsg"></div>
+ </section>
+
+ <!-- Λίστα -->
+ <section id="v-list" class="hidden">
+  <div class="row" style="justify-content:space-between;margin-bottom:12px">
+   <div class="tabs" id="filters"></div>
+   <button class="btn" onclick="edit(null)">+ Νέα ανάρτηση</button>
+  </div>
+  <div id="listMsg"></div>
+  <div class="card" style="padding:0"><ul class="list" id="list"></ul></div>
+ </section>
+
+ <!-- Επεξεργασία ανάρτησης -->
+ <section id="v-edit" class="hidden">
+  <div class="card">
+   <div class="row" style="justify-content:space-between"><h2 id="edTitle">Νέα ανάρτηση</h2><span class="st" id="edState"></span></div>
+   <div id="edNote"></div>
+   <div class="grid2">
+    <div><label for="f-imer">Ημερομηνία</label><input id="f-imer" type="date" min="2024-01-01"></div>
+    <div><label for="f-enot">Ενότητα</label><select id="f-enot"></select></div>
+   </div>
+   <label for="f-titl">Τίτλος</label><input id="f-titl" type="text" maxlength="160">
+   <label>Τάξεις <span class="hint">(προαιρετικό)</span></label><div class="chips" id="f-tax"></div>
+   <label>Δίκτυα και προγράμματα <span class="hint">(αν η δράση ανήκει σε κάποιο)</span></label><div class="chips" id="f-dik"></div>
+   <label for="f-keim">Κείμενο <span class="hint">— κενή γραμμή = νέα παράγραφος· σύνδεσμος: [κείμενο](https://…)· **έντονα**</span></label>
+   <textarea id="f-keim"></textarea>
+   <label>Φωτογραφίες <span class="hint">— μικραίνουν αυτόματα και σβήνονται τα κρυφά στοιχεία (θέση, κινητό)</span></label>
+   <input type="file" id="f-foto" accept="image/jpeg,image/png" multiple onchange="addPhotos(this)">
+   <div class="photos" id="photos"></div>
+   <label class="row" style="font-weight:600;gap:8px"><input type="checkbox" id="f-syn" style="width:22px;height:22px"> Υπάρχει γραπτή συγκατάθεση κηδεμόνων για όλους τους μαθητές που φαίνονται στις φωτογραφίες</label>
+   <label>Έγγραφα PDF <span class="hint">(προαιρετικό)</span></label>
+   <input type="file" id="f-pdf" accept="application/pdf" multiple onchange="addPdfs(this)">
+   <ul class="list docs" id="docs"></ul>
+   <label for="f-vid">Βίντεο YouTube <span class="hint">— σύνδεσμοι, χωρισμένοι με κενό</span></label><input id="f-vid" type="text">
+   <label for="f-syg">Ποιος το έγραψε</label><input id="f-syg" type="text" placeholder="π.χ. Κ. Παπαδοπούλου, Δ2">
+   <div id="edMsg"></div>
+   <div class="row" style="margin-top:18px">
+    <button class="btn g" onclick="save('proxeiro')">Αποθήκευση ως πρόχειρο</button>
+    <button class="btn" id="bSend" onclick="save('egkrisi')">Αποστολή για έγκριση</button>
+    <button class="btn ok dir" onclick="save('dimosiefsi')">Δημοσίευση</button>
+    <button class="btn g" onclick="nav('list')">Πίσω</button>
+   </div>
+  </div>
+  <div class="card dir hidden" id="decide">
+   <h2>Απόφαση Διεύθυνσης</h2>
+   <div id="propBox"></div>
+   <label for="d-sx">Σχόλιο προς τον συντάκτη <span class="hint">(για επιστροφή)</span></label><input id="d-sx" type="text">
+   <div class="row" style="margin-top:12px">
+    <button class="btn ok" onclick="decide('egkrisi')">Έγκριση και δημοσίευση</button>
+    <button class="btn g" onclick="decide('epistrofi')">Επιστροφή για διόρθωση</button>
+    <button class="btn bad" id="bWith" onclick="decide('aposyrsi')">Απόσυρση από τον ιστότοπο</button>
+    <button class="btn g hidden" id="bRest" onclick="decide('epanafora')">Επαναφορά</button>
+   </div>
+  </div>
+ </section>
+
+ <!-- Σελίδες -->
+ <section id="v-pages" class="hidden">
+  <div class="card"><h2>Σταθερές σελίδες</h2><p class="hint">Σύλλογος διδασκόντων, ωράριο, εγκαταστάσεις κ.λπ. Μόνο η Διεύθυνση.</p><ul class="list" id="pList"></ul></div>
+  <div class="card hidden" id="pEdit">
+   <h2 id="pT"></h2>
+   <label for="p-titl">Τίτλος</label><input id="p-titl" type="text">
+   <label for="p-per">Σύντομη περιγραφή</label><input id="p-per" type="text">
+   <label for="p-keim">Κείμενο</label><textarea id="p-keim"></textarea>
+   <label for="p-sim">Σημείωση <span class="hint">(π.χ. «Ενημερώνεται τον Σεπτέμβριο»)</span></label><input id="p-sim" type="text">
+   <label for="p-kat">Κατάσταση</label><select id="p-kat"><option>Δημοσιευμένη</option><option>Πρόχειρο</option></select>
+   <label>Έγγραφα PDF</label><input type="file" accept="application/pdf" multiple onchange="addPdfs(this,'page')"><ul class="list docs" id="pDocs"></ul>
+   <div id="pMsg"></div>
+   <div class="row" style="margin-top:14px"><button class="btn ok" onclick="savePage(true)">Αποθήκευση και δημοσίευση</button><button class="btn g" onclick="savePage(false)">Μόνο αποθήκευση</button></div>
+  </div>
+ </section>
+
+ <!-- Ρυθμίσεις -->
+ <section id="v-settings" class="hidden">
+  <div class="card">
+   <h2>Κωδικοί</h2>
+   <p class="hint">Όταν αλλάζουν τα πρόσωπα, αλλάξτε τον κωδικό: όλοι αποσυνδέονται αμέσως.</p>
+   <div class="grid2">
+    <div><label for="s-syn">Νέος κωδικός Συντάκτη (≥ 8)</label><input id="s-syn" type="password" autocomplete="new-password"><p><button class="btn g" onclick="chPass('syntaktis','s-syn')">Αλλαγή</button></p></div>
+    <div><label for="s-dir">Νέος κωδικός Διεύθυνσης (≥ 10)</label><input id="s-dir" type="password" autocomplete="new-password"><p><button class="btn g" onclick="chPass('diefthynsi','s-dir')">Αλλαγή</button></p></div>
+   </div>
+   <label for="s-mail">Email ειδοποιήσεων</label>
+   <div class="row"><input id="s-mail" type="email" style="flex:1"><button class="btn g" onclick="chMail()">Αποθήκευση</button></div>
+   <div id="sInfo"></div><div id="sMsg"></div>
+  </div>
+  <div class="card"><h2>Ιστορικό ενεργειών</h2><table id="hist"></table></div>
+ </section>
+</main>
+
+<script>
+var T = null, ROLE = null, OPT = null, ALL = [], CUR = null, FILTER = 'all', PAGES = [], PCUR = null;
+var $ = function (id) { return document.getElementById(id); };
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function msg(el, text, kind) { $(el).innerHTML = text ? '<div class="msg ' + (kind || 'info') + '">' + esc(text) + '</div>' : ''; }
+function run(fn, args, ok, el, btn) {
+  if (btn) btn.disabled = true;
+  var r = google.script.run.withSuccessHandler(function (x) { if (btn) btn.disabled = false; ok(x); })
+    .withFailureHandler(function (e) {
+      if (btn) btn.disabled = false;
+      var m = (e && e.message) || String(e);
+      if (/έληξε|άλλαξαν/.test(m)) { logout(); msg('loginMsg', m, 'bad'); return; }
+      msg(el, m, 'bad');
+    });
+  r[fn].apply(r, args);
+}
+function nav(v) {
+  ['login', 'list', 'edit', 'pages', 'settings'].forEach(function (k) { $('v-' + k).classList.toggle('hidden', k !== v); });
+  window.scrollTo(0, 0);
+  if (v === 'list') loadList();
+  if (v === 'pages') loadPages();
+  if (v === 'settings') loadSettings();
+}
+function login(e) {
+  e.preventDefault();
+  run('syndesi', [$('kod').value], function (r) {
+    if (!r.ok) { msg('loginMsg', r.minima, 'bad'); return; }
+    T = r.token; ROLE = r.rolos; OPT = r.epiloges; $('kod').value = '';
+    try { sessionStorage.setItem('t', T); sessionStorage.setItem('r', ROLE); sessionStorage.setItem('o', JSON.stringify(OPT)); } catch (x) {}
+    start();
+  }, 'loginMsg', $('bLogin'));
+}
+function logout() { T = null; try { sessionStorage.clear(); } catch (x) {} $('hdr').classList.add('hidden'); nav('login'); }
+function start() {
+  $('hdr').classList.remove('hidden');
+  $('roleLbl').textContent = ROLE === 'diefthynsi' ? 'Διεύθυνση' : 'Συντάκτης';
+  document.querySelectorAll('.dir').forEach(function (el) { el.classList.toggle('hidden', ROLE !== 'diefthynsi'); });
+  $('bSend').classList.toggle('hidden', ROLE === 'diefthynsi');
+  $('f-enot').innerHTML = OPT.enotites.map(function (e) { return '<option value="' + e[0] + '">' + esc(e[1]) + '</option>'; }).join('');
+  $('f-tax').innerHTML = OPT.taxeis.map(function (t) { return '<label><input type="checkbox" value="' + esc(t) + '">' + esc(t) + '</label>'; }).join('');
+  $('f-dik').innerHTML = OPT.diktya.map(function (d) { return '<label><input type="checkbox" value="' + d[0] + '">' + esc(d[1]) + '</label>'; }).join('');
+  var f = [['all', 'Όλες'], ['Προς έγκριση', 'Προς έγκριση'], ['Πρόχειρο', 'Πρόχειρα'], ['Επιστράφηκε', 'Επιστράφηκαν'], ['Δημοσιευμένη', 'Δημοσιευμένες'], ['Αποσυρμένη', 'Αποσυρμένες']];
+  $('filters').innerHTML = f.map(function (x) { return '<button data-f="' + x[0] + '">' + x[1] + '</button>'; }).join('');
+  $('filters').onclick = function (e) { var b = e.target.closest('button'); if (!b) return; FILTER = b.dataset.f; drawList(); };
+  FILTER = ROLE === 'diefthynsi' ? 'Προς έγκριση' : 'all';
+  nav('list');
+}
+function loadList() { run('listaAnartiseon', [T], function (l) { ALL = l; drawList(); }, 'listMsg'); }
+function drawList() {
+  document.querySelectorAll('#filters button').forEach(function (b) { b.classList.toggle('on', b.dataset.f === FILTER); });
+  var l = ALL.filter(function (a) { return FILTER === 'all' || a.katastasi === FILTER || (FILTER === 'Προς έγκριση' && a.exei_protasi); });
+  var en = {}; OPT.enotites.forEach(function (e) { en[e[0]] = e[1]; });
+  $('list').innerHTML = l.length ? l.slice(0, 300).map(function (a) {
+    var st = a.exei_protasi ? '<span class="st st-prop">Πρόταση αλλαγής</span>' : '<span class="st st-' + a.katastasi.replace(' ', '_') + '">' + esc(a.katastasi) + '</span>';
+    return '<li data-id="' + a.id + '"><div class="t"><b>' + esc(a.titlos) + '</b><span class="m">' + esc(a.imerominia.split('-').reverse().join('/')) + ' · ' + esc(en[a.enotita] || a.enotita) +
+      (a.syggrafeas ? ' · ' + esc(a.syggrafeas) : '') + (a.fotografies ? ' · ' + a.fotografies + ' φωτ.' : '') + '</span>' +
+      (a.sxolio ? '<span class="m" style="color:var(--bad)">Σχόλιο: ' + esc(a.sxolio) + '</span>' : '') + '</div>' + st + '</li>';
+  }).join('') : '<li class="m">Καμία ανάρτηση σε αυτή την κατηγορία.</li>';
+  $('list').onclick = function (e) { var li = e.target.closest('li[data-id]'); if (li) open_(li.dataset.id); };
+}
+function open_(id) { run('fereAnartisi', [T, id], function (a) { edit(a); }, 'listMsg'); }
+
+function edit(a) {
+  CUR = a ? JSON.parse(JSON.stringify(a)) : { id: '', katastasi: 'Πρόχειρο', imerominia: new Date().toISOString().slice(0, 10), titlos: '', enotita: 'draseis', taxeis: '', diktya: '', keimeno: '', fotografies: [], arxeia: [], video: '', syggrafeas: '', synainesi: false };
+  $('edTitle').textContent = a ? 'Επεξεργασία ανάρτησης' : 'Νέα ανάρτηση';
+  $('edState').className = 'st st-' + CUR.katastasi.replace(' ', '_'); $('edState').textContent = CUR.katastasi;
+  $('f-imer').value = CUR.imerominia; $('f-enot').value = CUR.enotita; $('f-titl').value = CUR.titlos;
+  setChips('f-tax', CUR.taxeis); setChips('f-dik', CUR.diktya);
+  $('f-keim').value = CUR.keimeno; $('f-vid').value = CUR.video; $('f-syg').value = CUR.syggrafeas; $('f-syn').checked = !!CUR.synainesi;
+  var n = '';
+  if (CUR.sxolio) n += '<div class="note"><b>Σχόλιο Διεύθυνσης:</b> ' + esc(CUR.sxolio) + '</div>';
+  if (CUR.katastasi === 'Δημοσιευμένη' && ROLE !== 'diefthynsi') n += '<div class="note">Η ανάρτηση είναι δημοσιευμένη. Αν αλλάξετε κάτι, η αλλαγή πηγαίνει στη Διεύθυνση για έγκριση· μέχρι τότε στον ιστότοπο μένει η τωρινή μορφή.</div>';
+  $('edNote').innerHTML = n; msg('edMsg', '');
+  drawPhotos(); drawDocs('docs', CUR.arxeia);
+  var showDec = ROLE === 'diefthynsi' && a && (CUR.katastasi !== 'Πρόχειρο' || CUR.protasi);
+  $('decide').classList.toggle('hidden', !showDec);
+  if (showDec) {
+    $('propBox').innerHTML = CUR.protasi ? '<div class="note">Ο συντάκτης πρότεινε αλλαγή στη δημοσιευμένη ανάρτηση. Τίτλος: <b>' + esc(CUR.protasi.titlos) + '</b></div><div class="prev">' + esc(CUR.protasi.keimeno) + '</div>' : '';
+    $('bWith').classList.toggle('hidden', CUR.katastasi !== 'Δημοσιευμένη');
+    $('bRest').classList.toggle('hidden', CUR.katastasi !== 'Αποσυρμένη');
+  }
+  nav('edit');
+}
+function setChips(id, csv) { var v = String(csv || '').split(',').map(function (x) { return x.trim(); }); document.querySelectorAll('#' + id + ' input').forEach(function (c) { c.checked = v.indexOf(c.value) >= 0; }); }
+function getChips(id) { return Array.prototype.slice.call(document.querySelectorAll('#' + id + ' input:checked')).map(function (c) { return c.value; }); }
+
+function drawPhotos() {
+  $('photos').innerHTML = CUR.fotografies.map(function (f, i) {
+    return '<div class="ph">' + (f.src ? '<img src="' + f.src + '" alt="">' : '<div class="up" id="th' + i + '">…</div>') +
+      '<button type="button" title="Αφαίρεση" onclick="rmPhoto(' + i + ')">×</button>' +
+      '<input type="text" placeholder="Λεζάντα (προαιρετικό)" value="' + esc(f.perigrafi || '') + '" oninput="CUR.fotografies[' + i + '].perigrafi=this.value"></div>';
+  }).join('');
+  CUR.fotografies.forEach(function (f, i) {
+    if (f.src || !f.id) return;
+    google.script.run.withSuccessHandler(function (u) { if (u) { f.src = u; var el = $('th' + i); if (el) el.outerHTML = '<img src="' + u + '" alt="">'; } }).mikrografia(T, f.id);
+  });
+}
+function rmPhoto(i) {
+  if (!confirm('Αφαίρεση της φωτογραφίας από την ανάρτηση;')) return;
+  var f = CUR.fotografies[i];
+  if (ROLE === 'diefthynsi' && CUR.id && CUR.katastasi === 'Δημοσιευμένη' && f.id && confirm('Να διαγραφεί οριστικά και από τον ιστότοπο (π.χ. ανάκληση συγκατάθεσης);')) {
+    run('afairesiFotografias', [T, CUR.id, f.id], function (r) { msg('edMsg', r.minima, 'ok'); }, 'edMsg');
+  }
+  CUR.fotografies.splice(i, 1); drawPhotos();
+}
+/* Μικραίνει στα 1600 px και ξαναγράφει ως JPEG: τα EXIF (GPS, κινητό) δεν περνούν ποτέ. */
+function shrink(file) {
+  return new Promise(function (ok, no) {
+    var img = new Image(), url = URL.createObjectURL(file);
+    img.onload = function () {
+      var s = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+      var c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      ok(c.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = function () { no(new Error('Δεν διαβάστηκε η φωτογραφία ' + file.name)); };
+    img.src = url;
+  });
+}
+function addPhotos(inp) {
+  var files = Array.prototype.slice.call(inp.files); inp.value = '';
+  if (!files.length) return;
+  msg('edMsg', 'Ανέβασμα ' + files.length + ' φωτογραφιών…', 'info');
+  var left = files.length;
+  files.forEach(function (file) {
+    shrink(file).then(function (data) {
+      var b64 = data.split(',')[1], name = file.name.replace(/\.\w+$/, '') + '.jpg';
+      google.script.run.withSuccessHandler(function (r) {
+        CUR.fotografies.push({ id: r.id, perigrafi: '', src: data }); drawPhotos();
+        if (--left === 0) msg('edMsg', 'Οι φωτογραφίες ανέβηκαν. Μην ξεχάσετε την αποθήκευση.', 'ok');
+      }).withFailureHandler(function (e) { left--; msg('edMsg', e.message, 'bad'); }).anevasma(T, name, 'image/jpeg', b64, 'foto');
+    }, function (e) { left--; msg('edMsg', e.message, 'bad'); });
+  });
+}
+function drawDocs(el, arr) {
+  $(el).innerHTML = arr.map(function (d, i) { return '<li><span>' + esc(d.onoma) + '</span><button class="btn g" type="button" onclick="rmDoc(\'' + el + '\',' + i + ')">Αφαίρεση</button></li>'; }).join('');
+}
+function rmDoc(el, i) { var arr = el === 'docs' ? CUR.arxeia : PCUR.arxeia; arr.splice(i, 1); drawDocs(el, arr); }
+function addPdfs(inp, where) {
+  var files = Array.prototype.slice.call(inp.files); inp.value = '';
+  var arr = where === 'page' ? PCUR.arxeia : CUR.arxeia, el = where === 'page' ? 'pDocs' : 'docs', m = where === 'page' ? 'pMsg' : 'edMsg';
+  files.forEach(function (file) {
+    if (file.size > 15 * 1024 * 1024) { msg(m, file.name + ': μεγαλύτερο από 15 MB.', 'bad'); return; }
+    var r = new FileReader();
+    r.onload = function () {
+      google.script.run.withSuccessHandler(function (x) { arr.push({ id: x.id, onoma: x.onoma }); drawDocs(el, arr); msg(m, 'Το ' + x.onoma + ' ανέβηκε.', 'ok'); })
+        .withFailureHandler(function (e) { msg(m, e.message, 'bad'); }).anevasma(T, file.name, 'application/pdf', String(r.result).split(',')[1], 'pdf');
+    };
+    r.readAsDataURL(file);
+  });
+}
+function collect() {
+  return { id: CUR.id, imerominia: $('f-imer').value, titlos: $('f-titl').value, enotita: $('f-enot').value, taxeis: getChips('f-tax'), diktya: getChips('f-dik'),
+    keimeno: $('f-keim').value, fotografies: CUR.fotografies.map(function (f) { return { id: f.id, perigrafi: f.perigrafi || '' }; }),
+    arxeia: CUR.arxeia, video: $('f-vid').value.trim(), syggrafeas: $('f-syg').value, synainesi: $('f-syn').checked };
+}
+function save(en) {
+  if (en === 'dimosiefsi' && !confirm('Δημοσίευση στον ιστότοπο τώρα;')) return;
+  run('apothikefsi', [T, collect(), en], function (r) {
+    CUR.id = r.id;
+    var t = r.minima + (r.github && !r.github.ok ? '\n' + r.github.minima : '');
+    msg('listMsg', t, r.github && !r.github.ok ? 'bad' : 'ok'); nav('list');
+  }, 'edMsg', event && event.target);
+}
+function decide(p) {
+  var q = { egkrisi: 'Έγκριση και δημοσίευση;', epistrofi: 'Επιστροφή στον συντάκτη;', aposyrsi: 'Απόσυρση από τον ιστότοπο;', epanafora: 'Επαναφορά στον ιστότοπο;' }[p];
+  if (!confirm(q)) return;
+  var go = function () {
+    run('apofasi', [T, CUR.id, p, $('d-sx').value], function (r) { msg('listMsg', r.minima + (r.github && !r.github.ok ? '\n' + r.github.minima : ''), 'ok'); $('d-sx').value = ''; nav('list'); }, 'edMsg');
+  };
+  /* Αν η Διεύθυνση διόρθωσε η ίδια κάτι πριν εγκρίνει, αποθηκεύεται πρώτα (χωρίς πρόταση). */
+  if (p === 'egkrisi' && !CUR.protasi) run('apothikefsi', [T, collect(), 'dimosiefsi'], function (r) { msg('listMsg', r.minima, 'ok'); nav('list'); }, 'edMsg');
+  else go();
+}
+
+function loadPages() {
+  $('pEdit').classList.add('hidden');
+  run('listaSelidon', [T], function (l) {
+    PAGES = l;
+    $('pList').innerHTML = l.map(function (s, i) { return '<li data-i="' + i + '"><div class="t"><b>' + esc(s.titlos) + '</b><span class="m">' + esc(s.simeiosi || s.perigrafi || '') + '</span></div><span class="st st-' + esc(String(s.katastasi).replace(' ', '_')) + '">' + esc(s.katastasi) + '</span></li>'; }).join('');
+    $('pList').onclick = function (e) { var li = e.target.closest('li[data-i]'); if (li) editPage(PAGES[li.dataset.i]); };
+  }, 'pMsg');
+}
+function editPage(s) {
+  PCUR = JSON.parse(JSON.stringify(s));
+  $('pT').textContent = s.titlos; $('p-titl').value = s.titlos; $('p-per').value = s.perigrafi || ''; $('p-keim').value = s.keimeno || '';
+  $('p-sim').value = s.simeiosi || ''; $('p-kat').value = s.katastasi === 'Πρόχειρο' ? 'Πρόχειρο' : 'Δημοσιευμένη';
+  drawDocs('pDocs', PCUR.arxeia); msg('pMsg', ''); $('pEdit').classList.remove('hidden'); $('pEdit').scrollIntoView();
+}
+function savePage(pub) {
+  var d = { id: PCUR.id, titlos: $('p-titl').value, perigrafi: $('p-per').value, keimeno: $('p-keim').value, simeiosi: $('p-sim').value, katastasi: $('p-kat').value, arxeia: PCUR.arxeia, fotografies: PCUR.fotografies };
+  run('apothikefsiSelidas', [T, d, pub], function (r) { msg('pMsg', r.minima, 'ok'); }, 'pMsg');
+}
+
+function loadSettings() {
+  run('rythmiseis', [T], function (r) {
+    $('s-mail').value = r.email;
+    var w = !r.github ? '<div class="note">Δεν έχει οριστεί κλειδί GitHub: οι αλλαγές αποθηκεύονται αλλά δεν δημοσιεύονται.</div>'
+      : r.github_imeres > 330 ? '<div class="note">Το κλειδί GitHub ορίστηκε πριν από ' + r.github_imeres + ' ημέρες και λήγει σύντομα.</div>' : '';
+    $('sInfo').innerHTML = w;
+    $('hist').innerHTML = r.istoriko.map(function (h) { return '<tr>' + h.map(function (c) { return '<td>' + esc(c) + '</td>'; }).join('') + '</tr>'; }).join('');
+  }, 'sMsg');
+}
+function chPass(who, id) {
+  if (!confirm('Αλλαγή κωδικού; Όλοι θα αποσυνδεθούν, και εσείς.')) return;
+  run('allagiKodikou', [T, who, $(id).value], function (r) { $(id).value = ''; alert(r.minima); logout(); }, 'sMsg');
+}
+function chMail() { run('allagiEmail', [T, $('s-mail').value], function (r) { msg('sMsg', r.minima, 'ok'); }, 'sMsg'); }
+
+(function () {
+  try { T = sessionStorage.getItem('t'); ROLE = sessionStorage.getItem('r'); OPT = JSON.parse(sessionStorage.getItem('o') || 'null'); } catch (x) {}
+  if (T && OPT) start(); else nav('login');
+})();
+</script>
+</body>
+</html>

@@ -75,7 +75,7 @@ def kefalida(r, nav_html):
 <header class="site-head">
  <div class="head-top wrap">
   <a class="brand" href="/" aria-label="{esc(r['onoma'])}, αρχική σελίδα">
-   <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><rect x="3" y="15" width="34" height="22" rx="3"/><path d="M1 17L20 4l19 13"/><rect x="16" y="24" width="8" height="13" rx="1.5"/></svg></span>
+   <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><defs><linearGradient id="bmG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a8fd6"/><stop offset="1" stop-color="#1e64a8"/></linearGradient></defs><circle cx="32" cy="32" r="31" fill="url(#bmG)"/><circle cx="32" cy="32" r="27.5" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.2"/><g stroke="#ffc94d" stroke-width="2.4" stroke-linecap="round"><path d="M32 8.5v3.5M20.5 13l2 2.8M43.5 13l-2 2.8M14.5 22.5l3.3 1.2M49.5 22.5l-3.3 1.2"/></g><circle cx="32" cy="24" r="7.5" fill="#ffc94d"/><path d="M32 40c-6-4-13-4.6-20-2.6v12.4c7-2 14-1.4 20 2.6z" fill="#f08a6c"/><path d="M32 40c6-4 13-4.6 20-2.6v12.4c-7-2-14-1.4-20 2.6z" fill="#4fb36a"/><path d="M32 37.5c-5.6-3.8-12-4.4-18.5-2.6v11.6c6.5-1.8 12.9-1.2 18.5 2.6z" fill="#fff"/><path d="M32 37.5c5.6-3.8 12-4.4 18.5-2.6v11.6c-6.5-1.8-12.9-1.2-18.5 2.6z" fill="#f3f8ff"/><path d="M32 37.5v11.6" stroke="#1e64a8" stroke-width="1.2"/><path d="M18 39.4c3.6-.7 7-.3 10 1M18 43c3.6-.7 7-.3 10 1M36 40.4c3-1.3 6.4-1.7 10-1M36 44c3-1.3 6.4-1.7 10-1" stroke="#9fb8d3" stroke-width="1.1" stroke-linecap="round" fill="none"/></svg></span>
    <span class="brand-txt"><span class="brand-name">{esc(r['onoma'])}</span><span class="brand-sub">{esc(r['periochi'])}</span></span>
   </a>
   <div class="head-tools">
@@ -96,6 +96,12 @@ def kefalida(r, nav_html):
 def ypo(r, etos):
     email = f'<li><a href="mailto:{esc(r["email"])}">{esc(r["email"])}</a></li>' if r.get('email') else ''
     return f'''<footer class="site-foot">
+ <div class="foot-art" aria-hidden="true">
+  <div class="wrap foot-art-in">
+   <div class="pencils">{"".join(f'<svg class="pc pc{i}" viewBox="0 0 20 90"><path d="M2 14h16v74H2z"/><path class="pc-w" d="M2 14L10 0l8 14z"/><path class="pc-t" d="M7 5.5L10 0l3 5.5z"/><path class="pc-e" d="M2 80h16v8H2z"/></svg>' for i in range(1,7))}</div>
+   <svg class="kite" viewBox="0 0 120 170"><g class="kite-b"><path d="M60 4L94 52 60 92 26 52z" fill="#f2b233"/><path d="M60 4L94 52H60z" fill="#e2663f"/><path d="M60 92L26 52h34z" fill="#3fa35a"/><path d="M60 4v88M26 52h68" stroke="#14324f" stroke-width="1.6"/><path class="kite-tail" d="M60 92c-10 16 10 24 0 40s8 22 2 34" fill="none" stroke="#e7eef6" stroke-width="1.6"/><path d="M52 112l8 4-8 4zM68 128l-8 4 8 4zM53 146l8 4-8 4z" fill="#5aa9ee"/></g></svg>
+  </div>
+ </div>
  <div class="wrap foot-grid">
   <div>
    <p class="foot-name">{esc(r['onoma'])}</p>
@@ -106,7 +112,6 @@ def ypo(r, etos):
    </ul>
   </div>
   <div>
-   <p class="foot-h">Γρήγορα</p>
    <ul class="foot-list">
     <li><a href="/zoi/anakoinoseis/">Ανακοινώσεις</a></li>
     <li><a href="/arxeio/">Αρχείο ανά σχολικό έτος</a></li>
@@ -115,7 +120,6 @@ def ypo(r, etos):
    </ul>
   </div>
   <div>
-   <p class="foot-h">Πληροφορίες</p>
    <ul class="foot-list">
     <li><a href="/prosvasimotita/">Δήλωση προσβασιμότητας</a></li>
     <li><a href="/aporrito/">Απόρρητο και cookies</a></li>
@@ -128,6 +132,15 @@ def ypo(r, etos):
   <p class="credit">Σχεδιασμός <a href="https://expertease.eu/webdesign/" target="_blank" rel="noopener">Expertease Designs<span class="sr-only"> (ανοίγει σε νέα καρτέλα)</span></a></p>
  </div>
 </footer>'''
+
+
+def omada_xromatos(path):
+    """Χρώμα ενότητας: ίδια σειρά παντού (γαλάζιο · πράσινο · ήλιος · κοραλλί · λιλά)."""
+    for pre, c in (('/sxoleio/', 'g1'), ('/zoi/', 'g2'), ('/anartiseis/', 'g2'), ('/arxeio/', 'g2'), ('/diktya/', 'g3'),
+                   ('/goneis/', 'g4'), ('/diagonismoi/', 'g5'), ('/syndesmoi/', 'g1'), ('/epikoinonia/', 'g2')):
+        if path.startswith(pre):
+            return c
+    return 'g1'
 
 
 def selida(*, r, nav_html, titlos, perigrafi, path, soma, h1_titlos=None, ld=None, og_eikona='',
@@ -164,8 +177,10 @@ def selida(*, r, nav_html, titlos, perigrafi, path, soma, h1_titlos=None, ld=Non
 <link rel="preload" href="/static/fonts/commissioner-greek-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/static/fonts/commissioner-greek-700.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/static/site.css?v={{V}}">
+<script>if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('anim-ready');setTimeout(function(){{document.documentElement.classList.add('rv-fallback')}},2500)</script>
 {extra_head}{lds}</head>
-<body>
+<body class="{omada_xromatos(path)}">
+<div class="read-pencil" aria-hidden="true"></div>
 {kefalida(r, nav_html)}
 <main id="kyrio" tabindex="-1">
 {crumbs}

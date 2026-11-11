@@ -8,10 +8,12 @@
   var mq = window.matchMedia('(max-width: 1180px)');
 
   /* ── ενεργό στοιχείο μενού */
-  var path = location.pathname;
-  document.querySelectorAll('.nav-list > li').forEach(function (li) {
+  var path = location.pathname.replace(/index\.html$/, '');
+  var lis = document.querySelectorAll('.nav-list > li');
+  lis.forEach(function (li, i) {
     var u = li.getAttribute('data-url');
-    if (u && (u === '/' ? path === '/' : path.indexOf(u) === 0)) {
+    var anartisi = /\/anartiseis\//.test(path) && /\/zoi\/$/.test(u || '');
+    if (u && (i === 0 ? path === u : (path.indexOf(u) === 0 || anartisi))) {
       li.classList.add('on');
       var a = li.querySelector('a');
       if (a) a.setAttribute('aria-current', 'page');
@@ -51,6 +53,107 @@
     if (e.key !== 'Escape') return;
     document.querySelectorAll('.has-sub.open').forEach(function (o) { o.classList.remove('open'); o.querySelector('.sub-toggle').setAttribute('aria-expanded', 'false'); });
   });
+
+  /* ── ήπια εμφάνιση με την κύλιση: ξεκινά λίγο πριν μπει το στοιχείο στην οθόνη (ΜΗ-34) */
+  var reveal = document.querySelectorAll('.rv');
+  if (document.documentElement.classList.contains('anim-ready') && 'IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (ent) {
+      ent.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var sibs = e.target.parentNode ? Array.prototype.indexOf.call(e.target.parentNode.children, e.target) : 0;
+        e.target.style.animationDelay = Math.min(sibs % 4, 3) * 70 + 'ms';
+        e.target.classList.add('rv-in'); io.unobserve(e.target);
+      });
+    }, { rootMargin: '0px 0px 12% 0px', threshold: 0 });
+    reveal.forEach(function (el) { io.observe(el); });
+  } else reveal.forEach(function (el) { el.classList.add('rv-in'); });
+
+  /* ── πρώτη οθόνη: αιωρούμενα γράμματα + αεροπλανάκι· παύση εκτός οθόνης (ΜΗ-37/42/47) */
+  var hero = document.querySelector('.hero');
+  var anim = document.documentElement.classList.contains('anim-ready');
+  if (hero && anim) {
+    var hio = new IntersectionObserver(function (e) { hero.classList.toggle('hero-off', !e[0].isIntersecting); }, { threshold: 0 });
+    hio.observe(hero);
+    document.addEventListener('visibilitychange', function () { hero.classList.toggle('hero-bg', document.hidden); });
+    requestAnimationFrame(function () { hero.classList.add('hero-go'); });
+    /* μετακίνηση με την κύλιση ΜΟΝΟ σε υπολογιστή (ΜΗ-35), ένα καρέ ανά κύλιση (ΜΗ-36) */
+    var desk = window.matchMedia('(min-width: 1069px) and (hover: hover)');
+    var hds = Array.prototype.slice.call(hero.querySelectorAll('.hd[data-p]'));
+    var ticking = false, hh = hero.offsetHeight;
+    function frame() {
+      ticking = false;
+      var y = Math.min(window.scrollY, hh);
+      hds.forEach(function (el) { el.style.translate = '0 ' + (y * parseFloat(el.getAttribute('data-p'))).toFixed(1) + 'px'; });
+    }
+    window.addEventListener('scroll', function () {
+      if (!desk.matches || ticking || window.scrollY > hh) return;
+      ticking = true; requestAnimationFrame(frame);
+    }, { passive: true });
+    window.addEventListener('resize', function () { hh = hero.offsetHeight; }, { passive: true });
+  }
+
+
+  /* ── αεροπλανάκι στις διαδρομές ανάμεσα στις ενότητες.
+     Υπολογιστής: ακολουθεί την κύλιση (θέσεις μετρημένες μία φορά, ένα καρέ ανά κύλιση).
+     Κινητό: μία πτήση 1,8 s όταν η διαδρομή μπει στην οθόνη (ΜΗ-35). */
+  var flights = Array.prototype.slice.call(document.querySelectorAll('.flight'));
+  if (flights.length && anim) {
+    var deskF = window.matchMedia('(min-width: 1069px) and (hover: hover)');
+    var F = flights.map(function (el) {
+      var path = el.querySelector('.fl-path'), L = path.getTotalLength();
+      return { el: el, path: path, L: L, plane: el.querySelector('.fl-plane'), st: el.querySelectorAll('.fl-st'),
+               flip: el.classList.contains('flight-r'), top: 0, h: 0, w: 0, done: false };
+    });
+    function measure() {
+      F.forEach(function (f) { var r = f.el.getBoundingClientRect(); f.top = r.top + window.scrollY; f.h = r.height; f.w = r.width; });
+    }
+    function place(f, p) {
+      p = Math.max(0, Math.min(1, p));
+      var e = p * f.L, a = f.path.getPointAtLength(e), b = f.path.getPointAtLength(Math.min(f.L, e + 2));
+      var sx = f.w / 1200, sy = f.h / 120;
+      var x = a.x * sx, y = a.y * sy, ang = Math.atan2((b.y - a.y) * sy, (b.x - a.x) * sx) * 180 / Math.PI;
+      if (f.flip) { x = f.w - x; ang = 180 - ang; }
+      f.plane.style.opacity = p > 0.01 ? 1 : 0;
+      f.plane.style.transform = 'translate(' + (x - 20).toFixed(1) + 'px,' + (y - 20).toFixed(1) + 'px) rotate(' + (ang + 22).toFixed(1) + 'deg)';
+      var th = [0.28, 0.55, 0.8];
+      for (var i = 0; i < f.st.length; i++) f.st[i].classList.toggle('on', p > (f.flip ? 1 - th[i] : th[i]));
+    }
+    measure();
+    window.addEventListener('resize', measure, { passive: true });
+    window.addEventListener('load', measure);
+    var tickF = false;
+    function frameF() {
+      tickF = false;
+      var vh = window.innerHeight, y = window.scrollY;
+      F.forEach(function (f) {
+        var p = (y + vh - f.top) / (vh * 0.85 + f.h);
+        if (p > -0.1 && p < 1.1) place(f, p);
+      });
+    }
+    window.addEventListener('scroll', function () {
+      if (!deskF.matches || tickF) return; tickF = true; requestAnimationFrame(frameF);
+    }, { passive: true });
+    if (deskF.matches) frameF();
+    var fio = new IntersectionObserver(function (ent) {
+      ent.forEach(function (en) {
+        if (!en.isIntersecting || deskF.matches) return;
+        var f = F[flights.indexOf(en.target)]; if (f.done) return; f.done = true; measure();
+        var t0 = null;
+        (function step(t) { if (!t0) t0 = t; var p = Math.min(1, (t - t0) / 1800); place(f, 1 - Math.pow(1 - p, 2)); if (p < 1) requestAnimationFrame(step); })(performance.now());
+        fio.unobserve(en.target);
+      });
+    }, { rootMargin: '0px 0px -15% 0px' });
+    flights.forEach(function (el) { fio.observe(el); });
+  }
+
+  /* ── υποσέλιδο: μολύβια και χαρταετός· ο χαρταετός ταλαντεύεται μόνο όσο φαίνεται */
+  var fa = document.querySelector('.foot-art');
+  if (fa && anim && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function (e) {
+      if (e[0].isIntersecting) fa.classList.add('in');
+      fa.classList.toggle('live', e[0].isIntersecting);
+    }, { rootMargin: '0px 0px 5% 0px' }).observe(fa);
+  }
 
   /* ── προβολή φωτογραφιών (<dialog>), βελάκια πληκτρολογίου και σάρωση */
   var links = Array.prototype.slice.call(document.querySelectorAll('a[data-lb]'));

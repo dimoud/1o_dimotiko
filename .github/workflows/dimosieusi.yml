@@ -1,4 +1,7 @@
 name: Δημοσίευση ιστότοπου
+# Τρέχει: (α) σε κάθε push, (β) όταν ο Πίνακας διαχείρισης δώσει εντολή (workflow_dispatch).
+# Αν υπάρχουν τα μυστικά DEDOMENA_URL και DEDOMENA_KLEIDI, το περιεχόμενο έρχεται από το Φύλλο Google·
+# αλλιώς (ή αν το Φύλλο είναι άδειο/μη διαθέσιμο) από τα αρχεία του αποθετηρίου.
 on:
   push:
     branches: [main]
@@ -20,8 +23,30 @@ jobs:
           python-version: '3.12'
       - id: pages
         uses: actions/configure-pages@v5
+      - name: Κρυφή μνήμη φωτογραφιών από το Drive
+        uses: actions/cache@v4
+        with:
+          path: .cache/meson
+          key: meson-${{ github.run_id }}
+          restore-keys: meson-
+      - name: Περιεχόμενο από τον Πίνακα διαχείρισης
+        id: fyllo
+        env:
+          DEDOMENA_URL: ${{ secrets.DEDOMENA_URL }}
+          DEDOMENA_KLEIDI: ${{ secrets.DEDOMENA_KLEIDI }}
+        run: |
+          if [ -z "$DEDOMENA_URL" ] || [ -z "$DEDOMENA_KLEIDI" ]; then echo "pigi=repo" >> "$GITHUB_OUTPUT"; exit 0; fi
+          pip install --quiet pillow
+          if python3 build/fere_apo_fyllo.py --url "$DEDOMENA_URL" --kleidi "$DEDOMENA_KLEIDI" --dedomena _dedomena --meson .cache/meson; then
+            echo "pigi=fyllo" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Το Φύλλο δεν διαβάστηκε· η παραγωγή γίνεται από τα αρχεία του αποθετηρίου."
+            echo "pigi=repo" >> "$GITHUB_OUTPUT"
+          fi
       - name: Παραγωγή στατικού HTML
-        run: python3 build/build.py --out _site --base "${{ steps.pages.outputs.base_path }}" --tomeas "${{ steps.pages.outputs.base_url }}"
+        run: |
+          if [ "${{ steps.fyllo.outputs.pigi }}" = "fyllo" ]; then EXTRA="--dedomena _dedomena --meson .cache/meson"; else EXTRA=""; fi
+          python3 build/build.py $EXTRA --out _site --base "${{ steps.pages.outputs.base_path }}" --tomeas "${{ steps.pages.outputs.base_url }}"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

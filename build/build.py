@@ -163,7 +163,7 @@ class Istotopos:
         e = self.meson.eikona(fot[0]['arxeio']) if fot else None
         eik = (f'<div class="card-img">{img_tag(e, "", sizes="(max-width: 734px) 100vw, 380px")}</div>' if e
                else '<div class="card-img card-img-none" aria-hidden="true"></div>')
-        return (f'<article class="card{" card-lg" if megali else ""}">{eik}<div class="card-body">'
+        return (f'<article class="card rv{" card-lg" if megali else ""}">{eik}<div class="card-body">'
                 f'<p class="card-meta"><time datetime="{p["imerominia"]}">{imerominia(p["imerominia"])}</time>'
                 f' · {esc(ENOTITES.get(p["enotita"], ""))}</p>'
                 f'<{heading} class="card-t"><a href="{p["url"]}">{esc(p["titlos"])}</a></{heading}></div></article>')
@@ -179,14 +179,14 @@ class Istotopos:
             omades.setdefault(p['sxoliko_etos'], []).append(p)
         out = []
         for et, ps in omades.items():
-            out.append(f'<section class="year-group" aria-labelledby="et-{et}"><h2 id="et-{et}" class="h-sec">Σχολικό έτος {et.replace("-", "–")}</h2>'
+            out.append(f'<section class="year-group" aria-labelledby="et-{et}"><h2 id="et-{et}" class="h-sec rv">Σχολικό έτος {et.replace("-", "–")}</h2>'
                        f'{self.lista(ps)}</section>')
         return ''.join(out)
 
     def kefali(self, etiketa, titlos, eisagogi=''):
         et = f'<p class="label">{esc(etiketa)}</p>' if etiketa else ''
         ei = f'<p class="lead">{eisagogi}</p>' if eisagogi else ''
-        return f'<header class="page-head wrap">{et}<h1>{esc(titlos)}</h1>{ei}</header>'
+        return f'<div class="page-band"><header class="page-head wrap">{et}<h1>{esc(titlos)}</h1>{ei}</header></div>'
 
     def gallery(self, fotos, titlos):
         items = []
@@ -200,7 +200,7 @@ class Istotopos:
                          f'{img_tag(e, alt, sizes="(max-width: 734px) 50vw, 300px")}</a>{cap}</figure>')
         if not items:
             return ''
-        return (f'<section class="gallery-wrap" aria-label="Φωτογραφίες"><h2 class="h-sec">Φωτογραφίες <span class="count">({len(items)})</span></h2>'
+        return (f'<section class="gallery-wrap" aria-label="Φωτογραφίες"><h2 class="h-sec rv">Φωτογραφίες <span class="count">({len(items)})</span></h2>'
                 f'<div class="gallery">{"".join(items)}</div></section>')
 
     def arxeia(self, rels, titlos='Έγγραφα'):
@@ -218,7 +218,7 @@ class Istotopos:
             meg = f'{kb / 1024:.1f} MB'.replace('.', ',') if kb > 1024 else f'{kb:.0f} KB'
             li.append(f'<li><a class="doc" href="{a["url"]}"><span class="doc-ext">{ext}</span>'
                       f'<span>{esc(onoma_arxeiou(onoma))}<span class="doc-size"> · {meg}</span></span></a></li>')
-        return f'<section class="docs"><h2 class="h-sec">{titlos}</h2><ul class="doc-list">{"".join(li)}</ul></section>' if li else ''
+        return f'<section class="docs"><h2 class="h-sec rv">{titlos}</h2><ul class="doc-list">{"".join(li)}</ul></section>' if li else ''
 
     def video(self, vids):
         out = []
@@ -227,7 +227,7 @@ class Istotopos:
                 out.append(f'<div class="yt" data-yt="{esc(v["id"])}"><button type="button" class="yt-btn">'
                            f'<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'
                            f'<span>Αναπαραγωγή βίντεο</span><small>Φορτώνει από το YouTube (youtube-nocookie.com)</small></button></div>')
-        return f'<section class="videos"><h2 class="h-sec">Βίντεο</h2>{"".join(out)}</section>' if out else ''
+        return f'<section class="videos"><h2 class="h-sec rv">Βίντεο</h2>{"".join(out)}</section>' if out else ''
 
     # ── σελίδες
     def anartisi(self, p, i):
@@ -247,15 +247,26 @@ class Istotopos:
             nav += f'<a class="pn-next" href="{nxt["url"]}"><span>Επόμενη</span>{esc(nxt["titlos"])}</a>'
         nav += '</div>'
         sxet = [x for x in self.ana_enotita[p['enotita']] if x is not p][:3]
-        sxet_html = (f'<section class="related wrap" aria-labelledby="sx"><h2 id="sx" class="h-sec">Από την ίδια ενότητα</h2>{self.lista(sxet)}</section>'
+        sxet_html = (f'<section class="related wrap" aria-labelledby="sx"><h2 id="sx" class="h-sec rv">Από την ίδια ενότητα</h2>{self.lista(sxet)}</section>'
                      if sxet else '')
         e0 = self.meson.eikona(fot[0]['arxeio']) if fot else None
+        dk_html = ''.join(f'<li><a href="/diktya/{d}/">{esc(dk[d]["titlos"])}</a></li>' for d in p.get('diktya', []) if d in dk)
+        tax = ', '.join(t if t in ('Ένταξη', 'Ολοήμερο') else t + '΄' for t in p.get('taxeis', []))
+        side = (f'<aside class="side"><div class="side-card rv"><p class="side-h">Στοιχεία</p><dl class="facts">'
+                f'<dt>Ημερομηνία</dt><dd>{imerominia(p["imerominia"])}</dd>'
+                f'<dt>Σχολικό έτος</dt><dd><a href="/arxeio/{p["sxoliko_etos"]}/">{p["sxoliko_etos"].replace("-", "–")}</a></dd>'
+                f'<dt>Ενότητα</dt><dd><a href="{url_enotitas(p["enotita"])}">{esc(ENOTITES.get(p["enotita"], ""))}</a></dd>'
+                + (f'<dt>Τάξεις</dt><dd>{esc(tax)}</dd>' if tax else '') + '</dl>'
+                + (f'<p class="side-h">Δίκτυα</p><ul class="side-list">{dk_html}</ul>' if dk_html else '') + '</div>'
+                + (f'<div class="side-card rv"><p class="side-h">Από την ίδια ενότητα</p><ul class="side-list">'
+                   + ''.join(f'<li><a href="{x["url"]}">{esc(x["titlos"])}</a><span>{imerominia(x["imerominia"])}</span></li>' for x in sxet)
+                   + '</ul></div>' if sxet else '') + '</aside>')
         soma = f'''<article class="post">
-<header class="page-head wrap"><p class="post-date">{imerologio(p["imerominia"])}<span>{imerominia(p["imerominia"])} · Σχολικό έτος {p["sxoliko_etos"].replace("-", "–")}</span></p>
-<h1>{esc(p["titlos"])}</h1><p class="tags">{"".join(tags)}</p></header>
-<div class="wrap post-body"><div class="prose">{keim}</div>
-{self.arxeia(p.get("arxeia", []))}{self.video(p.get("video"))}{self.gallery(fot, p["titlos"])}{nav}</div>
-</article>{sxet_html}'''
+<div class="page-band"><header class="page-head wrap"><p class="post-date">{imerologio(p["imerominia"])}<span>{imerominia(p["imerominia"])} · Σχολικό έτος {p["sxoliko_etos"].replace("-", "–")}</span></p>
+<h1>{esc(p["titlos"])}</h1><p class="tags">{"".join(tags)}</p></header></div>
+<div class="wrap page-grid"><div class="main"><div class="prose">{keim}</div>{self.arxeia(p.get("arxeia", []))}{self.video(p.get("video"))}</div>{side}</div>
+<div class="wrap post-body">{self.gallery(fot, p["titlos"])}{nav}</div>
+</article>'''
         perig = md.keimeno_xoris_morfi(p.get('keimeno', ''))[:155].rsplit(' ', 1)[0] + '…' if len(p.get('keimeno', '')) > 155 else md.keimeno_xoris_morfi(p.get('keimeno', '')) or p['titlos']
         ld = [{'@context': 'https://schema.org', '@type': 'Article', 'headline': p['titlos'][:110], 'datePublished': p['imerominia'],
                'inLanguage': 'el', 'author': {'@type': 'EducationalOrganization', 'name': r['onoma']},
@@ -283,7 +294,7 @@ class Istotopos:
             ps = self.ana_enotita.get(k)
             if not ps or k in ('goneis',):
                 continue
-            blocks.append(f'<section class="zone" aria-labelledby="z-{k}"><div class="zone-head"><h2 id="z-{k}" class="h-sec">{esc(ENOTITES[k])}</h2>'
+            blocks.append(f'<section class="zone" aria-labelledby="z-{k}"><div class="zone-head"><h2 id="z-{k}" class="h-sec rv">{esc(ENOTITES[k])}</h2>'
                           f'<a class="more" href="{url_enotitas(k)}">Όλες ({len(ps)})<span aria-hidden="true"> ›</span></a></div>{self.lista(ps[:3])}</section>')
         self.grapse('/zoi/', titlos='Σχολική Ζωή', perigrafi='Ανακοινώσεις, δράσεις, επισκέψεις, γιορτές και δημιουργίες των μαθητών του 1ου Δημοτικού Σχολείου Πολίχνης.',
                     soma=self.kefali('', 'Σχολική Ζωή', 'Ό,τι συμβαίνει στο σχολείο μας, ανά ενότητα.') + f'<div class="wrap">{"".join(blocks)}</div>')
@@ -293,10 +304,15 @@ class Istotopos:
         sim = f'<p class="note">{esc(s["simeiosi"])}</p>' if s.get('simeiosi') else ''
         sxet = ''
         if s.get('diktyo_sxetika') and self.ana_diktyo.get(s['diktyo_sxetika']):
-            sxet = f'<section class="related"><h2 class="h-sec">Σχετικές αναρτήσεις</h2>{self.lista(self.ana_diktyo[s["diktyo_sxetika"]][:6])}</section>'
-        soma = (self.kefali(omada_titlos, s['titlos']) +
-                f'<div class="wrap post-body"><div class="prose">{sim}{md.pros_html(s.get("keimeno", ""))}</div>'
-                f'{self.arxeia(s.get("arxeia", []))}{self.gallery(s.get("fotografies", []), s["titlos"])}{sxet}</div>')
+            sxet = f'<section class="related"><h2 class="h-sec rv">Σχετικές αναρτήσεις</h2>{self.lista(self.ana_diktyo[s["diktyo_sxetika"]][:6])}</section>'
+        adelfes = [x for x in sorted(self.sel, key=lambda x: x['seira']) if x['omada'] == s['omada']]
+        side = ('<aside class="side"><div class="side-card rv"><p class="side-h">' + esc(omada_titlos) + '</p><ul class="side-list side-nav">'
+                + ''.join(('<li class="on"><a aria-current="page" ' if x is s else '<li><a ') + f'href="{omada_url}{x["id"]}/">{esc(x["titlos"])}</a></li>' for x in adelfes)
+                + '</ul></div>' + self.epikoinonia_mikro() + '</aside>')
+        soma = (self.kefali(omada_titlos, s['titlos'], esc(s.get('perigrafi', ''))) +
+                f'<div class="wrap page-grid"><div class="main"><div class="prose">{sim}{md.pros_html(s.get("keimeno", ""))}</div>'
+                f'{self.arxeia(s.get("arxeia", []))}</div>{side}</div>'
+                f'<div class="wrap post-body">{self.gallery(s.get("fotografies", []), s["titlos"])}{sxet}</div>')
         self.grapse(path, titlos=s['titlos'], perigrafi=s['perigrafi'], soma=soma, diadromi=[(omada_titlos, omada_url)],
                     k=md.keimeno_xoris_morfi(s.get('keimeno', ''))[:400])
 
@@ -304,7 +320,7 @@ class Istotopos:
         items = [s for s in sorted(self.sel, key=lambda x: x['seira']) if s['omada'] == kod]
         for s in items:
             self.stathera(s, url, titlos)
-        li = ''.join(f'<li><a class="tile c{n % 5 + 1}" href="{url}{s["id"]}/"><span class="tile-t">{esc(s["titlos"])}</span>'
+        li = ''.join(f'<li class="rv"><a class="tile c{n % 5 + 1}" href="{url}{s["id"]}/"><span class="tile-t">{esc(s["titlos"])}</span>'
                      f'<span class="tile-d">{esc(s["perigrafi"])}</span></a></li>' for n, s in enumerate(items, 1))
         self.grapse(url, titlos=titlos, perigrafi=eisagogi, soma=self.kefali('', titlos, esc(eisagogi)) +
                     f'<div class="wrap"><ul class="tiles">{extra}{li}</ul></div>')
@@ -319,13 +335,13 @@ class Istotopos:
             yp = f'<p class="lead">{esc(d["ypotitlos"])}</p>' if d.get('ypotitlos') else ''
             ext = (f'<p><a class="btn" href="{esc(d["syndesmos"])}" target="_blank" rel="noopener">Επίσημη σελίδα του φορέα'
                    f'<span class="sr-only"> (ανοίγει σε νέα καρτέλα)</span></a></p>') if d.get('syndesmos') else ''
-            rel = (f'<section class="related"><h2 class="h-sec">Οι δράσεις μας</h2>{self.lista(ps)}</section>' if ps else '')
-            soma = (f'<header class="page-head wrap net-head {cc}"><div class="net-logo">{logo}</div><div><p class="label">{esc(d["eidos"])}</p>'
-                    f'<h1>{esc(d["titlos"])}</h1>{yp}</div></header>'
+            rel = (f'<section class="related"><h2 class="h-sec rv">Οι δράσεις μας</h2>{self.lista(ps)}</section>' if ps else '')
+            soma = (f'<div class="page-band"><header class="page-head wrap net-head {cc}"><div class="net-logo">{logo}</div><div><p class="label">{esc(d["eidos"])}</p>'
+                    f'<h1>{esc(d["titlos"])}</h1>{yp}</div></header></div>'
                     f'<div class="wrap post-body"><div class="prose"><p>{esc(d["perigrafi"])}</p>{ext}</div>{rel}</div>')
             self.grapse(path, titlos=d['titlos'], perigrafi=f'{d["eidos"]}: {d["perigrafi"]}'[:158], soma=soma,
                         diadromi=[('Δίκτυα και Προγράμματα', '/diktya/')])
-            tiles.append(f'<li><a class="net-tile {cc}" href="{path}"><span class="net-logo">{logo}</span>'
+            tiles.append(f'<li class="rv"><a class="net-tile {cc}" href="{path}"><span class="net-logo">{logo}</span>'
                          f'<span class="net-t">{esc(d["titlos"])}</span><span class="net-d">{esc(d["eidos"])}</span></a></li>')
         self.grapse('/diktya/', titlos='Τα Δίκτυα και τα Προγράμματά μας',
                     perigrafi='Τα διεθνή, ευρωπαϊκά και περιφερειακά δίκτυα και προγράμματα στα οποία συμμετέχει το 1ο Δημοτικό Σχολείο Πολίχνης.',
@@ -360,13 +376,20 @@ class Istotopos:
                 xs = [p for p in ps if p['enotita'] == k]
                 if xs:
                     omades[k] = xs
-            body = ''.join(f'<section class="zone"><h2 class="h-sec">{esc(ENOTITES[k])}</h2>{self.lista(xs)}</section>' for k, xs in omades.items())
+            body = ''.join(f'<section class="zone"><h2 class="h-sec rv">{esc(ENOTITES[k])}</h2>{self.lista(xs)}</section>' for k, xs in omades.items())
             self.grapse(path, titlos=f'Σχολικό έτος {et.replace("-", "–")}', perigrafi=f'Όλες οι αναρτήσεις του 1ου Δημοτικού Σχολείου Πολίχνης για το σχολικό έτος {et}.',
                         soma=self.kefali('Αρχείο', f'Σχολικό έτος {et.replace("-", "–")}', f'{len(ps)} αναρτήσεις') + f'<div class="wrap">{body}</div>',
                         diadromi=[('Αρχείο', '/arxeio/')])
             li.append(f'<li><a class="tile" href="{path}"><span class="tile-t">Σχολικό έτος {et.replace("-", "–")}</span><span class="tile-d">{len(ps)} αναρτήσεις</span></a></li>')
         self.grapse('/arxeio/', titlos='Αρχείο ανά σχολικό έτος', perigrafi='Οι αναρτήσεις του 1ου Δημοτικού Σχολείου Πολίχνης οργανωμένες ανά σχολικό έτος, από το 2024.',
                     soma=self.kefali('', 'Αρχείο ανά σχολικό έτος') + f'<div class="wrap"><ul class="tiles">{"".join(li)}</ul></div>')
+
+    def epikoinonia_mikro(self):
+        r = self.r
+        return (f'<div class="side-card side-contact rv"><p class="side-h">Επικοινωνία</p>'
+                f'<p><a href="tel:{r["tilefono"].replace(" ", "")}">{esc(r["tilefono"])}</a><br>'
+                + (f'<a href="mailto:{esc(r["email"])}">{esc(r["email"])}</a><br>' if r.get('email') else '')
+                + f'{esc(r["dieythynsi"])}</p></div>')
 
     def syndesmoi_html(self, mono_kyrioi=False):
         ICON = {'book': '<path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2zM4 5v16"/>',
@@ -381,18 +404,21 @@ class Istotopos:
 
         def li(s):
             dom = re.sub(r'^https?://(www\.)?', '', s['url']).rstrip('/')
-            return (f'<li><a class="link-tile" href="{esc(s["url"])}" target="_blank" rel="noopener">'
+            return (f'<li class="rv"><a class="link-tile" href="{esc(s["url"])}" target="_blank" rel="noopener">'
                     f'<svg aria-hidden="true" viewBox="0 0 24 24">{ICON.get(s["eikonidio"], ICON["screen"])}</svg>'
                     f'<span><span class="lt-t">{esc(s["titlos"])}</span><span class="lt-d">{esc(dom)}</span></span>'
                     f'<span class="sr-only"> (ανοίγει σε νέα καρτέλα)</span></a></li>')
         if mono_kyrioi:
             return '<ul class="links">' + ''.join(li(s) for v in omades.values() for s in v) + '</ul>'
-        return ''.join(f'<section class="zone"><h2 class="h-sec">{esc(o)}</h2><ul class="links">{"".join(li(s) for s in v)}</ul></section>' for o, v in omades.items())
+        return ''.join(f'<section class="zone"><h2 class="h-sec rv">{esc(o)}</h2><ul class="links">{"".join(li(s) for s in v)}</ul></section>' for o, v in omades.items())
 
     def arxiki(self, net_tiles):
         r = self.r
-        anak = self.ana_enotita.get('anakoinoseis', [])[:4]
-        anak_html = ''.join(f'<li><a class="notice" href="{p["url"]}">{imerologio(p["imerominia"])}<span class="notice-t">{esc(p["titlos"])}</span></a></li>' for p in anak)
+        anak = self.ana_enotita.get('anakoinoseis', [])[:5]
+        anak_html = ''.join(f'<li class="rv"><a class="notice" href="{p["url"]}">{imerologio(p["imerominia"])}'
+                            f'<span class="notice-body"><span class="notice-t">{esc(p["titlos"])}</span>'
+                            f'<span class="notice-m">{imerominia(p["imerominia"])} · Σχολικό έτος {p["sxoliko_etos"].replace("-", "–")}</span></span>'
+                            f'<span class="notice-go" aria-hidden="true">›</span></a></li>' for p in anak)
         zoi = [p for p in self.posts if p['enotita'] not in ('anakoinoseis', 'goneis') and p.get('fotografies')][:6]
         diak = self.ana_enotita.get('diagonismoi', [])[:3]
         hero_e = self.meson.eikona(r['fotografia_kentriki']) if r.get('fotografia_kentriki') else None
@@ -413,7 +439,12 @@ class Istotopos:
               'aed': '<rect x="4" y="5" width="16" height="14" rx="2"/><path d="M13 8l-3 5h4l-3 4"/>'}
         CC = {'vivliothiki': 'c1', 'kipos': 'c2', 'ksl': 'c4', 'aed': 'c3'}
         def kef(id_, titlos, keim, url):
-            return (f'<li><a class="chapter {CC[id_]}" href="{url}"><span class="ch-ic" aria-hidden="true"><svg viewBox="0 0 24 24">{IC[id_]}</svg></span>'
+            art = {'vivliothiki': 'spot_vivliothiki', 'kipos': 'spot_kipos', 'ksl': 'spot_ygeia', 'aed': 'spot_aed'}[id_]
+            if (RIZA / 'static' / 'eikones' / f'{art}.webp').exists():
+                ic = f'<span class="ch-art" aria-hidden="true"><img src="/static/eikones/{art}.webp" width="320" height="320" alt="" loading="lazy" decoding="async"></span>'
+            else:
+                ic = f'<span class="ch-ic" aria-hidden="true"><svg viewBox="0 0 24 24">{IC[id_]}</svg></span>'
+            return (f'<li class="rv"><a class="chapter {CC[id_]}" href="{url}">{ic}'
                     f'<span class="ch-t">{esc(titlos)}</span><span class="ch-d">{esc(keim)}</span>'
                     f'<span class="more" aria-hidden="true">Περισσότερα ›</span></a></li>')
         chapters = ''
@@ -424,39 +455,51 @@ class Istotopos:
         chapters += kef('ksl', 'KIDS SAVE LIVES', 'Πρώτες βοήθειες και ΚΑΡΠΑ για όλη τη σχολική κοινότητα.', '/diktya/kids-save-lives/')
         chapters += kef('aed', 'Υγεία και ασφάλεια', 'Το σχολείο διαθέτει αυτόματο εξωτερικό απινιδωτή (AED).',
                         '/sxoleio/ygeia-asfaleia/' if 'ygeia-asfaleia' in sel else '/diktya/kids-save-lives/')
+        deco = ('<div class="hero-deco" aria-hidden="true">'
+                '<span class="hd hd1" data-p="0.18">Α</span><span class="hd hd2" data-p="-0.12">β</span>'
+                '<span class="hd hd3" data-p="0.25">1</span><span class="hd hd4" data-p="-0.2">2</span>'
+                '<span class="hd hd5" data-p="0.1">+</span><span class="hd hd6" data-p="-0.16">Γ</span>'
+                '<svg class="hd hd-star" data-p="0.22" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 17l-6.1 3.4 1.5-6.8L2.2 9l6.9-.7z"/></svg>'
+                '<svg class="hd hd-pencil" data-p="-0.1" viewBox="0 0 64 16"><rect x="8" y="3" width="44" height="10" rx="2"/><path d="M52 3l10 5-10 5z"/><rect x="2" y="3" width="8" height="10" rx="2"/></svg>'
+                '<svg class="plane" viewBox="0 0 1200 400" preserveAspectRatio="none"><path class="plane-trail" d="M-40 330 C 200 300, 300 120, 520 170 S 820 330, 1010 120 S 1180 60, 1260 40"/></svg>'
+                '<svg class="plane-ico" viewBox="0 0 48 48"><path d="M3 22L45 4 33 44 23 28z" fill="#fff"/><path d="M23 28L45 4 15 25z" fill="#cfe2f6"/><path d="M3 22L45 4 33 44 23 28z" fill="none" stroke="#1e64a8" stroke-width="2.4" stroke-linejoin="round"/></svg>'
+                '</div>')
         soma = f'''<section class="hero">
+ {deco}
  <div class="wrap hero-grid">
   <div class="hero-txt">
    <p class="label">{esc(r['periochi'])}</p>
    <h1>{esc(r['onoma'])}</h1>
    <p class="lead"><strong>{esc(r['kalosorisma_titlos'])}</strong> {esc(r['kalosorisma'])}</p>
-   <p class="ctas"><a class="btn" href="/zoi/anakoinoseis/">Ανακοινώσεις</a> <a class="link-more" href="tel:{r['tilefono'].replace(' ', '')}">Τηλέφωνο {esc(r['tilefono'])}<span aria-hidden="true"> ›</span></a></p>
+   <p class="ctas"><a class="btn" href="/zoi/anakoinoseis/">Ανακοινώσεις</a> <a class="btn btn-ghost" href="tel:{r['tilefono'].replace(' ', '')}">Τηλέφωνο {esc(r['tilefono'])}</a></p>
   </div>
   <div class="hero-pic">{hero_img}</div>
  </div>
 </section>
+<div class="flight" aria-hidden="true"><svg viewBox="0 0 1200 120" preserveAspectRatio="none"><path class="fl-path" d="M-10 92 C 180 18, 330 112, 520 64 S 840 4, 1000 52 S 1120 96, 1170 34"/></svg><svg class="fl-plane" viewBox="0 0 48 48"><path d="M3 22L45 4 33 44 23 28z" fill="#fff"/><path d="M23 28L45 4 15 25z" fill="#cfe2f6"/><path d="M3 22L45 4 33 44 23 28z" fill="none" stroke="#1e64a8" stroke-width="2.6" stroke-linejoin="round"/></svg><span class="fl-st s1"></span><span class="fl-st s2"></span><span class="fl-st s3"></span></div>
 <section class="sec sec-nets" aria-labelledby="h-net"><div class="wrap">
- <div class="zone-head"><h2 id="h-net" class="h-sec">Τα Δίκτυα και τα Προγράμματά μας</h2><a class="more" href="/diktya/">Όλα τα δίκτυα<span aria-hidden="true"> ›</span></a></div>
+ <div class="zone-head zone-art"><img class="zone-pic" src="/static/eikones/spot_diktya.webp" width="320" height="320" alt="" aria-hidden="true" loading="lazy" decoding="async"><h2 id="h-net" class="h-sec rv">Τα Δίκτυα και τα Προγράμματά μας</h2><a class="more" href="/diktya/">Όλα τα δίκτυα<span aria-hidden="true"> ›</span></a></div>
  <ul class="nets">{"".join(net_tiles)}</ul>
 </div></section>
 <section class="band" aria-labelledby="h-anak"><div class="wrap">
- <div class="zone-head"><h2 id="h-anak" class="h-sec">Τελευταίες ανακοινώσεις</h2><a class="more" href="/zoi/anakoinoseis/">Όλες οι ανακοινώσεις<span aria-hidden="true"> ›</span></a></div>
+ <div class="zone-head"><h2 id="h-anak" class="h-sec rv">Τελευταίες ανακοινώσεις</h2><a class="more" href="/zoi/anakoinoseis/">Όλες οι ανακοινώσεις<span aria-hidden="true"> ›</span></a></div>
  <ul class="notices">{anak_html}</ul>
 </div></section>
 <section class="sec band-g" aria-labelledby="h-zoi"><div class="wrap">
- <div class="zone-head"><h2 id="h-zoi" class="h-sec">Η σχολική μας ζωή</h2><a class="more" href="/zoi/">Όλη η Σχολική Ζωή<span aria-hidden="true"> ›</span></a></div>
+ <div class="zone-head"><h2 id="h-zoi" class="h-sec rv">Η σχολική μας ζωή</h2><a class="more" href="/zoi/">Όλη η Σχολική Ζωή<span aria-hidden="true"> ›</span></a></div>
  {self.lista(zoi)}
 </div></section>
 {f"""<section class="sec" aria-labelledby="h-diak"><div class="wrap">
- <div class="zone-head"><h2 id="h-diak" class="h-sec">Διαγωνισμοί, διακρίσεις, βραβεία</h2><a class="more" href="/diagonismoi/">Όλες οι διακρίσεις<span aria-hidden="true"> ›</span></a></div>
+ <div class="zone-head"><h2 id="h-diak" class="h-sec rv">Διαγωνισμοί, διακρίσεις, βραβεία</h2><a class="more" href="/diagonismoi/">Όλες οι διακρίσεις<span aria-hidden="true"> ›</span></a></div>
  {self.lista(diak)}
 </div></section>""" if diak else ""}
+<div class="flight flight-r" aria-hidden="true"><svg viewBox="0 0 1200 120" preserveAspectRatio="none"><path class="fl-path" d="M-10 92 C 180 18, 330 112, 520 64 S 840 4, 1000 52 S 1120 96, 1170 34"/></svg><svg class="fl-plane" viewBox="0 0 48 48"><path d="M3 22L45 4 33 44 23 28z" fill="#fff"/><path d="M23 28L45 4 15 25z" fill="#cfe2f6"/><path d="M3 22L45 4 33 44 23 28z" fill="none" stroke="#1e64a8" stroke-width="2.6" stroke-linejoin="round"/></svg><span class="fl-st s1"></span><span class="fl-st s2"></span><span class="fl-st s3"></span></div>
 <section class="sec band" aria-labelledby="h-ch"><div class="wrap">
- <h2 id="h-ch" class="h-sec">Στο σχολείο μας</h2>
+ <h2 id="h-ch" class="h-sec rv">Στο σχολείο μας</h2>
  <ul class="chapters">{chapters}</ul>
 </div></section>
 <section class="sec" aria-labelledby="h-lnk"><div class="wrap">
- <div class="zone-head"><h2 id="h-lnk" class="h-sec">Χρήσιμοι σύνδεσμοι</h2><a class="more" href="/syndesmoi/">Όλοι οι σύνδεσμοι<span aria-hidden="true"> ›</span></a></div>
+ <div class="zone-head"><h2 id="h-lnk" class="h-sec rv">Χρήσιμοι σύνδεσμοι</h2><a class="more" href="/syndesmoi/">Όλοι οι σύνδεσμοι<span aria-hidden="true"> ›</span></a></div>
  {self.syndesmoi_html(True)}
 </div></section>
 {self.epikoinonia_html(h='h2')}'''
@@ -475,7 +518,7 @@ class Istotopos:
         email = f'<li><span class="ci-l">Email</span><a href="mailto:{esc(r["email"])}">{esc(r["email"])}</a></li>' if r.get('email') else ''
         q = f'{r["xartis_lat"]},{r["xartis_lng"]}'
         return f'''<section class="sec band" aria-labelledby="h-epik"><div class="wrap contact">
- <div><{h} id="h-epik" class="h-sec">Επικοινωνία</{h}>
+ <div><{h} id="h-epik" class="h-sec rv">Επικοινωνία</{h}>
   <ul class="contact-list">
    <li><span class="ci-l">Διεύθυνση</span>{esc(r['dieythynsi'])}</li>
    <li><span class="ci-l">Τηλέφωνο</span><a href="tel:{r['tilefono'].replace(' ', '')}">{esc(r['tilefono'])}</a></li>
