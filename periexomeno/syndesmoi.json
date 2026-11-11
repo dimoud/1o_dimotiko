@@ -1,0 +1,11 @@
+[
+ {"omada": "Ψηφιακά βιβλία και εκπαιδευτικό υλικό", "eikonidio": "book", "titlos": "Διαδραστικά Σχολικά Βιβλία", "url": "https://ebooks.edu.gr/ebooks/", "kyrios": true},
+ {"omada": "Ψηφιακά βιβλία και εκπαιδευτικό υλικό", "eikonidio": "book", "titlos": "Φωτόδεντρο", "url": "https://photodentro.edu.gr/"},
+ {"omada": "Ψηφιακά βιβλία και εκπαιδευτικό υλικό", "eikonidio": "book", "titlos": "Ψηφιακό Σχολείο", "url": "https://dschool.edu.gr/"},
+ {"omada": "Εκπαιδευτικές πλατφόρμες", "eikonidio": "screen", "titlos": "Πανελλήνιο Σχολικό Δίκτυο", "url": "https://www.sch.gr/", "kyrios": true},
+ {"omada": "Εκπαιδευτικές πλατφόρμες", "eikonidio": "screen", "titlos": "Ψηφιακή Εκπαιδευτική Πλατφόρμα e-me", "url": "https://e-me.edu.gr/", "kyrios": true},
+ {"omada": "Εκπαιδευτικές πλατφόρμες", "eikonidio": "screen", "titlos": "Ηλεκτρονική Σχολική Τάξη eClass", "url": "https://eclass.sch.gr/", "kyrios": true},
+ {"omada": "Εκπαιδευτικοί και θεσμικοί φορείς", "eikonidio": "building", "titlos": "Υπουργείο Παιδείας", "url": "https://www.minedu.gov.gr/", "kyrios": true},
+ {"omada": "Εκπαιδευτικοί και θεσμικοί φορείς", "eikonidio": "building", "titlos": "Ινστιτούτο Εκπαιδευτικής Πολιτικής", "url": "https://www.iep.edu.gr/"},
+ {"omada": "Ασφάλεια στο Διαδίκτυο", "eikonidio": "shield", "titlos": "Ενημερωτικός Κόμβος Ασφάλειας στο Διαδίκτυο του ΠΣΔ", "url": "https://internet-safety.sch.gr/", "kyrios": true}
+]
