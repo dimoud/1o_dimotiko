@@ -268,6 +268,18 @@ function syndesi(kodikos) {
   else if (h === p.getProperty('HASH_SYNTAKTI')) rolos = 'syntaktis';
   if (!rolos) {
     c.put('apotyxies', String(fails + 1), 900);
+    if (fails + 1 >= MEGISTES_APOTYXIES && !c.get('eidopoiisi_kleidoma')) {   // μία ειδοποίηση ανά κλείδωμα
+      c.put('eidopoiisi_kleidoma', '1', 900);
+      try {
+        eidopoiisi_('Προειδοποίηση: κλείδωσε η είσοδος στον Πίνακα διαχείρισης',
+          'Έγιναν ' + MEGISTES_APOTYXIES + ' αποτυχημένες προσπάθειες σύνδεσης με λάθος κωδικό στον Πίνακα διαχείρισης της ιστοσελίδας ' +
+          '(ώρα ' + Utilities.formatDate(new Date(), 'Europe/Athens', 'dd/MM/yyyy HH:mm') + ').\n\n' +
+          'Η είσοδος κλείδωσε για 15 λεπτά για όλους.\n\n' +
+          'Αν δεν ήταν κάποιος από εσάς που ξέχασε τον κωδικό, αλλάξτε τους κωδικούς: Πίνακας → Ρυθμίσεις → Κωδικοί, ' +
+          'ή στο Φύλλο: μενού Ιστοσελίδα → 2. Ορισμός κωδικών.');
+        katagrafi_('σύστημα', '', 'Κλείδωμα εισόδου μετά από ' + MEGISTES_APOTYXIES + ' λάθη', '', '');
+      } catch (e) {}
+    }
     Utilities.sleep(800);
     return { ok: false, minima: 'Λάθος κωδικός.' };
   }
@@ -553,7 +565,7 @@ function istoriko_(n) {
 function eidopoiisi_(thema, keimeno) {
   var to = P().getProperty('NOTIFY_EMAIL');
   if (!to) return;
-  try { MailApp.sendEmail(to, '[Ιστοσελίδα σχολείου] ' + thema, keimeno + '\n\nΠίνακας διαχείρισης: ' + ScriptApp.getService().getUrl()); } catch (e) {}
+  try { MailApp.sendEmail(to, '[Ιστοσελίδα σχολείου] ' + thema, keimeno + '\n\nΠίνακας διαχείρισης: ' + PINAKAS_URL + '\nΟδηγίες χρήσης: ' + ODIGIES_URL); } catch (e) {}
 }
 
 /* ═══════════════ Εισαγωγή παλιών αναρτήσεων (μία φορά, συνεχίζει αν διακοπεί) ═══════════════ */
