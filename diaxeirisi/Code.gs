@@ -442,11 +442,13 @@ function elegxos_(d, energeia) {
   if (l.length) throw new Error(l.join('\n'));
 }
 
-/* ═══════════════ Ανέβασμα αρχείων (φωτογραφίες, PDF) ═══════════════ */
+/* ═══════════════ Ανέβασμα αρχείων (φωτογραφίες, έγγραφα PDF/Word/Excel) ═══════════════ */
 
 function anevasma(token, onoma, mime, base64, eidos) {
   synedria_(token);
-  if (!/^image\/(jpeg|png|webp)$|^application\/pdf$/.test(mime)) throw new Error('Επιτρέπονται φωτογραφίες (JPG, PNG) και PDF.');
+  var DOC = /^application\/(pdf|msword|vnd\.ms-excel|vnd\.openxmlformats-officedocument\.(wordprocessingml\.document|spreadsheetml\.sheet)|vnd\.oasis\.opendocument\.(text|spreadsheet))$/;
+  if (!/^image\/(jpeg|png|webp)$/.test(mime) && !DOC.test(mime)) throw new Error('Επιτρέπονται φωτογραφίες (JPG, PNG) και έγγραφα PDF, Word, Excel.');
+  if (eidos === 'pdf' ? !DOC.test(mime) : !/^image\//.test(mime)) throw new Error('Λάθος είδος αρχείου.');
   var bytes = Utilities.base64Decode(base64);
   if (bytes.length > 15 * 1024 * 1024) throw new Error('Το αρχείο είναι μεγαλύτερο από 15 MB.');
   var root = DriveApp.getFolderById(P().getProperty('ROOT_ID'));

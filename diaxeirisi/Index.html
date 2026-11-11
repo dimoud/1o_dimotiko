@@ -281,14 +281,14 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
   <div class="secs" id="secs"></div>
 
   <details class="more">
-   <summary>➕ Περισσότερα (προαιρετικά): ημερομηνία, τάξεις, δίκτυα, PDF, βίντεο</summary>
+   <summary>➕ Περισσότερα (προαιρετικά): ημερομηνία, τάξεις, δίκτυα, έγγραφα, βίντεο</summary>
    <label style="font-weight:700">Ημερομηνία</label>
    <input class="field" id="f-imer" type="date" min="2024-01-01">
    <p style="font-weight:700;margin:14px 0 0">Τάξεις</p><div class="ckgrid" id="f-tax"></div>
    <p style="font-weight:700;margin:6px 0 0">Δίκτυα και προγράμματα</p><div class="ckgrid" id="f-dik"></div>
-   <p style="font-weight:700;margin:6px 0 6px">Έγγραφα PDF</p>
-   <button type="button" class="btn light" onclick="$('f-pdf').click()">📄 Προσθήκη PDF</button>
-   <input type="file" id="f-pdf" accept="application/pdf" multiple class="hidden" onchange="addPdfs(this,'post')">
+   <p style="font-weight:700;margin:6px 0 6px">Έγγραφα (PDF, Word, Excel)</p>
+   <button type="button" class="btn light" onclick="$('f-pdf').click()">📄 Προσθήκη εγγράφου</button>
+   <input type="file" id="f-pdf" accept="application/pdf,.pdf,.doc,.docx,.xls,.xlsx,.odt,.ods" multiple class="hidden" onchange="addPdfs(this,'post')">
    <div id="docs"></div>
    <label style="font-weight:700;display:block;margin-top:14px" for="f-vid">Βίντεο YouTube (σύνδεσμος)</label>
    <input class="field" id="f-vid" type="text" placeholder="https://youtu.be/…">
@@ -345,9 +345,9 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
    <button type="button" data-c="clear" title="Καθαρισμός μορφής">Καθαρισμός</button>
   </div>
   <div class="rte" id="prte" contenteditable="true" style="min-height:320px"></div>
-  <div class="step"><span class="n">4</span><h3>Έγγραφα PDF</h3></div>
-  <button type="button" class="btn light" onclick="$('p-pdf').click()">📄 Προσθήκη PDF</button>
-  <input type="file" id="p-pdf" accept="application/pdf" multiple class="hidden" onchange="addPdfs(this,'page')">
+  <div class="step"><span class="n">4</span><h3>Έγγραφα (PDF, Word, Excel)</h3></div>
+  <button type="button" class="btn light" onclick="$('p-pdf').click()">📄 Προσθήκη εγγράφου</button>
+  <input type="file" id="p-pdf" accept="application/pdf,.pdf,.doc,.docx,.xls,.xlsx,.odt,.ods" multiple class="hidden" onchange="addPdfs(this,'page')">
   <div id="pDocs"></div>
   <label class="tick" style="margin-top:18px"><input type="checkbox" id="p-draft"> Να μην εμφανίζεται ακόμα (πρόχειρο)</label>
   <div id="pMsg"></div>
@@ -883,18 +883,24 @@ function addPhotos(files) {
   d.addEventListener('drop', function (e) { addPhotos(e.dataTransfer.files); });
 })();
 function drawDocs(el, arr) {
-  $(el).innerHTML = arr.map(function (d, i) { return '<div class="post" style="cursor:default"><div class="thumb" style="width:56px;flex-basis:56px;height:56px">📄</div><div class="t"><b>' + esc(d.onoma) + '</b></div><button class="small-link" style="color:var(--coral)" onclick="rmDoc(\'' + el + '\',' + i + ')">Αφαίρεση</button></div>'; }).join('');
+  $(el).innerHTML = arr.map(function (d, i) { return '<div class="post" style="cursor:default"><div class="thumb" style="width:56px;flex-basis:56px;height:56px;font-size:12px;font-weight:700">' + esc(((d.onoma || '').split('.').pop() || '').toUpperCase().slice(0, 4)) + '</div><div class="t"><b>' + esc(d.onoma) + '</b></div><button class="small-link" style="color:var(--coral)" onclick="rmDoc(\'' + el + '\',' + i + ')">Αφαίρεση</button></div>'; }).join('');
 }
 function rmDoc(el, i) { var arr = el === 'docs' ? CUR.arxeia : PCUR.arxeia; arr.splice(i, 1); drawDocs(el, arr); }
+var DOC_MIME = { pdf: 'application/pdf', doc: 'application/msword', xls: 'application/vnd.ms-excel',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  odt: 'application/vnd.oasis.opendocument.text', ods: 'application/vnd.oasis.opendocument.spreadsheet' };
 function addPdfs(inp, where) {
   var files = Array.prototype.slice.call(inp.files); inp.value = '';
   var arr = where === 'page' ? PCUR.arxeia : CUR.arxeia, el = where === 'page' ? 'pDocs' : 'docs', m = where === 'page' ? 'pMsg' : 'edMsg';
   files.forEach(function (file) {
     if (file.size > 15 * 1024 * 1024) { msg(m, file.name + ': είναι μεγαλύτερο από 15 MB.', 'bad'); return; }
+    var ext = (file.name.split('.').pop() || '').toLowerCase(), mime = DOC_MIME[ext];
+    if (!mime) { msg(m, file.name + ': επιτρέπονται μόνο PDF, Word (doc, docx), Excel (xls, xlsx) και OpenDocument (odt, ods).', 'bad'); return; }
     var r = new FileReader(); BUSY++;
     r.onload = function () {
       google.script.run.withSuccessHandler(function (x) { BUSY--; arr.push({ id: x.id, onoma: x.onoma }); drawDocs(el, arr); msg(m, 'Το έγγραφο ανέβηκε.', 'ok'); })
-        .withFailureHandler(function (e) { BUSY--; msg(m, e.message, 'bad'); }).anevasma(T, file.name, 'application/pdf', String(r.result).split(',')[1], 'pdf');
+        .withFailureHandler(function (e) { BUSY--; msg(m, e.message, 'bad'); }).anevasma(T, file.name, mime, String(r.result).split(',')[1], 'pdf');
     };
     r.readAsDataURL(file);
   });
