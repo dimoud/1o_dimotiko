@@ -5,3 +5,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 _eisagogi/
+# Οδηγίες χρήσης: ιδιωτικές, μόνο στο Apps Script (Odigies.gs) και τοπικά
+diaxeirisi/ODIGIES.html
+diaxeirisi/Odigies.gs
+static/odigoi/

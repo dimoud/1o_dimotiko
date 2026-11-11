@@ -3,7 +3,8 @@
  *
  * Ζει δεμένο στο Φύλλο «Ιστοσελίδα σχολείου – Διαχείριση», στον λογαριασμό Google του σχολείου.
  * Ανάπτυξη: Εφαρμογή ιστού · Εκτέλεση ως: εγώ (λογαριασμός σχολείου) · Πρόσβαση: οποιοσδήποτε.
- * Η πρόσβαση ελέγχεται με δύο κωδικούς (Συντάκτης / Διεύθυνση) σε ΚΑΘΕ κλήση, στον διακομιστή.
+ * Η πρόσβαση ελέγχεται σε ΚΑΘΕ κλήση, στον διακομιστή: Διεύθυνση με τον κωδικό της· εκπαιδευτικοί με τον κωδικό
+ * Συντάκτη ΚΑΙ email που υπάρχει στη λίστα της Διεύθυνσης.
  *
  * Τα μυστικά ζουν στις Ιδιότητες σεναρίου (ποτέ στο Φύλλο, ποτέ στον περιηγητή):
  *   SALT, HASH_SYNTAKTI, HASH_DIEYTHYNSIS, API_KEY, GITHUB_TOKEN, GITHUB_REPO, NOTIFY_EMAIL, ROOT_ID
@@ -12,7 +13,7 @@
 var FYLLA = {
   anartiseis: ['id', 'katastasi', 'imerominia', 'titlos', 'enotita', 'taxeis', 'diktya', 'keimeno',
                'fotografies', 'arxeia', 'video', 'syggrafeas', 'synainesi', 'sxolio', 'url_slug',
-               'protasi', 'dimiourgia', 'tropopoiisi'],
+               'protasi', 'dimiourgia', 'tropopoiisi', 'arithmos'],
   selides: ['id', 'omada', 'seira', 'titlos', 'perigrafi', 'keimeno', 'fotografies', 'arxeia', 'simeiosi', 'katastasi', 'tropopoiisi'],
   istoriko: ['xronos', 'rolos', 'onoma', 'energeia', 'id', 'titlos']
 };
@@ -21,7 +22,7 @@ var ETIKETES = { id: 'Κωδικός', katastasi: 'Κατάσταση', imeromin
   taxeis: 'Τάξεις', diktya: 'Δίκτυα', keimeno: 'Κείμενο', fotografies: 'Φωτογραφίες', arxeia: 'Αρχεία', video: 'Βίντεο',
   syggrafeas: 'Συντάκτης', synainesi: 'Συγκατάθεση κηδεμόνων', sxolio: 'Σχόλιο Διεύθυνσης', url_slug: 'Διεύθυνση σελίδας',
   protasi: 'Πρόταση αλλαγής', dimiourgia: 'Δημιουργία', tropopoiisi: 'Τελευταία αλλαγή', omada: 'Ομάδα', seira: 'Σειρά',
-  perigrafi: 'Περιγραφή', simeiosi: 'Σημείωση', xronos: 'Χρόνος', rolos: 'Ρόλος', onoma: 'Όνομα', energeia: 'Ενέργεια' };
+  perigrafi: 'Περιγραφή', simeiosi: 'Σημείωση', arithmos: 'Α/Α', xronos: 'Χρόνος', rolos: 'Ρόλος', onoma: 'Όνομα', energeia: 'Ενέργεια' };
 function etiketa_(k) { return ETIKETES[k] || k; }
 function kleidi_(h) { for (var k in ETIKETES) if (ETIKETES[k] === h) return k; return h; }
 
@@ -35,7 +36,7 @@ var ENOTITES = [
 var TAXEIS = ['Α', 'Β', 'Γ', 'Δ', 'Ε', 'ΣΤ', 'Ένταξη', 'Ολοήμερο'];
 var DIKTYA = [['asfaleia-diadiktyo', 'Ασφάλεια στο Διαδίκτυο'], ['sima-aep', 'ΣΗ.ΜΑ.-Α.Ε.Π.'], ['oikologika', 'Οικολογικά Σχολεία'],
   ['thriving', 'Thriving Schools'], ['laxanokipoi', 'Σχολικοί Λαχανόκηποι'], ['kids-save-lives', 'KIDS SAVE LIVES']];
-var SYNEDRIA_ORES = 6, MEGISTES_APOTYXIES = 8;
+var SYNEDRIA_ORES = 6, MEGISTES_APOTYXIES = 8, KADOS_MERES = 40;
 
 var P = function () { return PropertiesService.getScriptProperties(); };
 
@@ -61,7 +62,7 @@ function onOpen() {
 }
 
 var PINAKAS_URL = 'https://1dim-polichnis.gr/diaxeirisi/';
-var ODIGIES_URL = 'https://1dim-polichnis.gr/diaxeirisi/odigies/';
+var ODIGIES_URL = 'https://1dim-polichnis.gr/diaxeirisi/#odigies';   // μόνο μετά από σύνδεση
 
 function anoigmaOdigion() {
   var h = HtmlService.createHtmlOutput(
@@ -76,7 +77,7 @@ function anoigmaPinaka() {
     '<div style="font:15px system-ui;line-height:1.5">' +
     '<p>Ο Πίνακας ανοίγει σε νέα καρτέλα. Αν δεν άνοιξε, πατήστε:</p>' +
     '<p><a href="' + PINAKAS_URL + '" target="_blank" style="font-size:17px;font-weight:700">' + PINAKAS_URL + '</a></p>' +
-    '<p style="color:#52606d">Σύνδεση με τον κωδικό Συντάκτη ή Διεύθυνσης. Δεν χρειάζεται λογαριασμός Google.</p></div>' +
+    '<p style="color:#52606d">Εκπαιδευτικοί: email (από τη λίστα της Διεύθυνσης) και κωδικός Συντάκτη. Διεύθυνση: μόνο ο κωδικός της.</p></div>' +
     '<script>window.open("' + PINAKAS_URL + '","_blank");</script>').setWidth(460).setHeight(190);
   SpreadsheetApp.getUi().showModalDialog(h, 'Πίνακας διαχείρισης');
 }
@@ -225,7 +226,8 @@ function rpc_(b) {
             apofasi: apofasi, anevasma: anevasma, mikrografia: mikrografia, mikrografies: mikrografies,
             afairesiFotografias: afairesiFotografias, listaSelidon: listaSelidon, apothikefsiSelidas: apothikefsiSelidas,
             rythmiseis: rythmiseis, allagiKodikou: allagiKodikou, allagiEmail: allagiEmail,
-            katastasiDimosiefsis: katastasiDimosiefsis };
+            katastasiDimosiefsis: katastasiDimosiefsis, odigies: odigies, odigosPdf: odigosPdf,
+            emailSyntakton: emailSyntakton, apothikefsiEmailSyntakton: apothikefsiEmailSyntakton };
   if (!b || !F[b.fn]) return out({ sfalma: 'άγνωστη κλήση' });
   try {
     var r = F[b.fn].apply(null, b.args || []);
@@ -259,14 +261,24 @@ function epitreptoArxeio_(id) {
 
 /* ═══════════════ Σύνδεση με κωδικό ═══════════════ */
 
-function syndesi(kodikos) {
+/* Εκπαιδευτικοί: εκτός από τον κωδικό Συντάκτη, το email τους πρέπει να είναι στη λίστα της Διεύθυνσης.
+ * Η Διεύθυνση μπαίνει μόνο με τον δικό της κωδικό. Η λίστα: Script Properties → EMAILS_SYNTAKTON (JSON). */
+function emailNorm_(e) { return String(e || '').trim().toLowerCase(); }
+function listaEmail_() { try { return JSON.parse(P().getProperty('EMAILS_SYNTAKTON') || '[]'); } catch (e) { return []; } }
+function vresEmail_(e) { e = emailNorm_(e); return listaEmail_().filter(function (x) { return x.email === e; })[0] || null; }
+
+function syndesi(kodikos, email) {
   var c = CacheService.getScriptCache(), p = P();
   var fails = Number(c.get('apotyxies') || 0);
   if (fails >= MEGISTES_APOTYXIES) return { ok: false, minima: 'Πολλές λάθος προσπάθειες. Δοκιμάστε ξανά σε 15 λεπτά.' };
   if (!p.getProperty('HASH_SYNTAKTI')) return { ok: false, minima: 'Δεν έχουν οριστεί κωδικοί. Ρωτήστε τη Διεύθυνση.' };
   var h = hash_((kodikos || '').trim()), rolos = null;
   if (h === p.getProperty('HASH_DIEYTHYNSIS')) rolos = 'diefthynsi';
-  else if (h === p.getProperty('HASH_SYNTAKTI')) rolos = 'syntaktis';
+  var melos = null;
+  if (!rolos && h === p.getProperty('HASH_SYNTAKTI')) {
+    melos = vresEmail_(email);
+    if (melos) rolos = 'syntaktis';
+  }
   if (!rolos) {
     c.put('apotyxies', String(fails + 1), 900);
     if (fails + 1 >= MEGISTES_APOTYXIES && !c.get('eidopoiisi_kleidoma')) {   // μία ειδοποίηση ανά κλείδωμα
@@ -282,11 +294,12 @@ function syndesi(kodikos) {
       } catch (e) {}
     }
     Utilities.sleep(800);
-    return { ok: false, minima: 'Λάθος κωδικός.' };
+    return { ok: false, minima: 'Λάθος κωδικός, ή το email δεν είναι στη λίστα της Διεύθυνσης. Οι εκπαιδευτικοί γράφουν και το email τους.' };
   }
   var token = Utilities.getUuid() + Utilities.getUuid();
-  c.put('s_' + token, JSON.stringify({ rolos: rolos, gen: p.getProperty('GENIA') || '0' }), SYNEDRIA_ORES * 3600);
-  return { ok: true, token: token, rolos: rolos, epiloges: epiloges_() };
+  c.put('s_' + token, JSON.stringify({ rolos: rolos, gen: p.getProperty('GENIA') || '0', email: melos ? melos.email : '', onoma: melos ? melos.onoma : '' }), SYNEDRIA_ORES * 3600);
+  if (melos) try { katagrafi_('syntaktis', melos.onoma || melos.email, 'Είσοδος (' + melos.email + ')', '', ''); } catch (e) {}
+  return { ok: true, token: token, rolos: rolos, onoma: melos ? melos.onoma : '', epiloges: epiloges_() };
 }
 
 function synedria_(token, apaitisi) {
@@ -295,6 +308,10 @@ function synedria_(token, apaitisi) {
   s = JSON.parse(s);
   if (s.gen !== (P().getProperty('GENIA') || '0')) throw new Error('Οι κωδικοί άλλαξαν. Μπείτε ξανά με τον νέο κωδικό.');
   if (apaitisi === 'diefthynsi' && s.rolos !== 'diefthynsi') throw new Error('Μόνο η Διεύθυνση μπορεί να το κάνει αυτό.');
+  if (s.rolos === 'syntaktis' && !vresEmail_(s.email)) {   // βγήκε από τη λίστα → αποσυνδέεται αμέσως
+    CacheService.getScriptCache().remove('s_' + token);
+    throw new Error('Το email σας δεν είναι πια στη λίστα της Διεύθυνσης. Ρωτήστε τη Διεύθυνση.');
+  }
   return s;
 }
 
@@ -308,12 +325,18 @@ function epiloges_() {
 
 function listaAnartiseon(token) {
   synedria_(token);
+  if (diavase_('anartiseis').some(function (r) { return !Number(r.arithmos); })) {
+    var lock = LockService.getScriptLock(); lock.waitLock(20000);
+    try { arithmisi_(); } finally { lock.releaseLock(); }
+  }
   return diavase_('anartiseis').map(function (r) {
     var fot = json_(r.fotografies, []);
     return { id: r.id, katastasi: r.katastasi, imerominia: hm_(r.imerominia), titlos: r.titlos, enotita: r.enotita,
+             taxeis: String(r.taxeis || ''), diktya: String(r.diktya || ''),
              syggrafeas: r.syggrafeas, sxolio: r.sxolio, exei_protasi: !!r.protasi,
              fotografies: fot.length, exofyllo: fot.length ? fot[0].id : '',
              tropopoiisi: r.tropopoiisi instanceof Date ? r.tropopoiisi.toISOString() : '',
+             arithmos: Number(r.arithmos) || 0, meres_kadou: r.katastasi === 'Αποσυρμένη' ? meresKadou_(r) : null,
              apospasma: String(r.keimeno || '').replace(/[*#|=\[\]()]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 140) };
   }).sort(function (a, b) { return a.imerominia < b.imerominia ? 1 : -1; });
 }
@@ -331,7 +354,8 @@ function morfi_(r) {
   return { id: r.id, katastasi: r.katastasi, imerominia: hm_(r.imerominia), titlos: r.titlos, enotita: r.enotita,
            taxeis: (r.taxeis || '').toString(), diktya: (r.diktya || '').toString(), keimeno: r.keimeno,
            fotografies: json_(r.fotografies, []), arxeia: json_(r.arxeia, []), video: r.video || '',
-           syggrafeas: r.syggrafeas, synainesi: r.synainesi === true || r.synainesi === 'TRUE', sxolio: r.sxolio || '' };
+           syggrafeas: r.syggrafeas, synainesi: r.synainesi === true || r.synainesi === 'TRUE', sxolio: r.sxolio || '',
+           arithmos: Number(r.arithmos) || 0, meres_kadou: r.katastasi === 'Αποσυρμένη' ? meresKadou_(r) : null };
 }
 
 /**
@@ -362,7 +386,7 @@ function apothikefsi(token, d, energeia) {
     if (energeia === 'dimosiefsi') { pedia.protasi = ''; pedia.sxolio = ''; }
     var id = r ? r.id : 'a' + Utilities.formatDate(now, 'Europe/Athens', 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
     if (r) grapse_(sh, r._row, pedia);
-    else { pedia.id = id; pedia.dimiourgia = now; prosthese_(sh, 'anartiseis', pedia); }
+    else { pedia.id = id; pedia.dimiourgia = now; pedia.arithmos = arithmisi_() + 1; prosthese_(sh, 'anartiseis', pedia); }
     katagrafi_(s.rolos, pedia.syggrafeas, { proxeiro: 'Αποθήκευση προχείρου', egkrisi: 'Αποστολή για έγκριση', dimosiefsi: 'Δημοσίευση' }[energeia], id, pedia.titlos);
     if (energeia === 'egkrisi') eidopoiisi_('Νέα ανάρτηση προς έγκριση: ' + pedia.titlos, (pedia.syggrafeas || 'Συντάκτης') + ' έστειλε ανάρτηση για έγκριση.');
   } finally { lock.releaseLock(); }
@@ -389,12 +413,17 @@ function apofasi(token, id, praxi, sxolio) {
       else grapse_(sh, r._row, { katastasi: 'Επιστράφηκε', sxolio: sxolio || '' });
     } else if (praxi === 'aposyrsi') {
       grapse_(sh, r._row, { katastasi: 'Αποσυρμένη', protasi: '', tropopoiisi: new Date() });
+      egkatastasiKadou_();
+    } else if (praxi === 'diagrafi') {      // οριστική διαγραφή: μόνο από τον κάδο
+      if (r.katastasi !== 'Αποσυρμένη') throw new Error('Οριστική διαγραφή γίνεται μόνο σε ανάρτηση που είναι στον κάδο.');
+      oristikiDiagrafi_(sh, diavase_('anartiseis'), [r], 'διεύθυνση', 'Οριστική διαγραφή');
+      return { ok: true, minima: 'Η ανάρτηση διαγράφηκε οριστικά. Οι φωτογραφίες της πήγαν στον Κάδο του Google Drive (30 ημέρες).' };
     } else if (praxi === 'epanafora') {
       grapse_(sh, r._row, { katastasi: 'Δημοσιευμένη', tropopoiisi: new Date() });
     } else throw new Error('Άγνωστη ενέργεια.');
   } finally { lock.releaseLock(); }
   katagrafi_('διεύθυνση', 'Διεύθυνση', { egkrisi: 'Έγκριση και δημοσίευση', epistrofi: 'Επιστροφή με σχόλιο', aposyrsi: 'Απόσυρση', epanafora: 'Επαναφορά' }[praxi], id, r.titlos);
-  var ap = { ok: true, minima: { egkrisi: 'Εγκρίθηκε. Θα φανεί στον ιστότοπο μέσα σε μισή ώρα.', epistrofi: 'Επιστράφηκε στον συντάκτη.', aposyrsi: 'Αποσύρθηκε. Θα φύγει από τον ιστότοπο μέσα σε μισή ώρα.', epanafora: 'Επανήλθε. Θα φανεί μέσα σε μισή ώρα.' }[praxi] };
+  var ap = { ok: true, minima: { egkrisi: 'Εγκρίθηκε. Θα φανεί στον ιστότοπο μέσα σε μισή ώρα.', epistrofi: 'Επιστράφηκε στον συντάκτη.', aposyrsi: 'Μπήκε στον κάδο ανακύκλωσης. Φεύγει από την ιστοσελίδα μέσα σε μισή ώρα και διαγράφεται οριστικά σε ' + KADOS_MERES + ' ημέρες· ως τότε επαναφέρεται με ένα πάτημα.', epanafora: 'Επανήλθε. Θα φανεί μέσα σε μισή ώρα.' }[praxi] };
   if (praxi !== 'epistrofi') ap.github = ksekinaDimosiefsi_();
   return ap;
 }
@@ -509,6 +538,31 @@ function allagiKodikou(token, poios, neos) {
   akyrosiSynedrion_();
   katagrafi_('διεύθυνση', 'Διεύθυνση', poios === 'syntaktis' ? 'Νέος κωδικός Συντάκτη' : 'Νέος κωδικός Διεύθυνσης', '', '');
   return { ok: true, minima: 'Ο κωδικός άλλαξε. Όλοι αποσυνδέθηκαν και μπαίνουν με τους ισχύοντες κωδικούς.' };
+}
+
+/** Λίστα εκπαιδευτικών με πρόσβαση (μόνο Διεύθυνση). */
+function emailSyntakton(token) {
+  synedria_(token, 'diefthynsi');
+  return listaEmail_();
+}
+/** lista: [{email, onoma}]. Όποιος αφαιρείται, αποσυνδέεται στην επόμενη κίνησή του. */
+function apothikefsiEmailSyntakton(token, lista) {
+  synedria_(token, 'diefthynsi');
+  var seen = {}, out = [];
+  (lista || []).forEach(function (x) {
+    var e = emailNorm_(x && x.email);
+    if (!e) return;
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) throw new Error('Μη έγκυρο email: ' + e);
+    if (seen[e]) return; seen[e] = 1;
+    out.push({ email: e, onoma: String(x.onoma || '').trim().slice(0, 80) });
+  });
+  if (out.length > 150) throw new Error('Έως 150 email.');
+  var prin = listaEmail_().map(function (x) { return x.email; });
+  P().setProperty('EMAILS_SYNTAKTON', JSON.stringify(out));
+  var nea = out.filter(function (x) { return prin.indexOf(x.email) < 0; }).length;
+  var fygan = prin.filter(function (e) { return !seen[e]; }).length;
+  katagrafi_('διεύθυνση', 'Διεύθυνση', 'Λίστα εκπαιδευτικών: ' + out.length + ' email (+' + nea + ', −' + fygan + ')', '', '');
+  return { ok: true, lista: out, minima: 'Αποθηκεύτηκε: ' + out.length + ' εκπαιδευτικοί με πρόσβαση.' + (fygan ? ' Όσοι αφαιρέθηκαν αποσυνδέονται αμέσως.' : '') };
 }
 
 function allagiEmail(token, email) {
@@ -769,8 +823,73 @@ function grapse_(sh, row, pedia) {
   });
 }
 
-function prosthese_(sh, k, pedia) {
-  sh.appendRow(FYLLA[k].map(function (h) { return pedia[h] === undefined ? '' : pedia[h]; }));
+function prosthese_(sh, k, pedia) {   // κατά τις επικεφαλίδες του Φύλλου (όχι κατά θέση: στήλες μπορεί να προστεθούν)
+  var kef = sh.getLastColumn() ? sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(kleidi_) : FYLLA[k];
+  sh.appendRow(kef.map(function (h) { return pedia[h] === undefined ? '' : pedia[h]; }));
+}
+
+/* ═══════════════ Αρίθμηση αναρτήσεων (Α/Α) ═══════════════
+ * Σταθερός αύξων αριθμός ανά ανάρτηση· οι παλιές αριθμούνται μία φορά κατά ημερομηνία. Επιστρέφει τον μεγαλύτερο. */
+function arithmisi_() {
+  var sh = fyllo_('anartiseis'), kef = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(kleidi_);
+  if (kef.indexOf('arithmos') < 0) {
+    sh.getRange(1, kef.length + 1).setValue(etiketa_('arithmos')).setFontWeight('bold').setBackground('#eef5fc');
+  }
+  var rows = diavase_('anartiseis'), max = 0;
+  rows.forEach(function (r) { var n = Number(r.arithmos) || 0; if (n > max) max = n; });
+  var leipoun = rows.filter(function (r) { return !Number(r.arithmos); });
+  if (!leipoun.length) return max;
+  leipoun.sort(function (a, b) { var x = hm_(a.imerominia), y = hm_(b.imerominia); return x < y ? -1 : x > y ? 1 : (a._row - b._row); })
+    .forEach(function (r) { max++; r.arithmos = max; });
+  // μία εγγραφή για όλη τη στήλη (όχι μία ανά γραμμή)
+  var col = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(kleidi_).indexOf('arithmos') + 1, last = sh.getLastRow();
+  if (last >= 2) {
+    var vals = sh.getRange(2, col, last - 1, 1).getValues(), ana = {};
+    rows.forEach(function (r) { ana[r._row] = r.arithmos; });
+    for (var i = 0; i < vals.length; i++) if (ana[i + 2] != null && ana[i + 2] !== '') vals[i][0] = ana[i + 2];
+    sh.getRange(2, col, last - 1, 1).setValues(vals);
+  }
+  return max;
+}
+
+/* ═══════════════ Κάδος ανακύκλωσης ═══════════════
+ * «Αφαίρεση» = Αποσυρμένη: φεύγει από την ιστοσελίδα, μένει στον κάδο KADOS_MERES ημέρες και επαναφέρεται με ένα πάτημα.
+ * Μετά: η γραμμή σβήνεται και οι φωτογραφίες/τα PDF της πάνε στον Κάδο του Drive (εκεί μένουν άλλες 30 ημέρες). */
+function meresKadou_(r) {
+  var t = r.tropopoiisi instanceof Date ? r.tropopoiisi : (r.tropopoiisi ? new Date(r.tropopoiisi) : null);
+  if (!t || isNaN(t)) return KADOS_MERES;
+  return Math.max(0, Math.ceil(KADOS_MERES - (new Date() - t) / 864e5));
+}
+function kadosAnakyklosis() {
+  var lock = LockService.getScriptLock(); if (!lock.tryLock(30000)) return 0;
+  try {
+    var sh = fyllo_('anartiseis'), rows = diavase_('anartiseis');
+    var lixi = rows.filter(function (r) { return r.katastasi === 'Αποσυρμένη' && r.tropopoiisi && meresKadou_(r) === 0; });
+    if (!lixi.length) return 0;
+    oristikiDiagrafi_(sh, rows, lixi, 'σύστημα', 'Οριστική διαγραφή από τον κάδο (' + KADOS_MERES + ' ημέρες)');
+    return lixi.length;
+  } finally { lock.releaseLock(); }
+}
+/* Σβήνει γραμμές και στέλνει στον Κάδο του Drive μόνο τα αρχεία που δεν χρησιμοποιεί άλλη ανάρτηση ή σελίδα. */
+function oristikiDiagrafi_(sh, rows, svisimo, rolos, energeia) {
+  var ids = svisimo.map(function (r) { return r.id; }), menoun = {};
+  rows.concat(diavase_('selides')).forEach(function (r) {
+    if (ids.indexOf(r.id) >= 0) return;
+    json_(r.fotografies, []).concat(json_(r.arxeia, [])).forEach(function (f) { menoun[f.id] = true; });
+  });
+  svisimo.slice().sort(function (a, b) { return b._row - a._row; }).forEach(function (r) {
+    json_(r.fotografies, []).concat(json_(r.arxeia, [])).forEach(function (f) {
+      if (f.id && !menoun[f.id]) { try { DriveApp.getFileById(f.id).setTrashed(true); } catch (e) {} }
+    });
+    sh.deleteRow(r._row);
+    katagrafi_(rolos, rolos === 'διεύθυνση' ? 'Διεύθυνση' : '', energeia, r.id, r.titlos);
+  });
+}
+function egkatastasiKadou_() {   // ημερήσιος έλεγχος του κάδου, μία φορά
+  try {
+    if (ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === 'kadosAnakyklosis'; })) return;
+    ScriptApp.newTrigger('kadosAnakyklosis').timeBased().everyDays(1).atHour(3).create();
+  } catch (e) {}
 }
 
 function hash_(s) {
@@ -788,3 +907,33 @@ function youtubeId_(s) {
 }
 
 function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(); }
+
+/* ═══════════════ Οδηγίες χρήσης: μόνο για συνδεδεμένους ═══════════════ */
+var ODIGOS_PDF_ONOMA = 'Οδηγός νέας ανάρτησης (για τον Πίνακα, μην το σβήσετε).pdf';
+function odigies(token) {
+  synedria_(token);
+  return { html: odigiesHtml_() };
+}
+/** Ο οδηγός PDF με εικόνες φυλάσσεται ιδιωτικά στον φάκελο Drive του Πίνακα. */
+function odigosPdf(token) {
+  synedria_(token);
+  var f = odigosPdfArxeio_();
+  if (!f) throw new Error('Ο οδηγός PDF δεν βρέθηκε. Ενημερώστε τον τεχνικό υπεύθυνο.');
+  return { onoma: 'Odigos_neas_anartisis.pdf', b64: Utilities.base64Encode(f.getBlob().getBytes()) };
+}
+function odigosPdfArxeio_() {
+  var id = P().getProperty('ODIGOS_PDF_ID');
+  if (id) { try { var f = DriveApp.getFileById(id); if (!f.isTrashed()) return f; } catch (e) {} }
+  return null;
+}
+/** Μία φορά, από τον editor: αντιγράφει τον οδηγό PDF στο Drive (ιδιωτικά). url: από πού να τον πάρει. */
+function egkatastasiOdigou(url) {
+  url = url || 'https://1dim-polichnis.gr/static/odigoi/Odigos_neas_anartisis.pdf';
+  if (odigosPdfArxeio_()) { console.log('υπάρχει ήδη: ' + odigosPdfArxeio_().getId()); return; }
+  var r = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+  if (r.getResponseCode() !== 200) throw new Error('λήψη ' + r.getResponseCode());
+  var root = DriveApp.getFolderById(P().getProperty('ROOT_ID'));
+  var f = root.createFile(r.getBlob().setName(ODIGOS_PDF_ONOMA));
+  P().setProperty('ODIGOS_PDF_ID', f.getId());
+  console.log('ok ' + f.getId() + ' ' + f.getSize());
+}

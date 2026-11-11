@@ -705,10 +705,7 @@ class Istotopos:
         d = self.out / 'diaxeirisi'
         d.mkdir(parents=True, exist_ok=True)
         (d / 'index.html').write_text(t, encoding='utf-8')
-        od = RIZA / 'diaxeirisi' / 'ODIGIES.html'
-        if od.exists():
-            (d / 'odigies').mkdir(exist_ok=True)
-            (d / 'odigies' / 'index.html').write_text(od.read_text(encoding='utf-8'), encoding='utf-8')
+        # Οι οδηγίες ΔΕΝ δημοσιεύονται: τις σερβίρει το Apps Script μόνο σε συνδεδεμένους (Odigies.gs).
 
 
 def onoma_arxeiou(f):
