@@ -1,7 +1,7 @@
 """Ελαφρύ Markdown → HTML για τα κείμενα του Φύλλου.
 
 Ό,τι γράφει ένας εκπαιδευτικός χωρίς να ξέρει Markdown πρέπει να βγαίνει σωστά:
-κενή γραμμή = νέα παράγραφος, «- » = λίστα. Επιπλέον: **έντονα**, *πλάγια*,
+κενή γραμμή = νέα παράγραφος, «- » = λίστα. Επιπλέον: **έντονα**, *πλάγια*, ==επισήμανση==,
 [κείμενο](https://…), ### υπότιτλος, γραμμές «| α | β |» = πίνακας,
 δύο κενά στο τέλος γραμμής = αλλαγή γραμμής. Γυμνές διευθύνσεις και email γίνονται σύνδεσμοι.
 Όλο το HTML του χρήστη διαφεύγει: ποτέ ακατέργαστο HTML από το Φύλλο στη σελίδα.
@@ -33,6 +33,7 @@ def inline(s):
     s = _URL.sub(lambda m: krata(_syndesmos(m.group(1), m.group(1).split('//', 1)[1].rstrip('/'))), s)
     s = _MAIL.sub(lambda m: krata(f'<a href="mailto:{m.group(1)}">{m.group(1)}</a>'), s)
     s = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', s)
+    s = re.sub(r'==(.+?)==', r'<mark>\1</mark>', s)
     s = re.sub(r'(?<![\w*])\*(?!\s)(.+?)(?<!\s)\*(?![\w*])', r'<em>\1</em>', s)
     s = s.replace('  \n', '<br>\n')
     s = re.sub(r'\x00(\d+)\x00', lambda m: kratimena[int(m.group(1))], s)
@@ -113,5 +114,5 @@ def pros_html(keimeno, epipedo_titlou=2):
 def keimeno_xoris_morfi(keimeno):
     """Για περιγραφές/ευρετήριο: χωρίς σύμβολα Markdown."""
     s = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', keimeno or '')
-    s = re.sub(r'[*#|]+', ' ', s)
+    s = re.sub(r'[*#|=]+', ' ', s)
     return re.sub(r'\s+', ' ', s).strip()

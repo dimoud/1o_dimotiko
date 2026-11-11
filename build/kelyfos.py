@@ -95,6 +95,8 @@ def kefalida(r, nav_html):
 
 
 def ypo(r, etos):
+    cookies = ' · <a class="foot-admin" href="#" data-cc-open>Ρυθμίσεις cookies</a>' if r.get('ga4') else ''
+    admin = ('\n  <p><a class="foot-admin" href="' + esc(r['forma_url']) + '" rel="nofollow">🔒 Διαχείριση ιστοσελίδας</a>' + cookies + '</p>') if r.get('forma_url') else ''
     email = f'<li><a href="mailto:{esc(r["email"])}">{esc(r["email"])}</a></li>' if r.get('email') else ''
     return f'''<footer class="site-foot">
  <div class="foot-art" aria-hidden="true">
@@ -129,7 +131,7 @@ def ypo(r, etos):
   </div>
  </div>
  <div class="wrap foot-base">
-  <p>Τα κείμενα και οι φωτογραφίες ανήκουν στη σχολική μονάδα· η αναδημοσίευση φωτογραφιών μαθητών δεν επιτρέπεται.</p>
+  <p>Τα κείμενα και οι φωτογραφίες ανήκουν στη σχολική μονάδα· η αναδημοσίευση φωτογραφιών μαθητών δεν επιτρέπεται.</p>{admin}
  </div>
  <hr class="ec-rule">
  <div class="expertease-credit">
@@ -163,10 +165,17 @@ def omada_xromatos(path):
     return 'g1'
 
 
+GA_HEAD = ('<script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments);}}'
+           "gtag('consent','default',{{analytics_storage:'denied',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',wait_for_update:500}});</script>\n")
+
+
 def selida(*, r, nav_html, titlos, perigrafi, path, soma, h1_titlos=None, ld=None, og_eikona='', extra_tail='',
            diadromi=None, etos=2026, extra_head='', robots='index,follow', lorida=''):
     """Πλήρης σελίδα HTML. path: σχετική διεύθυνση π.χ. /zoi/anakoinoseis/."""
     tomeas = r['tomeas'].rstrip('/')
+    ga_attr = ' data-ga="' + esc(r['ga4']) + '"' if r.get('ga4') else ''
+    ga_head = GA_HEAD if r.get('ga4') else ''
+    ga_tail = '<script src="/static/consent.js?v={V}" defer></script>\n' if r.get('ga4') else ''
     titlos_tab = titlos if path == '/' else f'{titlos} | {r["onoma"]}'
     crumbs = ''
     if diadromi:
@@ -177,7 +186,7 @@ def selida(*, r, nav_html, titlos, perigrafi, path, soma, h1_titlos=None, ld=Non
         lds += '<script type="application/ld+json">' + json.dumps(x, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/') + '</script>\n'
     og = f'<meta property="og:image" content="{esc(tomeas + og_eikona)}">' if og_eikona else ''
     return f'''<!DOCTYPE html>
-<html lang="el">
+<html lang="el"{ga_attr}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -199,7 +208,7 @@ def selida(*, r, nav_html, titlos, perigrafi, path, soma, h1_titlos=None, ld=Non
 <link rel="stylesheet" href="/static/site.css?v={{V}}">
 <link rel="stylesheet" href="/static/expertease-credit.css?v={{V}}">
 <script>if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('anim-ready');setTimeout(function(){{document.documentElement.classList.add('rv-fallback')}},2500)</script>
-{extra_head}{lds}</head>
+{ga_head}{extra_head}{lds}</head>
 <body class="{omada_xromatos(path)}">
 <div class="read-pencil" aria-hidden="true"></div>
 {kefalida(r, nav_html)}
@@ -210,6 +219,6 @@ def selida(*, r, nav_html, titlos, perigrafi, path, soma, h1_titlos=None, ld=Non
 {f'<aside class="net-strip" aria-label="Τα Δίκτυα και τα Προγράμματά μας"><div class="wrap"><p class="ns-h">Τα Δίκτυα και τα Προγράμματά μας</p><ul>{lorida}</ul></div></aside>' if lorida else ''}
 {ypo(r, etos)}
 <script src="/static/site.js?v={{V}}" defer></script>
-{extra_tail}</body>
+{ga_tail}{extra_tail}</body>
 </html>
 '''

@@ -565,3 +565,5 @@ html.rv-fallback .pc,html.rv-fallback .kite{transform:none;opacity:1}
 .map-wide{aspect-ratio:auto;height:380px;margin-top:32px;box-shadow:0 10px 30px rgba(27,38,51,.08)}
 .map-link{margin:8px 0 0}
 @media (max-width:900px){.contact{gap:24px}.map-wide{height:300px}}
+.prose mark{background:#fff1b8;color:inherit;padding:0 .2em;border-radius:3px}
+.foot-admin{color:#c8d6e4!important;text-decoration:none;font-size:13px;display:inline-flex;align-items:center;min-height:44px}.foot-admin:hover{color:#fff!important;text-decoration:underline}

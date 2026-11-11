@@ -21,7 +21,7 @@ var FORMA = {
   dieythynsi: 'Σχολείου 1, 565 33 Πολίχνη Θεσσαλονίκης',
   tilefono: '2310 654739',
   fax: '2310 587767',
-  site: 'https://www.expertease.eu/1o_dimotiko/',
+  site: 'https://1dim-polichnis.gr/',
   logo: 'https://www.expertease.eu/1o_dimotiko/email-logo.png',
   mple: '#1e64a8', skouro: '#14324f',
   megisto: 5000
