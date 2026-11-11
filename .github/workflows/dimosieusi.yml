@@ -6,6 +6,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      xoris_sygkrisi:
+        description: 'Χωρίς σύγκριση αριθμού αναρτήσεων (μόνο αν σβήσατε σκόπιμα πολλές)'
+        type: boolean
+        default: false
 permissions:
   contents: read
   pages: write
@@ -30,6 +35,12 @@ jobs:
           path: .cache/meson
           key: meson-${{ github.run_id }}
           restore-keys: meson-
+      - name: Τελευταία καλή λήψη του Φύλλου (εφεδρεία αν το Φύλλο δεν απαντήσει)
+        uses: actions/cache@v4
+        with:
+          path: .cache/dedomena-kalo
+          key: dedomena-${{ github.run_id }}
+          restore-keys: dedomena-
       - name: Περιεχόμενο από τον Πίνακα διαχείρισης
         id: fyllo
         env:
@@ -37,16 +48,29 @@ jobs:
           DEDOMENA_KLEIDI: ${{ secrets.DEDOMENA_KLEIDI }}
         run: |
           if [ -z "$DEDOMENA_URL" ] || [ -z "$DEDOMENA_KLEIDI" ]; then echo "pigi=repo" >> "$GITHUB_OUTPUT"; exit 0; fi
-          if python3 build/fere_apo_fyllo.py --url "$DEDOMENA_URL" --kleidi "$DEDOMENA_KLEIDI" --dedomena _dedomena --meson .cache/meson; then
-            echo "pigi=fyllo" >> "$GITHUB_OUTPUT"
-          else
-            echo "::warning::Το Φύλλο δεν διαβάστηκε· η παραγωγή γίνεται από τα αρχεία του αποθετηρίου."
-            echo "pigi=repo" >> "$GITHUB_OUTPUT"
+          # έως 3 προσπάθειες: τα περισσότερα σφάλματα της Google είναι στιγμιαία
+          for i in 1 2 3; do
+            if python3 build/fere_apo_fyllo.py --url "$DEDOMENA_URL" --kleidi "$DEDOMENA_KLEIDI" --dedomena _dedomena --meson .cache/meson; then
+              rm -rf .cache/dedomena-kalo && mkdir -p .cache && cp -r _dedomena .cache/dedomena-kalo
+              echo "pigi=fyllo" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+            echo "::warning::Το Φύλλο δεν διαβάστηκε (προσπάθεια $i/3)"; sleep $((i * 20))
+          done
+          if [ -f .cache/dedomena-kalo/anartiseis.json ]; then
+            echo "::warning::Το Φύλλο δεν απάντησε· η ιστοσελίδα χτίζεται από την τελευταία καλή λήψη του."
+            rm -rf _dedomena && cp -r .cache/dedomena-kalo _dedomena
+            echo "pigi=fyllo" >> "$GITHUB_OUTPUT"; exit 0
           fi
+          echo "::error::Το Φύλλο δεν διαβάστηκε και δεν υπάρχει αποθηκευμένη λήψη· η δημοσίευση σταματά για να μη χαθούν αναρτήσεις. Μένει online η προηγούμενη έκδοση."
+          exit 1
       - name: Παραγωγή στατικού HTML
         run: |
           if [ "${{ steps.fyllo.outputs.pigi }}" = "fyllo" ]; then EXTRA="--dedomena _dedomena --meson .cache/meson"; else EXTRA=""; fi
           python3 build/build.py $EXTRA --out _site --base "${{ steps.pages.outputs.base_path }}" --tomeas "${{ steps.pages.outputs.base_url }}"
+      - name: Έλεγχος πριν ανέβει (αλλιώς μένει η προηγούμενη έκδοση)
+        run: |
+          if [ "${{ inputs.xoris_sygkrisi }}" = "true" ]; then X="--xoris-sygkrisi"; else X=""; fi
+          python3 build/elegxos_dimosiefsis.py _site --live "${{ steps.pages.outputs.base_url }}" $X
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

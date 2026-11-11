@@ -12,6 +12,30 @@ html{font-size:18px}
 body{margin:0;font:1rem/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
 button,input,select,textarea{font:inherit;color:inherit}
 .hidden{display:none!important}
+.wrap-ed{max-width:1180px}
+.edbox{position:relative}
+.edbox.edfull{position:fixed;inset:0;z-index:45;background:#fff;overflow:auto;padding:12px 16px 40px}
+.edbox.edfull .rte{min-height:calc(100vh - 260px);max-width:1100px;margin:0 auto}
+body.noscroll{overflow:hidden}
+.tbx{position:sticky;top:0;z-index:6;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end;background:#f4f8fc;border:2px solid var(--line);border-bottom:0;border-radius:14px 14px 0 0;padding:10px 12px 12px}
+.edbox .tbx + .rte{border-top-left-radius:0;border-top-right-radius:0;margin-top:0}
+.tb-odigia{width:100%;margin:0 0 2px;font-size:15px;color:var(--ink2)}
+.tg{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tg-h{width:100%;font-size:13px;font-weight:700;color:var(--ink2);text-transform:none;margin-bottom:-2px}
+.tg-more,.tg-pin{width:100%;border-top:1px dashed var(--line);padding-top:8px}
+.tbtn{min-height:46px;display:inline-flex;align-items:center;gap:7px;padding:0 13px;border:0;border-radius:10px;background:#fff;box-shadow:inset 0 0 0 1px #c9d5e2;font:inherit;font-size:16px;font-weight:600;color:var(--ink);cursor:pointer}
+.tbtn:hover{background:var(--blue-bg)}
+.tbtn:focus-visible{outline:3px solid #f2b233;outline-offset:1px}
+.tbtn[aria-pressed="true"],.tbtn[aria-expanded="true"]{background:var(--blue);color:#fff;box-shadow:none}
+.tbtn svg{flex:none}
+.tb-l{font-size:19px;min-width:20px;text-align:center;line-height:1}
+.tb-mk{background:#fff1b8;border-radius:5px;padding:2px;display:inline-flex}
+.fpop.fpop-list{display:flex;flex-direction:column;gap:4px;min-width:270px;padding:8px;grid-template-columns:none}
+.fpop.fpop-list button{display:flex;align-items:center;gap:10px;min-height:48px;padding:0 14px;border:0;border-radius:10px;background:#fff;font:inherit;font-size:17px;text-align:left;cursor:pointer;color:var(--ink)}
+.fpop.fpop-list button:hover,.fpop.fpop-list button:focus-visible{background:var(--blue-bg)}
+.swc{width:22px;height:22px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 2px rgba(0,0,0,.15)}
+.edbox .rte{font-size:17px;min-height:360px}
+
 .t-kokkino{color:#c62828}.t-mple{color:#1565c0}.t-prasino{color:#2e7d32}.t-portokali{color:#bf360c}.t-mov{color:#6a1b9a}.t-kafe{color:#6d4c41}.t-gkri{color:#546e7a}
 .t-mikro{font-size:.875em}.t-megalo{font-size:1.25em}.t-polymegalo{font-size:1.6em;line-height:1.25}
 .t-patoures{font-family:Georgia,"Times New Roman","Noto Serif",serif}.t-grafomixani{font-family:"Courier New",Courier,"Noto Sans Mono",monospace}.t-paidiki{font-family:"Comic Sans MS","Comic Neue","Segoe Print",sans-serif}
@@ -166,7 +190,11 @@ h2{font-size:1.35rem;margin:0 0 6px}
 .modal{position:fixed;inset:0;background:rgba(20,30,45,.55);display:flex;align-items:flex-end;justify-content:center;z-index:50;padding:12px}
 .modal .card{max-width:880px;width:100%;max-height:92vh;overflow:auto;margin:0}
 @media(min-width:700px){.modal{align-items:center}}
-.pub{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:40;width:min(560px,calc(100% - 24px));background:#fff;border-radius:18px;box-shadow:0 12px 34px rgba(0,0,0,.18);padding:14px 16px 12px;border:2px solid var(--blue-bg)}
+.pub{position:fixed;right:16px;bottom:16px;z-index:40;width:min(360px,calc(100% - 24px));background:#fff;border-radius:16px;box-shadow:0 10px 28px rgba(0,0,0,.16);padding:12px 14px 10px;border:2px solid var(--blue-bg);font-size:.92rem}
+.pub .st{font-size:.78rem!important}
+@media(max-width:600px){.pub{right:12px;left:12px;width:auto;bottom:10px}}
+.ygeia{margin:14px 0 0;padding:12px 16px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px var(--line);line-height:1.5}
+.ygeia.ok{background:var(--green-bg)}.ygeia.on{background:var(--blue-bg)}.ygeia.bad{background:var(--coral-bg)}
 .pub b{display:block;margin-bottom:8px}
 .pub .st{display:flex;gap:6px;align-items:center;font-size:.85rem;color:var(--ink2)}
 .pub .st span{flex:1;text-align:center;padding:6px 4px;border-radius:10px;background:var(--bg)}
@@ -229,6 +257,7 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
  <p class="muted" id="helloSub">Τι θέλετε να κάνετε;</p>
  <div id="homeMsg"></div>
  <div class="tiles" id="tiles"></div>
+ <div id="ygeia" class="ygeia hidden" role="status"></div>
  <div class="card">
   <h2>Πώς ανεβαίνει μια ανάρτηση</h2>
   <p class="muted" style="margin:0">1. Πατάτε <b>Νέα ανάρτηση</b>. 2. Γράφετε τίτλο και κείμενο. 3. Προσθέτετε φωτογραφίες. 4. Πατάτε <b>Αποστολή</b>. Η Διεύθυνση την ελέγχει και τη δημοσιεύει.</p>
@@ -263,7 +292,7 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
 </section>
 
 <!-- ═══ Συντάκτης ανάρτησης ═══ -->
-<section id="v-edit" class="wrap hidden">
+<section id="v-edit" class="wrap wrap-ed hidden">
  <div class="card">
   <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
    <h2 id="edTitle" style="margin:0">Νέα ανάρτηση</h2><span class="badge" id="edState"></span>
@@ -274,30 +303,7 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
   <input class="title-in" id="f-titl" type="text" maxlength="160" placeholder="π.χ. Επίσκεψη της Γ΄ τάξης στο Μουσείο Φυσικής Ιστορίας">
 
   <div class="step"><span class="n">2</span><h3>Κείμενο</h3></div>
-  <div class="toolbar" id="tb">
-   <button type="button" data-c="bold" title="Έντονα"><b>Ε</b></button>
-   <button type="button" data-c="italic" title="Πλάγια"><i>Π</i></button>
-   <button type="button" data-c="mark" title="Επισήμανση με κίτρινο" style="background:#fff1b8">Επισήμανση</button>
-   <button type="button" data-c="ypo" title="Υπογράμμιση των λέξεων που σημαδέψατε"><u>Υπογράμμιση</u></button>
-   <button type="button" data-c="xroma" title="Χρώμα γραμμάτων: σημαδέψτε τις λέξεις και διαλέξτε χρώμα">🎨 Χρώμα ▾</button>
-   <select data-k="megethos" title="Μέγεθος γραμμάτων: σημαδέψτε τις λέξεις και διαλέξτε μέγεθος" aria-label="Μέγεθος γραμμάτων"><option value="">Μέγεθος…</option><option value="mikro">Μικρά</option><option value="0">Κανονικά</option><option value="megalo">Μεγάλα</option><option value="polymegalo">Πολύ μεγάλα</option></select>
-   <select data-k="gramma" title="Γραμματοσειρά: σημαδέψτε τις λέξεις και διαλέξτε γραμματοσειρά" aria-label="Γραμματοσειρά"><option value="">Γραμματοσειρά…</option><option value="0">Κανονική</option><option value="patoures">Με πατούρες (Times)</option><option value="grafomixani">Γραφομηχανής</option><option value="paidiki">Παιδική</option></select>
-   <span class="sep" aria-hidden="true"></span>
-   <button type="button" data-c="al-aristera" title="Στοίχιση αριστερά (η συνηθισμένη)" aria-label="Στοίχιση αριστερά"><svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="12" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg></button>
-   <button type="button" data-c="al-kentro" title="Στοίχιση στο κέντρο" aria-label="Στοίχιση στο κέντρο"><svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="5.5" y1="10" x2="14.5" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg></button>
-   <button type="button" data-c="al-dexia" title="Στοίχιση δεξιά" aria-label="Στοίχιση δεξιά"><svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="8" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg></button>
-   <button type="button" data-c="al-plires" title="Πλήρης στοίχιση (ίσια και τα δύο άκρα)" aria-label="Πλήρης στοίχιση"><svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg></button>
-   <span class="sep" aria-hidden="true"></span>
-   <button type="button" data-c="h3" title="Υπότιτλος">Υπότιτλος</button>
-   <button type="button" data-c="ul" title="Λίστα">• Λίστα</button>
-   <button type="button" data-c="link" title="Σύνδεσμος">🔗 Σύνδεσμος</button>
-   <button type="button" data-c="table" title="Νέος πίνακας">▦ Πίνακας</button>
-   <button type="button" data-c="row+" title="Νέα γραμμή κάτω από αυτή που είστε">＋ Γραμμή</button>
-   <button type="button" data-c="row-" title="Σβήσιμο της γραμμής που είστε">− Γραμμή</button>
-   <button type="button" data-c="col+" title="Νέα στήλη δεξιά από αυτή που είστε">＋ Στήλη</button>
-   <button type="button" data-c="col-" title="Σβήσιμο της στήλης που είστε">− Στήλη</button>
-   <button type="button" data-c="clear" title="Καθαρισμός μορφής">Καθαρισμός</button>
-  </div>
+  <div class="toolbar" id="tb"></div>
   <div class="rte" id="rte" contenteditable="true" data-ph="Γράψτε εδώ τι έγινε, όπως θα το λέγατε στους γονείς…"></div>
   <textarea class="plain hidden" id="plain"></textarea>
 
@@ -360,7 +366,7 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
  <p><button class="btn green" onclick="neaSelidaUI()" title="Φτιάχνει νέα σελίδα στο μενού «Το Σχολείο μας» ή «Γονείς και Κηδεμόνες»">➕ Νέα σελίδα</button></p>
  <div id="pList"></div>
 </section>
-<section id="v-page" class="wrap hidden">
+<section id="v-page" class="wrap wrap-ed hidden">
  <div class="card">
   <h2 id="pT"></h2>
   <div class="step"><span class="n">1</span><h3>Τίτλος</h3></div>
@@ -369,31 +375,8 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
   <input class="field" id="p-per" type="text">
   <div class="step"><span class="n">3</span><h3>Κείμενο</h3></div>
   <p class="muted" style="margin:0 0 6px">Για πίνακα: πατήστε μέσα σε ένα κελί και γράψτε. Με «＋ Γραμμή» / «＋ Στήλη» μεγαλώνει. Μπορείτε και να επικολλήσετε πίνακα από το Word.</p>
-  <div class="toolbar" id="ptb">
-   <button type="button" data-c="bold" title="Έντονα"><b>Ε</b></button>
-   <button type="button" data-c="italic" title="Πλάγια"><i>Π</i></button>
-   <button type="button" data-c="mark" title="Επισήμανση με κίτρινο" style="background:#fff1b8">Επισήμανση</button>
-   <button type="button" data-c="ypo" title="Υπογράμμιση των λέξεων που σημαδέψατε"><u>Υπογράμμιση</u></button>
-   <button type="button" data-c="xroma" title="Χρώμα γραμμάτων: σημαδέψτε τις λέξεις και διαλέξτε χρώμα">🎨 Χρώμα ▾</button>
-   <select data-k="megethos" title="Μέγεθος γραμμάτων: σημαδέψτε τις λέξεις και διαλέξτε μέγεθος" aria-label="Μέγεθος γραμμάτων"><option value="">Μέγεθος…</option><option value="mikro">Μικρά</option><option value="0">Κανονικά</option><option value="megalo">Μεγάλα</option><option value="polymegalo">Πολύ μεγάλα</option></select>
-   <select data-k="gramma" title="Γραμματοσειρά: σημαδέψτε τις λέξεις και διαλέξτε γραμματοσειρά" aria-label="Γραμματοσειρά"><option value="">Γραμματοσειρά…</option><option value="0">Κανονική</option><option value="patoures">Με πατούρες (Times)</option><option value="grafomixani">Γραφομηχανής</option><option value="paidiki">Παιδική</option></select>
-   <span class="sep" aria-hidden="true"></span>
-   <button type="button" data-c="al-aristera" title="Στοίχιση αριστερά (η συνηθισμένη)" aria-label="Στοίχιση αριστερά"><svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="12" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg></button>
-   <button type="button" data-c="al-kentro" title="Στοίχιση στο κέντρο" aria-label="Στοίχιση στο κέντρο"><svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="5.5" y1="10" x2="14.5" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg></button>
-   <button type="button" data-c="al-dexia" title="Στοίχιση δεξιά" aria-label="Στοίχιση δεξιά"><svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="8" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg></button>
-   <button type="button" data-c="al-plires" title="Πλήρης στοίχιση (ίσια και τα δύο άκρα)" aria-label="Πλήρης στοίχιση"><svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg></button>
-   <span class="sep" aria-hidden="true"></span>
-   <button type="button" data-c="h3" title="Υπότιτλος">Υπότιτλος</button>
-   <button type="button" data-c="ul" title="Λίστα">• Λίστα</button>
-   <button type="button" data-c="link" title="Σύνδεσμος">🔗 Σύνδεσμος</button>
-   <button type="button" data-c="table" title="Νέος πίνακας">▦ Πίνακας</button>
-   <button type="button" data-c="row+" title="Νέα γραμμή κάτω από αυτή που είστε">＋ Γραμμή</button>
-   <button type="button" data-c="row-" title="Σβήσιμο της γραμμής που είστε">− Γραμμή</button>
-   <button type="button" data-c="col+" title="Νέα στήλη δεξιά από αυτή που είστε">＋ Στήλη</button>
-   <button type="button" data-c="col-" title="Σβήσιμο της στήλης που είστε">− Στήλη</button>
-   <button type="button" data-c="clear" title="Καθαρισμός μορφής">Καθαρισμός</button>
-  </div>
-  <div class="rte" id="prte" contenteditable="true" style="min-height:320px"></div>
+  <div class="toolbar" id="ptb"></div>
+  <div class="rte" id="prte" contenteditable="true"></div>
   <div class="step"><span class="n">4</span><h3>Έγγραφα (PDF, Word, Excel)</h3></div>
   <button type="button" class="btn light" onclick="$('p-pdf').click()">📄 Προσθήκη εγγράφου</button>
   <input type="file" id="p-pdf" accept="application/pdf,.pdf,.doc,.docx,.xls,.xlsx,.odt,.ods" multiple class="hidden" onchange="addPdfs(this,'page')">
@@ -596,6 +579,9 @@ function home() {
   }
   t += '<button class="tile t-help" onclick="nav(\'odigies\')" style="background:#fff"><span class="em">📖</span><b>Οδηγίες χρήσης</b><span>Βήμα-βήμα: αναρτήσεις, φωτογραφίες, κάδος, Φύλλο</span></button>';
   $('tiles').innerHTML = t;
+  var prn = prDiavase_('pr_neo');
+  if (prn) msg('homeMsg', '💾 Υπάρχει νέα ανάρτηση που δεν αποθηκεύτηκε: «' + (prn.d.titlos || '(χωρίς τίτλο)') + '». Πατήστε «Νέα ανάρτηση» για να τη συνεχίσετε.', 'info');
+  ygeia_();
   run('listaAnartiseon', [T], function (l) {
     ALL = l;
     if ($('waitN')) $('waitN').textContent = l.filter(isWaiting).length;
@@ -603,6 +589,24 @@ function home() {
     // δεν σβήνουμε το μήνυμα «✔ Στάλθηκε/Εγκρίθηκε» που μόλις έδειξε το save()/decide()
     if (ret && ROLE !== 'diefthynsi') msg('homeMsg', ret + ' ανάρτηση(-εις) επιστράφηκαν για μικρή διόρθωση. Δείτε τις στο «Οι αναρτήσεις».', 'info');
   }, 'homeMsg');
+}
+/* ═══ Κατάσταση ιστοσελίδας στην αρχική: πράσινο / κίτρινο / κόκκινο, με απλή εξήγηση ═══ */
+function ygeia_() {
+  run('katastasiDimosiefsis', [T], function (o) {
+    var b = $('ygeia'); if (!b) return;
+    var r = (o && o.runs) || [], last = r[0], h = '', c = '';
+    function wra(d) { var x = new Date(d); return ('0' + x.getHours()).slice(-2) + ':' + ('0' + x.getMinutes()).slice(-2) + ', ' + x.getDate() + '/' + (x.getMonth() + 1); }
+    if (o && (o.xoris_kleidi || o.sfalma === 401)) { c = 'bad'; h = '🔴 Η σύνδεση με τη δημοσίευση χάθηκε. Οι αλλαγές σας αποθηκεύονται κανονικά· ο τεχνικός υπεύθυνος έχει ειδοποιηθεί με email.'; }
+    else if (!last) { b.classList.add('hidden'); return; }
+    else if (last.status !== 'completed') { c = 'on'; h = '🟡 Η ιστοσελίδα ενημερώνεται αυτή τη στιγμή (ξεκίνησε ' + wra(last.created) + ').'; }
+    else if (last.conclusion === 'success') { c = 'ok'; h = '🟢 Η ιστοσελίδα είναι ενημερωμένη. Τελευταία ενημέρωση: ' + wra(last.updated) + '.'; }
+    else { c = 'bad'; h = '🔴 Η τελευταία ενημέρωση της ιστοσελίδας (' + wra(last.created) + ') δεν ολοκληρώθηκε. Οι αναρτήσεις σας είναι αποθηκευμένες και η ιστοσελίδα δείχνει την προηγούμενη έκδοση. Το σύστημα ξαναδοκιμάζει μόνο του μέσα σε μισή ώρα.'; }
+    if (c === 'bad' && ROLE === 'diefthynsi' && !(o.xoris_kleidi || o.sfalma === 401)) h += ' <button class="btn light" style="margin-left:6px" onclick="xanaDimosiefsi_(this)" title="Ξεκινά ξανά τώρα την ενημέρωση της ιστοσελίδας">🔄 Ξαναδοκίμασε τώρα</button>';
+    b.className = 'ygeia ' + c; b.innerHTML = h;
+  }, 'homeMsg');
+}
+function xanaDimosiefsi_(btn) {
+  run('xanaDimosiefsi', [T], function (r) { if (r.ok) { parakolouthisi('Ενημέρωση της ιστοσελίδας'); $('ygeia').className = 'ygeia on'; $('ygeia').textContent = '🟡 Η ενημέρωση ξεκίνησε ξανά.'; } else msg('homeMsg', r.minima, 'bad'); }, 'homeMsg', btn);
 }
 function isWaiting(a) { return a.katastasi === 'Προς έγκριση' || a.exei_protasi; }
 
@@ -917,7 +921,7 @@ function htmlToMd(root) {
 document.addEventListener('selectionchange', function () {   // κρατάμε την επιλογή κάθε επεξεργαστή (οι λίστες επιλογής «κλέβουν» την εστίαση)
   var s = window.getSelection(); if (!s.rangeCount) return;
   var r = s.getRangeAt(0), n = r.commonAncestorContainer, ed = (n.nodeType === 1 ? n : n.parentNode).closest && (n.nodeType === 1 ? n : n.parentNode).closest('.rte');
-  if (ed) ed._rng = r.cloneRange();
+  if (ed) { ed._rng = r.cloneRange(); var tb = ed.parentNode && ed.parentNode.querySelector('.tbx'); if (tb && typeof syncToolbar_ === 'function') syncToolbar_(tb, ed); }
 });
 function epilogiSe(ed) {
   ed.focus();
@@ -974,11 +978,14 @@ function stoixisi(ed, timi) {
 function paletaXromatos(ed, koumpi) {
   var p = document.getElementById('fpop'); if (p) { p.remove(); if (p._apo === koumpi) return; }
   p = document.createElement('div'); p.id = 'fpop'; p.className = 'fpop'; p._apo = koumpi; p.setAttribute('role', 'menu');
-  p.innerHTML = XROMATA.map(function (x) { return '<button type="button" class="sw t-' + x[0] + '" data-x="' + x[0] + '" title="' + x[1] + '" aria-label="' + x[1] + '" style="background:rgb(' + x[2].join(',') + ')"></button>'; }).join('') +
-    '<button type="button" class="sw-0" data-x="" title="Χωρίς χρώμα (μαύρα γράμματα)">Χωρίς χρώμα</button>';
+  p.className = 'fpop fpop-list';
+  p.innerHTML = XROMATA.map(function (x) { return '<button type="button" role="menuitem" data-x="' + x[0] + '"><i class="swc" style="background:rgb(' + x[2].join(',') + ')"></i><span class="t-' + x[0] + '" style="font-weight:700">' + x[1] + '</span></button>'; }).join('') +
+    '<button type="button" role="menuitem" data-x=""><i class="swc" style="background:#1b2633"></i>Χωρίς χρώμα (μαύρα)</button>';
   p.onmousedown = function (e) { e.preventDefault(); };
   p.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; p.remove(); morfi(ed, 'xroma', b.dataset.x); };
-  koumpi.parentNode.appendChild(p);
+  var tg = koumpi.closest('.tbx'); tg.appendChild(p);
+  var r0 = koumpi.getBoundingClientRect(), t0 = tg.getBoundingClientRect();
+  p.style.left = Math.max(0, Math.min(r0.left - t0.left, t0.width - 290)) + 'px'; p.style.top = (r0.bottom - t0.top + 6) + 'px';
   setTimeout(function () { document.addEventListener('mousedown', function k(e) { if (!p.contains(e.target) && e.target !== koumpi) { p.remove(); document.removeEventListener('mousedown', k); } }); }, 0);
 }
 function katharismos_(ed) {   // «Καθαρισμός»: βγάζει και χρώματα/μεγέθη/στοίχιση από την επιλογή
@@ -1005,37 +1012,159 @@ function tableCmd(ed, c) {
   else if (c === 'col+') rows.forEach(function (r, k) { var x = document.createElement(k ? 'td' : 'th'); x.innerHTML = k ? '<br>' : 'Στήλη'; var ref = r.children[ci]; r.insertBefore(x, ref ? ref.nextSibling : null); });
   else if (c === 'col-') { if (tr.children.length <= 1) tb.remove(); else rows.forEach(function (r) { if (r.children[ci]) r.children[ci].remove(); }); }
 }
+/* ═══ Γραμμή εργαλείων κειμένου: λίγα, μεγάλα κουμπιά με λέξεις, σε ομάδες· τα σπάνια στο «Περισσότερες επιλογές» ═══ */
+var IC = {
+  undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/>', redo: '<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 000 12h3"/>',
+  pal: '<circle cx="12" cy="12" r="9"/><circle cx="8" cy="10" r="1.3" fill="currentColor"/><circle cx="12" cy="7.5" r="1.3" fill="currentColor"/><circle cx="16" cy="10" r="1.3" fill="currentColor"/>',
+  mark: '<path d="M4 20h7"/><path d="M14.5 4.5l5 5L11 18H6v-5z"/>', al: '<path d="M4 6h16M4 12h11M4 18h16"/>',
+  ul: '<circle cx="5" cy="6" r="1.4" fill="currentColor"/><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="5" cy="18" r="1.4" fill="currentColor"/><path d="M10 6h10M10 12h10M10 18h10"/>',
+  ol: '<path d="M4 4.5h1.5V9M4 9h3M4 14.5c0-1 2.8-1 2.8.6 0 1.2-2.8 2.2-2.8 3.4h3"/><path d="M11 6h9M11 12h9M11 18h9"/>',
+  link: '<path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/>',
+  table: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M10 4v16"/>',
+  img: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-8 8"/>',
+  clear: '<path d="M6 6l12 12M18 6L6 18"/>', more: '<circle cx="6" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="18" cy="12" r="1.6" fill="currentColor"/>'
+};
+function ic_(k) { return '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + IC[k] + '</svg>'; }
+function tk_(c, label, icon, tip, extra) {
+  return '<button type="button" class="tbtn" data-c="' + c + '" title="' + tip + '"' + (extra || '') + '>' + icon + '<span>' + label + '</span></button>';
+}
+function ftiakseToolbar_(tbar, opt) {
+  opt = opt || {};
+  tbar.className = 'tbx';
+  tbar.innerHTML = '<p class="tb-odigia">Σημαδέψτε τις λέξεις με το ποντίκι και πατήστε το κουμπί που θέλετε.</p>' +
+    '<div class="tg"><span class="tg-h">Επεξεργασία</span>' +
+      tk_('undo', 'Αναίρεση', ic_('undo'), 'Αναίρεση της τελευταίας αλλαγής (Ctrl+Z)') + tk_('redo', 'Επανάληψη', ic_('redo'), 'Ξανακάνει ό,τι αναιρέσατε (Ctrl+Y)') + '</div>' +
+    '<div class="tg"><span class="tg-h">Εμφάνιση κειμένου</span>' +
+      tk_('bold', 'Έντονα', '<b class="tb-l">B</b>', 'Έντονα γράμματα (Ctrl+B)', ' aria-pressed="false"') +
+      tk_('italic', 'Πλάγια', '<i class="tb-l">I</i>', 'Πλάγια γράμματα (Ctrl+I)', ' aria-pressed="false"') +
+      tk_('ypo', 'Υπογράμμιση', '<u class="tb-l">U</u>', 'Υπογράμμιση των λέξεων', ' aria-pressed="false"') +
+      tk_('xroma', 'Χρώμα γραμμάτων ▾', ic_('pal'), 'Αλλάζει το χρώμα των γραμμάτων') +
+      tk_('mark', 'Χρωματισμός κειμένου', '<span class="tb-mk">' + ic_('mark') + '</span>', 'Κίτρινο φόντο πίσω από τις λέξεις, σαν μαρκαδόρος', ' aria-pressed="false"') + '</div>' +
+    '<div class="tg"><span class="tg-h">Διάταξη κειμένου</span>' +
+      tk_('stoixisi', 'Στοίχιση ▾', ic_('al'), 'Αριστερά, στο κέντρο, δεξιά ή πλήρης') +
+      tk_('ul', 'Λίστα με κουκκίδες', ic_('ul'), 'Λίστα με κουκκίδες', ' aria-pressed="false"') +
+      tk_('ol', 'Αριθμημένη λίστα', ic_('ol'), 'Λίστα με αριθμούς 1, 2, 3…', ' aria-pressed="false"') + '</div>' +
+    '<div class="tg"><span class="tg-h">Εισαγωγή</span>' +
+      tk_('link', 'Σύνδεσμος', ic_('link'), 'Εισαγωγή συνδέσμου προς άλλη ιστοσελίδα') +
+      tk_('table', 'Πίνακας', ic_('table'), 'Εισαγωγή πίνακα') +
+      (opt.eikona ? tk_('eikona', 'Εικόνα', ic_('img'), 'Προσθήκη φωτογραφίας στην ανάρτηση') : '') + '</div>' +
+    '<div class="tg"><span class="tg-h">&nbsp;</span>' +
+      tk_('clear', 'Αφαίρεση μορφοποίησης', ic_('clear'), 'Ξαναγίνονται απλά γράμματα (χωρίς έντονα, χρώματα, στοίχιση)') +
+      tk_('more', 'Περισσότερες επιλογές', ic_('more'), 'Υπότιτλος, μέγεθος και γραμματοσειρά', ' aria-expanded="false"') + '</div>' +
+    '<div class="tg tg-more hidden"><span class="tg-h">Περισσότερες επιλογές</span>' +
+      tk_('h3', 'Υπότιτλος', '<b class="tb-l">Η</b>', 'Κάνει την παράγραφο υπότιτλο', ' aria-pressed="false"') +
+      tk_('megethos', 'Μέγεθος γραμμάτων ▾', '<span class="tb-l">Αα</span>', 'Μικρά, κανονικά, μεγάλα ή πολύ μεγάλα γράμματα') +
+      tk_('gramma', 'Γραμματοσειρά ▾', '<span class="tb-l t-patoures">Γ</span>', 'Αλλάζει το είδος των γραμμάτων') + '</div>' +
+    '<div class="tg tg-pin hidden"><span class="tg-h">Πίνακας (είστε μέσα σε πίνακα)</span>' +
+      tk_('row+', 'Νέα γραμμή κάτω', '<span class="tb-l">＋</span>', 'Προσθέτει γραμμή κάτω από αυτή που είστε') +
+      tk_('row-', 'Σβήσιμο γραμμής', '<span class="tb-l">−</span>', 'Σβήνει τη γραμμή που είστε') +
+      tk_('col+', 'Νέα στήλη δεξιά', '<span class="tb-l">＋</span>', 'Προσθέτει στήλη δεξιά από αυτή που είστε') +
+      tk_('col-', 'Σβήσιμο στήλης', '<span class="tb-l">−</span>', 'Σβήνει τη στήλη που είστε') + '</div>';
+}
+/* επιλογές σε αναδυόμενο πλαίσιο: μεγάλα στοιχεία με λέξεις */
+function epiloges_(koumpi, items, cb) {
+  var p = document.getElementById('fpop'); if (p) { p.remove(); if (p._apo === koumpi) return; }
+  p = document.createElement('div'); p.id = 'fpop'; p.className = 'fpop fpop-list'; p._apo = koumpi; p.setAttribute('role', 'menu');
+  p.innerHTML = items.map(function (x) { return '<button type="button" role="menuitem" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('');
+  p.onmousedown = function (e) { e.preventDefault(); };
+  p.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; p.remove(); cb(b.dataset.v); };
+  var tg = koumpi.closest('.tbx'); tg.appendChild(p);
+  var r = koumpi.getBoundingClientRect(), t = tg.getBoundingClientRect();
+  p.style.left = Math.max(0, Math.min(r.left - t.left, t.width - 290)) + 'px'; p.style.top = (r.bottom - t.top + 6) + 'px';
+  setTimeout(function () { document.addEventListener('mousedown', function k(e) { if (!p.contains(e.target) && e.target !== koumpi) { p.remove(); document.removeEventListener('mousedown', k); } }); }, 0);
+}
+/* ιστορικό αλλαγών (Αναίρεση/Επανάληψη) για κάθε επεξεργαστή */
+function istReset(ed) { ed._h = [ed.innerHTML]; ed._hi = 0; }
+function istFylaxe(ed) {
+  if (!ed._h) istReset(ed);
+  var v = ed.innerHTML; if (ed._h[ed._hi] === v) return;
+  ed._h = ed._h.slice(0, ed._hi + 1); ed._h.push(v); if (ed._h.length > 150) ed._h.shift(); ed._hi = ed._h.length - 1;
+}
+function istPame(ed, d) {
+  istFylaxe(ed);
+  var n = ed._hi + d; if (n < 0 || n >= ed._h.length) return;
+  ed._hi = n; ed.innerHTML = ed._h[n]; ed.focus();
+  var r = document.createRange(); r.selectNodeContents(ed); r.collapse(false); var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  ed.dispatchEvent(new Event('input', { bubbles: true }));
+}
+/* ενεργές επιλογές: το κουμπί «πατημένο» όταν ο κέρσορας είναι σε έντονα, λίστα κ.λπ. */
+function syncToolbar_(tbar, ed) {
+  var s = getSelection(); if (!s.rangeCount) return;
+  var n = s.anchorNode; if (!n || !ed.contains(n)) return;
+  var el = n.nodeType === 1 ? n : n.parentNode;
+  function on(c, v) { var b = tbar.querySelector('[data-c="' + c + '"]'); if (b) { b.setAttribute('aria-pressed', v ? 'true' : 'false'); } }
+  on('bold', !!el.closest('b,strong')); on('italic', !!el.closest('i,em')); on('ypo', !!el.closest('.t-ypogrammisi,u'));
+  on('mark', !!el.closest('mark')); on('ul', !!el.closest('ul')); on('ol', !!el.closest('ol')); on('h3', !!el.closest('h1,h2,h3,h4'));
+  var x = el.closest('[class*="t-"]'), xb = tbar.querySelector('[data-c="xroma"]');
+  var xr = null; for (var a = el; a && a !== ed; a = a.parentNode) { if (a.classList) XROMATA.forEach(function (q) { if (!xr && a.classList.contains('t-' + q[0])) xr = q; }); if (xr) break; }
+  if (xb) xb.style.boxShadow = xr ? 'inset 0 -5px 0 rgb(' + xr[2].join(',') + '), inset 0 0 0 1px var(--line)' : '';
+  tbar.querySelector('.tg-pin').classList.toggle('hidden', !el.closest('td,th'));
+}
 function initRte() {
   rte = $('rte');
+  ftiakseToolbar_($('tb'), { eikona: true }); ftiakseToolbar_($('ptb'), {});
   bindEditor($('tb'), rte);
   bindEditor($('ptb'), $('prte'));
 }
 function bindEditor(tbar, rte) {
+  // κουτί επεξεργαστή: γραμμή εργαλείων + κείμενο, με «Μεγάλη οθόνη»
+  var box = document.createElement('div'); box.className = 'edbox'; tbar.parentNode.insertBefore(box, tbar); box.appendChild(tbar); box.appendChild(rte);
+  var fg = tbar.querySelector('[data-c="more"]').parentNode;
+  fg.insertAdjacentHTML('beforeend', tk_('megali', 'Μεγάλη οθόνη', '<span class="tb-l">⛶</span>', 'Ο επεξεργαστής απλώνεται σε όλη την οθόνη· πατήστε ξανά για επιστροφή', ' aria-pressed="false"'));
+  function meta() { istFylaxe(rte); syncToolbar_(tbar, rte); }
+  rte.addEventListener('input', function () { clearTimeout(rte._it); rte._it = setTimeout(function () { istFylaxe(rte); }, 400); });
+  rte.addEventListener('keyup', function () { syncToolbar_(tbar, rte); });
+  rte.addEventListener('mouseup', function () { syncToolbar_(tbar, rte); });
+  rte.addEventListener('focus', function () { if (!rte._h) istReset(rte); });
+  rte.addEventListener('keydown', function (e) {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    var k = e.key.toLowerCase();
+    if (k === 'z' && !e.shiftKey) { e.preventDefault(); istPame(rte, -1); }
+    else if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); istPame(rte, 1); }
+    else if (k === 'b' || k === 'i') { setTimeout(meta, 0); }
+  });
   tbar.onmousedown = function (e) { if (e.target.closest('button')) e.preventDefault(); };
-  tbar.onchange = function (e) { var sl = e.target.closest('select'); if (!sl || !sl.value) return; var v = sl.value; sl.value = ''; morfi(rte, sl.dataset.k, v === '0' ? '' : v); };
   tbar.onclick = function (e) {
-    var b = e.target.closest('button'); if (!b) return;
-    var c = b.dataset.c; rte.focus();
-    if (/^(table|row[+-]|col[+-])$/.test(c)) { tableCmd(rte, c); return; }
+    var b = e.target.closest('button[data-c]'); if (!b) return;
+    var c = b.dataset.c;
+    if (c === 'megali') { var on = box.classList.toggle('edfull'); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.querySelector('span:last-child').textContent = on ? 'Κανονική οθόνη' : 'Μεγάλη οθόνη'; document.body.classList.toggle('noscroll', on); rte.focus(); return; }
+    if (c === 'more') { var m = tbar.querySelector('.tg-more'), o = m.classList.toggle('hidden'); b.setAttribute('aria-expanded', o ? 'false' : 'true'); return; }
+    if (c === 'undo' || c === 'redo') { istPame(rte, c === 'undo' ? -1 : 1); return; }
+    if (c === 'eikona') { $('f-foto').click(); msg('edMsg', 'Οι φωτογραφίες μπαίνουν στη συλλογή της ανάρτησης (βήμα 3), κάτω από το κείμενο. Η πρώτη γίνεται εξώφυλλο.', 'info'); return; }
+    istFylaxe(rte);
+    rte.focus(); if (rte._rng && rte.contains(rte._rng.commonAncestorContainer)) { var s0 = getSelection(); s0.removeAllRanges(); s0.addRange(rte._rng); }
+    if (/^(table|row[+-]|col[+-])$/.test(c)) { tableCmd(rte, c); meta(); return; }
     if (c === 'xroma') { paletaXromatos(rte, b); return; }
-    if (c === 'ypo') { var sl = epilogiSe(rte), an = sl.anchorNode, ex = an && (an.nodeType === 1 ? an : an.parentNode).closest('.t-ypogrammisi'); morfi(rte, 'ypo', ex && rte.contains(ex) ? '' : 'ypogrammisi'); return; }
-    if (/^al-/.test(c)) { stoixisi(rte, c.slice(3)); return; }
+    if (c === 'stoixisi') { epiloges_(b, [['aristera', ic_('al') + ' Αριστερά (η συνηθισμένη)'], ['kentro', '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M4 18h16"/></svg> Στο κέντρο'],
+        ['dexia', '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M9 12h11M4 18h16"/></svg> Δεξιά'], ['plires', '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Πλήρης (ίσια και τα δύο άκρα)']],
+        function (v) { stoixisi(rte, v); meta(); }); return; }
+    if (c === 'megethos') { epiloges_(b, [['mikro', '<span class="t-mikro">Μικρά γράμματα</span>'], ['0', 'Κανονικά γράμματα'], ['megalo', '<span class="t-megalo">Μεγάλα γράμματα</span>'], ['polymegalo', '<span class="t-polymegalo">Πολύ μεγάλα</span>']],
+        function (v) { morfi(rte, 'megethos', v === '0' ? '' : v); meta(); }); return; }
+    if (c === 'gramma') { epiloges_(b, [['0', 'Κανονική'], ['patoures', '<span class="t-patoures">Με πατούρες (Times)</span>'], ['grafomixani', '<span class="t-grafomixani">Γραφομηχανής</span>'], ['paidiki', '<span class="t-paidiki">Παιδική</span>']],
+        function (v) { morfi(rte, 'gramma', v === '0' ? '' : v); meta(); }); return; }
+    if (c === 'ypo') { var sl = epilogiSe(rte), an = sl.anchorNode, ex = an && (an.nodeType === 1 ? an : an.parentNode).closest('.t-ypogrammisi'); morfi(rte, 'ypo', ex && rte.contains(ex) ? '' : 'ypogrammisi'); meta(); return; }
     if (c === 'bold' || c === 'italic') document.execCommand(c);
     else if (c === 'ul') document.execCommand('insertUnorderedList');
-    else if (c === 'h3') document.execCommand('formatBlock', false, 'h3');
+    else if (c === 'ol') document.execCommand('insertOrderedList');
+    else if (c === 'h3') { var s3 = getSelection(), n3 = s3.anchorNode, e3 = n3 && (n3.nodeType === 1 ? n3 : n3.parentNode).closest('h1,h2,h3,h4'); document.execCommand('formatBlock', false, e3 && rte.contains(e3) ? 'p' : 'h3'); }
     else if (c === 'clear') { katharismos_(rte); document.execCommand('removeFormat'); document.execCommand('formatBlock', false, 'p'); }
     else if (c === 'mark') {
-      var s = window.getSelection(); if (!s.rangeCount || s.isCollapsed) { dlg({ icon: '🖍️', title: 'Επιλέξτε πρώτα τις λέξεις', text: 'Με το ποντίκι (ή το δάχτυλο) σημαδέψτε τις λέξεις που θέλετε να επισημάνετε και πατήστε ξανά «Επισήμανση».', cancel: false }); return; }
+      var s = window.getSelection(), an2 = s.anchorNode, mk0 = an2 && (an2.nodeType === 1 ? an2 : an2.parentNode).closest('mark');
+      if (mk0 && rte.contains(mk0)) { xefloudiasma_(mk0); meta(); return; }
+      if (!s.rangeCount || s.isCollapsed) { xoris(rte); return; }
       var r = s.getRangeAt(0), mk = document.createElement('mark'); try { r.surroundContents(mk); } catch (x) { mk.appendChild(r.extractContents()); r.insertNode(mk); }
     } else if (c === 'link') {
       var sel0 = window.getSelection(), rg = sel0.rangeCount ? sel0.getRangeAt(0).cloneRange() : null;
-      dlg({ icon: '🔗', title: 'Προσθήκη συνδέσμου', text: 'Επικολλήστε τη διεύθυνση της σελίδας (ξεκινά με https://).', ok: 'Προσθήκη', input: { value: 'https://', placeholder: 'https://…' } }, function (u) {
+      dlg({ icon: '🔗', title: 'Εισαγωγή συνδέσμου', text: 'Επικολλήστε τη διεύθυνση της σελίδας (ξεκινά με https://).', ok: 'Προσθήκη', input: { value: 'https://', placeholder: 'https://…' } }, function (u) {
         u = (u || '').trim();
         if (!/^https?:\/\/\S+\.\S+$/.test(u)) { dlg({ icon: '⚠️', title: 'Η διεύθυνση δεν είναι σωστή', text: 'Πρέπει να ξεκινά με https:// , π.χ. https://www.minedu.gov.gr', cancel: false }); return; }
         rte.focus(); var sl = window.getSelection(); if (rg) { sl.removeAllRanges(); sl.addRange(rg); }
         if (sl.isCollapsed) document.execCommand('insertHTML', false, '<a href="' + esc(u) + '">' + esc(u) + '</a>'); else document.execCommand('createLink', false, u);
+        meta();
       });
+      return;
     }
+    meta();
   };
   // επικόλληση από Word/ιστοσελίδες: κρατάμε μόνο ό,τι υποστηρίζουμε
   rte.addEventListener('paste', function (e) {
@@ -1068,6 +1197,7 @@ function edit(a, fromProp) {
   var hasTable = false;   // οι πίνακες υποστηρίζονται πλέον στον επεξεργαστή
   $('rte').classList.toggle('hidden', hasTable); $('tb').classList.toggle('hidden', hasTable); $('plain').classList.toggle('hidden', !hasTable);
   if (hasTable) $('plain').value = CUR.keimeno; else $('rte').innerHTML = mdToHtml(CUR.keimeno);
+  istReset($('rte'));
   var n = '';
   if (CUR.sxolio) n += '<div class="note">💬 <b>Σχόλιο της Διεύθυνσης:</b> ' + esc(CUR.sxolio) + '</div>';
   if (CUR.katastasi === 'Δημοσιευμένη' && ROLE !== 'diefthynsi') n += '<div class="note">Η ανάρτηση είναι ήδη στην ιστοσελίδα. Ό,τι αλλάξετε πηγαίνει πρώτα στη Διεύθυνση· μέχρι να εγκριθεί, στην ιστοσελίδα μένει η τωρινή μορφή.</div>';
@@ -1088,6 +1218,7 @@ function edit(a, fromProp) {
   act += '<button class="small-link" onclick="leave()">Πίσω χωρίς αποθήκευση</button>';
   $('edActions').innerHTML = act;
   nav('edit');
+  if (!fromProp) setTimeout(prEpanafora_, 50);
 }
 function leave() { if (BUSY) { dlg({ icon: '⏳', title: 'Ανεβαίνουν ακόμα φωτογραφίες', text: 'Περιμένετε λίγα δευτερόλεπτα να τελειώσουν.', cancel: false }); return; } home(); }
 
@@ -1134,6 +1265,17 @@ function shrink(file) {
     img.src = url;
   });
 }
+/* ανέβασμα που ξαναδοκιμάζει μόνο του (κομμένη σύνδεση, προσωρινό σφάλμα της Google) πριν δείξει μήνυμα */
+function anevasmaEpimono_(args, ok, fail, n) {
+  n = n || 0;
+  var r = google.script.run.withSuccessHandler(ok).withFailureHandler(function (e) {
+    var m = (e && e.message) || String(e);
+    if (n < 3 && !/Επιτρέπονται|μεγαλύτερο|Λάθος είδος|έληξε|άλλαξαν/.test(m)) { setTimeout(function () { anevasmaEpimono_(args, ok, fail, n + 1); }, 2000 * (n + 1)); return; }
+    if (n >= 3) e = { message: 'Το ανέβασμα δεν έγινε μετά από 4 προσπάθειες. Ελέγξτε τη σύνδεση στο ίντερνετ και δοκιμάστε ξανά.' };
+    fail(e);
+  });
+  r.anevasma.apply(r, args);
+}
 function addPhotos(files) {
   files = Array.prototype.slice.call(files).filter(function (f) { return /^image\//.test(f.type); });
   if (!files.length) return;
@@ -1141,9 +1283,9 @@ function addPhotos(files) {
     var p = { id: '', perigrafi: '', src: '', up: true }; CUR.fotografies.push(p); BUSY++;
     shrink(file).then(function (data) {
       p.src = data; drawPhotos();
-      google.script.run.withSuccessHandler(function (r) { p.id = r.id; p.up = false; BUSY--; THUMBS[r.id] = data; drawPhotos(); })
-        .withFailureHandler(function (e) { BUSY--; CUR.fotografies.splice(CUR.fotografies.indexOf(p), 1); drawPhotos(); msg('edMsg', e.message, 'bad'); })
-        .anevasma(T, file.name.replace(/\.\w+$/, '') + '.jpg', 'image/jpeg', data.split(',')[1], 'foto');
+      anevasmaEpimono_([T, file.name.replace(/\.\w+$/, '') + '.jpg', 'image/jpeg', data.split(',')[1], 'foto'],
+        function (r) { p.id = r.id; p.up = false; BUSY--; THUMBS[r.id] = data; drawPhotos(); },
+        function (e) { BUSY--; CUR.fotografies.splice(CUR.fotografies.indexOf(p), 1); drawPhotos(); msg('edMsg', e.message, 'bad'); });
     }, function (e) { BUSY--; CUR.fotografies.splice(CUR.fotografies.indexOf(p), 1); drawPhotos(); msg('edMsg', e.message, 'bad'); });
   });
   drawPhotos();
@@ -1171,8 +1313,9 @@ function addPdfs(inp, where) {
     if (!mime) { msg(m, file.name + ': επιτρέπονται μόνο PDF, Word (doc, docx), Excel (xls, xlsx) και OpenDocument (odt, ods).', 'bad'); return; }
     var r = new FileReader(); BUSY++;
     r.onload = function () {
-      google.script.run.withSuccessHandler(function (x) { BUSY--; arr.push({ id: x.id, onoma: x.onoma }); drawDocs(el, arr); msg(m, 'Το έγγραφο ανέβηκε.', 'ok'); })
-        .withFailureHandler(function (e) { BUSY--; msg(m, e.message, 'bad'); }).anevasma(T, file.name, mime, String(r.result).split(',')[1], 'pdf');
+      anevasmaEpimono_([T, file.name, mime, String(r.result).split(',')[1], 'pdf'],
+        function (x) { BUSY--; arr.push({ id: x.id, onoma: x.onoma }); drawDocs(el, arr); msg(m, 'Το έγγραφο ανέβηκε.', 'ok'); },
+        function (e) { BUSY--; msg(m, e.message, 'bad'); });
     };
     r.readAsDataURL(file);
   });
@@ -1182,6 +1325,56 @@ function collect() {
   return { id: CUR.id, imerominia: $('f-imer').value, titlos: $('f-titl').value, enotita: CUR.enotita, alles_enotites: getChips('f-alles').filter(function (k) { return k !== CUR.enotita; }), taxeis: getChips('f-tax'), diktya: getChips('f-dik'),
     keimeno: keimeno(), fotografies: CUR.fotografies.filter(function (f) { return f.id; }).map(function (f) { return { id: f.id, perigrafi: f.perigrafi || '' }; }),
     arxeia: CUR.arxeia, video: $('f-vid').value.trim(), syggrafeas: $('f-syg').value.trim(), synainesi: $('f-syn').checked };
+}
+/* ═══ Αυτόματη φύλαξη πρόχειρου στη συσκευή: αν λήξει η σύνδεση ή κλείσει η καρτέλα, τίποτα δεν χάνεται ═══ */
+var PR_T = null;
+function prKleidi_() { return 'pr_' + ((CUR && CUR.id) || 'neo'); }
+function prDiavase_(k) { try { var v = JSON.parse(localStorage.getItem(k) || 'null'); return v && v.d ? v : null; } catch (x) { return null; } }
+function prSvise_(k) { try { localStorage.removeItem(k); } catch (x) {} }
+function prFylaxe_() {
+  clearTimeout(PR_T);
+  PR_T = setTimeout(function () {
+    if (!CUR || $('v-edit').classList.contains('hidden')) return;
+    var d = collect(); if (!d.titlos.trim() && !d.keimeno.trim()) return;
+    try { localStorage.setItem(prKleidi_(), JSON.stringify({ t: Date.now(), d: d, en: CUR.enotita })); } catch (x) {}
+  }, 1500);
+}
+document.addEventListener('input', function (e) { if (e.target.closest && e.target.closest('#v-edit')) prFylaxe_(); if (e.target.closest && e.target.closest('#v-page')) psFylaxe_(); }, true);
+document.addEventListener('change', function (e) { if (e.target.closest && e.target.closest('#v-edit')) prFylaxe_(); }, true);
+function prEpanafora_() {
+  var k = prKleidi_(), pr = prDiavase_(k); if (!pr) return;
+  var now = collect();
+  if (pr.d.titlos === now.titlos && pr.d.keimeno === now.keimeno && JSON.stringify(pr.d.fotografies) === JSON.stringify(now.fotografies)) { prSvise_(k); return; }
+  var w = new Date(pr.t), wr = ('0' + w.getHours()).slice(-2) + ':' + ('0' + w.getMinutes()).slice(-2) + ', ' + w.getDate() + '/' + (w.getMonth() + 1);
+  dlg({ icon: '💾', title: 'Βρέθηκε κείμενο που δεν αποθηκεύτηκε', text: '«' + (pr.d.titlos || '(χωρίς τίτλο)') + '», από ' + wr + '. Να συνεχίσετε από εκεί που το αφήσατε;',
+        ok: 'Ναι, συνέχεια από εκεί', kind: 'green', noLabel: 'Όχι, να ανοίξει όπως είναι αποθηκευμένο', noValue: 'oxi' }, function (v) {
+    if (v === 'oxi') { prSvise_(k); return; }
+    var d = pr.d;
+    $('f-titl').value = d.titlos || ''; $('f-imer').value = d.imerominia || $('f-imer').value; $('f-vid').value = d.video || ''; $('f-syg').value = d.syggrafeas || $('f-syg').value;
+    $('rte').innerHTML = mdToHtml(d.keimeno || ''); $('f-syn').checked = !!d.synainesi;
+    CUR.fotografies = (d.fotografies || []).map(function (f) { return { id: f.id, perigrafi: f.perigrafi || '' }; }); CUR.arxeia = d.arxeia || [];
+    setChips('f-tax', d.taxeis); setChips('f-dik', d.diktya); setChips('f-alles', d.alles_enotites); setSec(d.enotita || pr.en || '');
+    drawPhotos(); drawDocs('docs', CUR.arxeia); loadThumbs(CUR.fotografies.map(function (f) { return f.id; }));
+    msg('edMsg', 'Συνεχίζετε από το κείμενο που δεν είχε αποθηκευτεί. Μην ξεχάσετε να το αποθηκεύσετε.', 'info');
+  });
+}
+var PS_T = null;
+function psFylaxe_() {
+  clearTimeout(PS_T);
+  PS_T = setTimeout(function () {
+    if (!PCUR || $('v-page').classList.contains('hidden')) return;
+    try { localStorage.setItem('ps_' + PCUR.id, JSON.stringify({ t: Date.now(), d: { titlos: $('p-titl').value, perigrafi: $('p-per').value, keimeno: htmlToMd($('prte')) } })); } catch (x) {}
+  }, 1500);
+}
+function psEpanafora_() {
+  var k = 'ps_' + PCUR.id, pr = prDiavase_(k); if (!pr) return;
+  if (pr.d.keimeno === (PCUR.keimeno || '') && pr.d.titlos === PCUR.titlos && pr.d.perigrafi === (PCUR.perigrafi || '')) { prSvise_(k); return; }
+  dlg({ icon: '💾', title: 'Βρέθηκαν αλλαγές που δεν αποθηκεύτηκαν', text: 'Στη σελίδα «' + PCUR.titlos + '». Να συνεχίσετε από εκεί που τις αφήσατε;', ok: 'Ναι, συνέχεια από εκεί', kind: 'green',
+        noLabel: 'Όχι, να ανοίξει όπως είναι αποθηκευμένη', noValue: 'oxi' }, function (v) {
+    if (v === 'oxi') { prSvise_(k); return; }
+    $('p-titl').value = pr.d.titlos; $('p-per').value = pr.d.perigrafi; $('prte').innerHTML = mdToHtml(pr.d.keimeno || '');
+    msg('pMsg', 'Συνεχίζετε από τις αλλαγές που δεν είχαν αποθηκευτεί. Μην ξεχάσετε την αποθήκευση.', 'info');
+  });
 }
 function save(en, btn) {
   if (BUSY) { msg('edMsg', 'Περιμένετε λίγο να ανέβουν όλες οι φωτογραφίες.', 'info'); return; }
@@ -1197,8 +1390,9 @@ function save(en, btn) {
   }
   if (btn) btn._ok = false;
   if (d.syggrafeas) store('onoma', d.syggrafeas);
+  var prk = prKleidi_();
   run('apothikefsi', [T, d, en], function (r) {
-    CUR.id = r.id;
+    prSvise_(prk); prSvise_('pr_' + r.id); CUR.id = r.id;
     var t = r.minima + (r.github && !r.github.ok ? '\n' + r.github.minima : '');
     home(); msg('homeMsg', '✔ ' + t, r.github && !r.github.ok ? 'bad' : 'ok');
     if (en === 'dimosiefsi' && r.github && r.github.ok) parakolouthisi(d.titlos);
@@ -1402,8 +1596,9 @@ function loadPages() {
 function editPage(s) {
   if (!rte) initRte();
   PCUR = JSON.parse(JSON.stringify(s));
-  $('pT').textContent = s.titlos; $('p-titl').value = s.titlos; $('p-per').value = s.perigrafi || ''; $('prte').innerHTML = mdToHtml(s.keimeno || '');
+  $('pT').textContent = s.titlos; $('p-titl').value = s.titlos; $('p-per').value = s.perigrafi || ''; $('prte').innerHTML = mdToHtml(s.keimeno || ''); istReset($('prte'));
   $('p-draft').checked = s.katastasi === 'Πρόχειρο' && !s._nea; drawDocs('pDocs', PCUR.arxeia); msg('pMsg', s._nea ? 'Νέα σελίδα: γράψτε το κείμενο και πατήστε «Αποθήκευση και δημοσίευση».' : '', s._nea ? 'info' : ''); nav('page');
+  setTimeout(psEpanafora_, 50);
   $('pAfair').textContent = s.katastasi === 'Αποσυρμένη' ? '♻️ Επαναφορά της σελίδας στην ιστοσελίδα' : '🗑️ Αφαίρεση της σελίδας από την ιστοσελίδα';
 }
 function neaSelidaUI() {
@@ -1425,7 +1620,7 @@ function afairesiSelidasUI() {
 function savePage(pub) {
   var d = { id: PCUR.id, titlos: $('p-titl').value, perigrafi: $('p-per').value, keimeno: htmlToMd($('prte')), simeiosi: PCUR.simeiosi || '',
             katastasi: PCUR.katastasi === 'Αποσυρμένη' ? 'Αποσυρμένη' : $('p-draft').checked ? 'Πρόχειρο' : 'Δημοσιευμένη', arxeia: PCUR.arxeia, fotografies: PCUR.fotografies };
-  run('apothikefsiSelidas', [T, d, pub], function (r) { msg('pMsg', '✔ ' + r.minima, 'ok'); }, 'pMsg');
+  run('apothikefsiSelidas', [T, d, pub], function (r) { prSvise_('ps_' + d.id); PCUR.katastasi = d.katastasi; PCUR.keimeno = d.keimeno; PCUR.titlos = d.titlos; PCUR.perigrafi = d.perigrafi; msg('pMsg', '✔ ' + r.minima, 'ok'); }, 'pMsg');
 }
 
 /* ─── ρυθμίσεις ─── */

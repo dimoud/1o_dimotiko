@@ -228,7 +228,7 @@ function rpc_(b) {
             rythmiseis: rythmiseis, allagiKodikou: allagiKodikou, allagiEmail: allagiEmail,
             katastasiDimosiefsis: katastasiDimosiefsis, odigies: odigies, odigosPdf: odigosPdf,
             emailSyntakton: emailSyntakton, apothikefsiEmailSyntakton: apothikefsiEmailSyntakton,
-            neaSelida: neaSelida, afairesiSelidas: afairesiSelidas };
+            neaSelida: neaSelida, afairesiSelidas: afairesiSelidas, xanaDimosiefsi: xanaDimosiefsi };
   if (!b || !F[b.fn]) return out({ sfalma: 'άγνωστη κλήση' });
   try {
     var r = F[b.fn].apply(null, b.args || []);
@@ -646,9 +646,10 @@ function ksekinaDimosiefsi_() {
     payload: JSON.stringify({ ref: 'main' })
   });
   var c = res.getResponseCode();
-  if (c === 204) return { ok: true };
+  if (c === 204) { p.setProperty('TELEFTAIA_ENTOLI', String(Date.now())); CacheService.getScriptCache().remove('gh_runs'); return { ok: true }; }
   katagrafi_('σύστημα', '', 'Αποτυχία εντολής δημοσίευσης (' + c + ')', '', '');
-  eidopoiisi_('Η δημοσίευση δεν ξεκίνησε', 'Το GitHub απάντησε ' + c + '. Πιθανόν έληξε το κλειδί GitHub.\n' + res.getContentText().slice(0, 300));
+  eidopoiisiSystimatos_('Η δημοσίευση δεν ξεκίνησε', 'Το GitHub απάντησε με κωδικό ' + c + (c === 401 || c === 403 ? ': το κλειδί GitHub έληξε ή ακυρώθηκε. Φτιάξτε νέο κλειδί και βάλτε το στις Ιδιότητες του σεναρίου (GITHUB_TOKEN).' : '.') +
+    '\nΟι αλλαγές είναι αποθηκευμένες στο Φύλλο· θα δημοσιευτούν μόλις αποκατασταθεί η σύνδεση.\n\n' + res.getContentText().slice(0, 300));
   return { ok: false, minima: 'Η αλλαγή αποθηκεύτηκε, αλλά η δημοσίευση δεν ξεκίνησε (κωδικός ' + c + '). Ενημερώστε την τεχνική υποστήριξη.' };
 }
 
@@ -679,6 +680,80 @@ function istoriko_(n) {
   return sh.getRange(from, 1, last - from + 1, 6).getValues().reverse().map(function (r) {
     return [Utilities.formatDate(new Date(r[0]), 'Europe/Athens', 'dd/MM/yyyy HH:mm'), r[1], r[2], r[3], r[5]];
   });
+}
+
+/* ═══════════════ Αυτοδιόρθωση: «φύλακας» που ξαναδοκιμάζει τη δημοσίευση και ειδοποιεί μόνο όταν χρειάζεται ═══════════════
+ * Τρέχει κάθε 30 λεπτά (εγκατάσταση μία φορά: egkatastasiFylaka). Ειδοποιήσεις: στον λογαριασμό Google του σχολείου
+ * (ιδιοκτήτης του σεναρίου). Δεν ενοχλεί τους εκπαιδευτικούς. */
+function systimaEmail_() {   // ο λογαριασμός Google του σχολείου = ιδιοκτήτης του Φύλλου (χωρίς επιπλέον άδειες)
+  var c = CacheService.getScriptCache(), v = c.get('sys_email'); if (v) return v;
+  try { v = DriveApp.getFileById(SpreadsheetApp.getActive().getId()).getOwner().getEmail(); } catch (e) { v = ''; }
+  v = v || P().getProperty('NOTIFY_EMAIL') || ''; if (v) c.put('sys_email', v, 21600); return v;
+}
+function eidopoiisiSystimatos_(thema, keimeno) {
+  var to = systimaEmail_(); if (!to) return;
+  try { MailApp.sendEmail(to, '[Ιστοσελίδα σχολείου · αυτόματος έλεγχος] ' + thema, keimeno + '\n\nΠίνακας διαχείρισης: ' + PINAKAS_URL +
+    '\n(Αυτόματο μήνυμα: ο έλεγχος τρέχει κάθε μισή ώρα και ξαναδοκιμάζει μόνος του πριν ειδοποιήσει.)'); } catch (e) {}
+}
+function egkatastasiFylaka() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'fylakas') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('fylakas').timeBased().everyMinutes(30).create();
+  console.log('Ο φύλακας εγκαταστάθηκε: τρέχει κάθε 30 λεπτά. Ειδοποιήσεις στο ' + systimaEmail_());
+  fylakas();
+}
+function fylakas() {
+  var p = P(), t = p.getProperty('GITHUB_TOKEN'), repo = p.getProperty('GITHUB_REPO');
+  if (!t || !repo) return;
+  var res = UrlFetchApp.fetch('https://api.github.com/repos/' + repo + '/actions/workflows/dimosieusi.yml/runs?per_page=5', {
+    muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + t, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' } });
+  var code = res.getResponseCode(), h = res.getAllHeaders(), simera = Utilities.formatDate(new Date(), 'Europe/Athens', 'yyyy-MM-dd');
+  // 1. Λήξη κλειδιού GitHub: προειδοποίηση 14 ημέρες πριν, μία φορά την εβδομάδα
+  var lixi = h['github-authentication-token-expiration'] || h['Github-Authentication-Token-Expiration'];
+  if (lixi) {
+    var ld = new Date(String(lixi).replace(' UTC', 'Z').replace(' +0000', 'Z').replace(' ', 'T')), meres = Math.floor((ld - new Date()) / 864e5);
+    var pr = p.getProperty('LIXI_EIDOP') || '';
+    if (meres <= 14 && (!pr || (new Date(simera) - new Date(pr)) / 864e5 >= 7)) {
+      eidopoiisiSystimatos_('Το κλειδί GitHub λήγει σε ' + meres + ' ημέρες', 'Στις ' + Utilities.formatDate(ld, 'Europe/Athens', 'dd/MM/yyyy') +
+        ' λήγει το κλειδί με το οποίο ο Πίνακας δημοσιεύει στην ιστοσελίδα. Φτιάξτε νέο στο GitHub (Settings → Developer settings → Fine-grained tokens, δικαίωμα Actions: Read and write) ' +
+        'και βάλτε το στις Ιδιότητες του σεναρίου ως GITHUB_TOKEN. Αλλιώς, μετά τη λήξη, οι αλλαγές θα αποθηκεύονται αλλά δεν θα φαίνονται στην ιστοσελίδα.');
+      p.setProperty('LIXI_EIDOP', simera);
+    }
+  }
+  if (code === 401 || code === 403) {
+    if (p.getProperty('KLEIDI_EIDOP') !== simera) { eidopoiisiSystimatos_('Η σύνδεση με τη δημοσίευση χάθηκε', 'Το GitHub απορρίπτει το κλειδί (κωδικός ' + code + '): έληξε ή ακυρώθηκε. Οι αλλαγές αποθηκεύονται κανονικά στο Φύλλο, αλλά δεν δημοσιεύονται μέχρι να μπει νέο κλειδί (GITHUB_TOKEN).'); p.setProperty('KLEIDI_EIDOP', simera); }
+    return;
+  }
+  if (code !== 200) return;   // παροδικό· ξανά σε μισή ώρα
+  var runs = JSON.parse(res.getContentText()).workflow_runs || [], last = runs[0], now = Date.now();
+  var entoli = Number(p.getProperty('TELEFTAIA_ENTOLI') || 0), prosp = Number(p.getProperty('FYLAKAS_PROSP') || 0);
+  function xanadokimi(aitia) {
+    if (prosp < 2) {
+      var r = ksekinaDimosiefsi_(); p.setProperty('FYLAKAS_PROSP', String(prosp + 1));
+      katagrafi_('σύστημα', '', 'Αυτόματη επανάληψη δημοσίευσης ' + (prosp + 1) + '/2 (' + aitia + ')' + (r.ok ? '' : ': δεν ξεκίνησε'), '', '');
+    } else if (!p.getProperty('FYLAKAS_EIDOP')) {
+      eidopoiisiSystimatos_('Η ιστοσελίδα δεν ενημερώνεται', 'Η δημοσίευση απέτυχε και μετά από 2 αυτόματες επαναλήψεις (' + aitia + ').\n' +
+        'Η ιστοσελίδα δείχνει την τελευταία σωστή έκδοση· τίποτα δεν χάθηκε από το Φύλλο.\nΛεπτομέρειες: ' + (last && last.html_url ? last.html_url : 'https://github.com/' + repo + '/actions'));
+      p.setProperty('FYLAKAS_EIDOP', String(now));
+    }
+  }
+  if (last && last.status === 'completed' && last.conclusion === 'success') {
+    if (p.getProperty('FYLAKAS_EIDOP')) eidopoiisiSystimatos_('Η ιστοσελίδα ενημερώνεται ξανά κανονικά', 'Το πρόβλημα με τη δημοσίευση λύθηκε· η ιστοσελίδα είναι ενημερωμένη.');
+    p.deleteProperty('FYLAKAS_PROSP'); p.deleteProperty('FYLAKAS_EIDOP');
+    if (entoli && new Date(last.created_at).getTime() < entoli - 60000 && now - entoli > 20 * 60000 && !runs.some(function (r) { return new Date(r.created_at).getTime() >= entoli - 60000; })) xanadokimi('η εντολή δεν ξεκίνησε δημοσίευση');
+    return;
+  }
+  if (last && last.status === 'completed' && last.conclusion !== 'success') { xanadokimi('η τελευταία δημοσίευση απέτυχε'); return; }
+  if (last && last.status !== 'completed' && now - new Date(last.created_at).getTime() > 90 * 60000 && !p.getProperty('FYLAKAS_EIDOP')) {
+    eidopoiisiSystimatos_('Η δημοσίευση έχει κολλήσει', 'Μια δημοσίευση τρέχει πάνω από 90 λεπτά: ' + last.html_url); p.setProperty('FYLAKAS_EIDOP', String(now));
+  }
+  if (entoli && now - entoli > 20 * 60000 && !runs.some(function (r) { return new Date(r.created_at).getTime() >= entoli - 60000; })) xanadokimi('η εντολή δεν ξεκίνησε δημοσίευση');
+}
+/** Κουμπί «Ξαναδοκίμασε τώρα» στον Πίνακα (μόνο Διεύθυνση). */
+function xanaDimosiefsi(token) {
+  synedria_(token, 'diefthynsi');
+  katagrafi_('διεύθυνση', 'Διεύθυνση', 'Χειροκίνητη επανάληψη δημοσίευσης', '', '');
+  var r = ksekinaDimosiefsi_();
+  return r.ok ? { ok: true } : { ok: false, minima: r.minima };
 }
 
 function eidopoiisi_(thema, keimeno) {
