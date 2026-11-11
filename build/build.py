@@ -366,9 +366,13 @@ class Istotopos:
                 return f'<img src="/logotypa/{src.name}"{wh} alt="Λογότυπο: {esc(d["titlos"])}" loading="lazy" decoding="async">'
         il = RIZA / 'static' / 'eikones' / 'diktya' / f'{d["id"]}.webp'
         if il.exists():
-            from PIL import Image
-            with Image.open(il) as im:
-                return f'<img class="net-il" src="/static/eikones/diktya/{d["id"]}.webp" width="{im.width}" height="{im.height}" alt="" loading="lazy" decoding="async">'
+            try:
+                from PIL import Image
+                with Image.open(il) as im:
+                    w, h = im.size
+            except Exception:
+                w, h = 240, 240
+            return f'<img class="net-il" src="/static/eikones/diktya/{d["id"]}.webp" width="{w}" height="{h}" alt="" loading="lazy" decoding="async">'
         arxika = ''.join(w[0] for w in re.findall(r'[A-Za-zΑ-Ωα-ωά-ώ]+', d['titlos'])[:3]).upper()
         return f'<span class="logo-ph" aria-hidden="true">{esc(arxika)}</span>'
 
