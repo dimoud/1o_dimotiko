@@ -229,7 +229,8 @@ function rpc_(b) {
             rythmiseis: rythmiseis, allagiKodikou: allagiKodikou, allagiEmail: allagiEmail,
             katastasiDimosiefsis: katastasiDimosiefsis, odigies: odigies, odigosPdf: odigosPdf,
             emailSyntakton: emailSyntakton, apothikefsiEmailSyntakton: apothikefsiEmailSyntakton,
-            neaSelida: neaSelida, afairesiSelidas: afairesiSelidas, xanaDimosiefsi: xanaDimosiefsi, anoixti: anoixti, xoros: xoros };
+            neaSelida: neaSelida, afairesiSelidas: afairesiSelidas, xanaDimosiefsi: xanaDimosiefsi, anoixti: anoixti, xoros: xoros,
+            epiloges: epiloges };
   if (!b || !F[b.fn]) return out({ sfalma: 'άγνωστη κλήση' });
   try {
     var r = F[b.fn].apply(null, b.args || []);
@@ -321,8 +322,19 @@ function synedria_(token, apaitisi) {
 
 function akyrosiSynedrion_() { P().setProperty('GENIA', String(Number(P().getProperty('GENIA') || 0) + 1)); }
 
+/** Πού μπορεί να μπει μια ανάρτηση: οι ενότητες της Σχολικής Ζωής ΚΑΙ κάθε δημοσιευμένη σελίδα των μενού
+ *  (κωδικός «s:» + id σελίδας). Δυναμικό: νέα σελίδα στον Πίνακα = νέα επιλογή, χωρίς αλλαγή κώδικα. */
+function enotitesOles_() {
+  var SEIRA_OM = { sxoleio: 1, zoi: 2, goneis: 3 };
+  var sel = diavase_('selides').filter(function (s) { return s.katastasi === 'Δημοσιευμένη' && SEIRA_OM[s.omada] &&
+    !ENOTITES.some(function (e) { return e[0] === String(s.id); }); });   // π.χ. «Σχολικός κήπος»: υπάρχει ήδη ως ενότητα
+  sel.sort(function (a, b) { return (SEIRA_OM[a.omada] - SEIRA_OM[b.omada]) || (Number(a.seira) - Number(b.seira)); });
+  return ENOTITES.concat(sel.map(function (s) { return ['s:' + s.id, String(s.titlos), s.omada]; }));
+}
+/** Ανανέωση των επιλογών στον Πίνακα (κάθε φόρτωση με ενεργή σύνδεση). */
+function epiloges(token) { synedria_(token); return epiloges_(); }
 function epiloges_() {
-  return { enotites: ENOTITES, taxeis: TAXEIS, diktya: DIKTYA, katastaseis: KATASTASEIS };
+  return { enotites: enotitesOles_(), taxeis: TAXEIS, diktya: DIKTYA, katastaseis: KATASTASEIS };
 }
 
 /* ═══════════════ Αναρτήσεις ═══════════════ */
@@ -383,9 +395,10 @@ function apothikefsi(token, d, energeia) {
       epanalipsi = !!r;
     }
     if (r && !epanalipsi) elegxosEkdosis_(r, d.ekdosi);
+    var OLES = enotitesOles_();
     var pedia = {
       imerominia: d.imerominia, titlos: d.titlos.trim(), enotita: d.enotita,
-      alles_enotites: (d.alles_enotites || []).filter(function (k) { return k && k !== d.enotita && ENOTITES.some(function (e) { return e[0] === k; }); }).join(','),
+      alles_enotites: (d.alles_enotites || []).filter(function (k) { return k && k !== d.enotita && OLES.some(function (e) { return e[0] === k; }); }).join(','),
       taxeis: (d.taxeis || []).join(','),
       diktya: (d.diktya || []).join(','), keimeno: d.keimeno || '', fotografies: JSON.stringify(d.fotografies || []),
       arxeia: JSON.stringify(d.arxeia || []), video: d.video || '', syggrafeas: (d.syggrafeas || '').trim(),
@@ -453,7 +466,7 @@ function elegxos_(d, energeia) {
   if (!d.titlos || d.titlos.trim().length < 5) l.push('Ο τίτλος θέλει τουλάχιστον 5 χαρακτήρες.');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d.imerominia || '')) l.push('Λείπει η ημερομηνία.');
   else if (d.imerominia < '2024-01-01') l.push('Η ημερομηνία πρέπει να είναι από 1/1/2024 και μετά.');
-  if (!ENOTITES.some(function (e) { return e[0] === d.enotita; })) l.push('Διαλέξτε ενότητα.');
+  if (!enotitesOles_().some(function (e) { return e[0] === d.enotita; })) l.push('Διαλέξτε πού ανήκει η ανάρτηση.');
   if (energeia !== 'proxeiro') {
     if (!d.syggrafeas || !d.syggrafeas.trim()) l.push('Συμπληρώστε το «Ποιος το έγραψε».');
     if ((d.fotografies || []).length && !d.synainesi) l.push('Επιβεβαιώστε ότι υπάρχει συγκατάθεση κηδεμόνων για τις φωτογραφίες.');

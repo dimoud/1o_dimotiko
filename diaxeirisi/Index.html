@@ -201,6 +201,8 @@ h2{font-size:1.35rem;margin:0 0 6px}
 .ph input{width:100%;border:0;border-top:1px solid var(--line);padding:8px;font-size:.85rem}
 .ph .prog{position:absolute;inset:0;background:rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;font-weight:700}
 .secs{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.sec-om{grid-column:1/-1;margin:10px 0 0;font-weight:800;font-size:.9rem;color:var(--blue-d)}.sec-om:first-child{margin-top:0}
+#f-alles .sec-om{flex-basis:100%;width:100%}
 .sec-btn{border:2px solid var(--line);background:#fff;border-radius:14px;padding:12px;min-height:60px;cursor:pointer;display:flex;align-items:center;gap:10px;text-align:left;font-weight:600;font-size:.95rem}
 .sec-btn .em{font-size:1.4rem}
 .sec-btn.on{border-color:var(--blue);background:var(--blue-bg);color:var(--blue-d)}
@@ -609,16 +611,24 @@ function login(e) {
   }, 'loginMsg', $('bLogin'));
 }
 function logout() { T = null; try { sessionStorage.clear(); } catch (x) {} $('hdr').classList.add('hidden'); nav('login'); }
+function ftiaxeEpiloges_() {
+  /* οι επιλογές «πού ανήκει» έρχονται από τον διακομιστή: ενότητες + όλες οι δημοσιευμένες σελίδες των μενού (s:…) */
+  var OM_T = { sxoleio: 'Το Σχολείο μας', zoi: 'Σχολική Ζωή', goneis: 'Γονείς και Κηδεμόνες' }, OM_I = { sxoleio: '🏫', zoi: '🌱', goneis: '👪' };
+  OPT.enotites.forEach(function (e) { if (e[2] && !ICON[e[0]]) ICON[e[0]] = OM_I[e[2]] || '📄'; });
+  var omadaEn_ = function (e) { return e[2] ? 'Σελίδες: ' + (OM_T[e[2]] || e[2]) : 'Ενότητες της Σχολικής Ζωής'; };
+  var meOmades_ = function (fn) { var pr = null; return OPT.enotites.map(function (e) { var o = omadaEn_(e), h = o !== pr ? '<p class="sec-om">' + esc(o) + '</p>' : ''; pr = o; return h + fn(e); }).join(''); };
+  $('secs').innerHTML = meOmades_(function (e) {
+    return '<button type="button" class="sec-btn" data-v="' + e[0] + '"><span class="em">' + (ICON[e[0]] || '📌') + '</span>' + esc(e[1]) + '</button>';
+  });
+  $('secs').onclick = function (e) { var b = e.target.closest('.sec-btn'); if (!b) return; setSec(b.dataset.v); };
+  $('f-alles').innerHTML = meOmades_(function (e) { return '<label><input type="checkbox" value="' + e[0] + '"> ' + (ICON[e[0]] || '📌') + ' ' + esc(e[1]) + '</label>'; });
+  $('f-tax').innerHTML = OPT.taxeis.map(function (t) { return '<label><input type="checkbox" value="' + esc(t) + '"> ' + esc(t) + '</label>'; }).join('');
+  $('f-dik').innerHTML = OPT.diktya.map(function (d) { return '<label><input type="checkbox" value="' + d[0] + '"> ' + esc(d[1]) + '</label>'; }).join('');
+}
 function start() {
   $('hdr').classList.remove('hidden');
   $('roleLbl').textContent = ROLE === 'diefthynsi' ? 'Διεύθυνση' : 'Εκπαιδευτικός';
-  $('secs').innerHTML = OPT.enotites.map(function (e) {
-    return '<button type="button" class="sec-btn" data-v="' + e[0] + '"><span class="em">' + (ICON[e[0]] || '📌') + '</span>' + esc(e[1]) + '</button>';
-  }).join('');
-  $('secs').onclick = function (e) { var b = e.target.closest('.sec-btn'); if (!b) return; setSec(b.dataset.v); };
-  $('f-alles').innerHTML = OPT.enotites.map(function (e) { return '<label><input type="checkbox" value="' + e[0] + '"> ' + (ICON[e[0]] || '📌') + ' ' + esc(e[1]) + '</label>'; }).join('');
-  $('f-tax').innerHTML = OPT.taxeis.map(function (t) { return '<label><input type="checkbox" value="' + esc(t) + '"> ' + esc(t) + '</label>'; }).join('');
-  $('f-dik').innerHTML = OPT.diktya.map(function (d) { return '<label><input type="checkbox" value="' + d[0] + '"> ' + esc(d[1]) + '</label>'; }).join('');
+  ftiaxeEpiloges_();
   if (location.hash === '#odigies') { try { history.replaceState(null, '', location.pathname); } catch (x) {} nav('odigies'); } else home();
 }
 function home() {
@@ -726,7 +736,7 @@ function drawFacets(en) {
   function n(skip, f) { return ALL.filter(function (a) { return match(a, FILTER) && pass(a, skip) && f(a); }).length; }
   function btn(kind, v, label, c, on) { return '<button class="fo' + (on ? ' on' : '') + '" data-k="' + kind + '" data-v="' + esc(v) + '"' + (!c && !on ? ' disabled' : '') + '><span>' + label + '</span><i>' + c + '</i></button>'; }
   $('fThema').innerHTML = btn('thema', '', 'Όλα τα θέματα', n('thema', function () { return true; }), !THEMA) +
-    OPT.enotites.map(function (e) { return btn('thema', e[0], (ICON[e[0]] || '📌') + ' ' + esc(e[1]), n('thema', function (a) { return stinEnotita_(a, e[0]); }), THEMA === e[0]); }).join('');
+    OPT.enotites.map(function (e) { var c = n('thema', function (a) { return stinEnotita_(a, e[0]); }); return e[2] && !c && THEMA !== e[0] ? '' : btn('thema', e[0], (ICON[e[0]] || '📌') + ' ' + esc(e[1]), c, THEMA === e[0]); }).join('');
   $('fTaxi').innerHTML = btn('taxi', '', 'Όλες οι τάξεις', n('taxi', function () { return true; }), !TAXI) +
     OPT.taxeis.map(function (t) { return btn('taxi', t, (t.length <= 2 ? t + '΄ τάξη' : esc(t)), n('taxi', function (a) { return taxeisOf(a).indexOf(t) >= 0; }), TAXI === t); }).join('') +
     btn('taxi', '-', 'Όλο το σχολείο', n('taxi', function (a) { return !taxeisOf(a).length; }), TAXI === '-');
@@ -2035,7 +2045,13 @@ function sygkrousi_(m, fn, args, ok, el, btn) {
 (function () {
   try { T = sessionStorage.getItem('t'); ROLE = sessionStorage.getItem('r'); OPT = JSON.parse(sessionStorage.getItem('o') || 'null'); } catch (x) {}
   var em0 = store('em'); if (em0) $('lemail').value = em0;
-  if (T && OPT) start(); else nav('login');
+  if (T && OPT) {
+    start();
+    /* ανανέωση των επιλογών (π.χ. νέα σελίδα στο μενού) χωρίς νέα σύνδεση */
+    run('epiloges', [T], function (r) { if (!r || !r.enotites) return; OPT = r; try { sessionStorage.setItem('o', JSON.stringify(OPT)); } catch (x) {}
+      var v = CUR && CUR.enotita, al = getChips('f-alles'), tx = getChips('f-tax'), dk = getChips('f-dik'); ftiaxeEpiloges_();
+      if (CUR) { setChips('f-alles', al.join(',')); setChips('f-tax', tx.join(',')); setChips('f-dik', dk.join(',')); setSec(v || ''); } }, 'homeMsg');
+  } else nav('login');
 })();
 
 /* ═══ Βοηθητικές ενδείξεις (tooltips): μεγάλα γράμματα, εμφανίζονται όταν σταθεί το ποντίκι ή το πλήκτρο Tab ═══ */

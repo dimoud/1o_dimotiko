@@ -19,9 +19,10 @@ from collections import OrderedDict, defaultdict
 from pathlib import Path
 
 import md
-from kelyfos import ENOTITES, esc, imerominia, selida, slug, url_enotitas, menou
+from kelyfos import ENOTITES, SELIDES_EN, esc, imerominia, selida, slug, titlos_enotitas, url_enotitas, menou
 
 RIZA = Path(__file__).resolve().parent.parent
+OMADES = {'sxoleio': ('Το Σχολείο μας', '/sxoleio/'), 'zoi': ('Σχολική Ζωή', '/zoi/'), 'goneis': ('Γονείς και Κηδεμόνες', '/goneis/')}
 APO = '2024-01-01'          # κανόνας πελάτη: τίποτα πριν από το 2024
 DIMOSIEYMENI = 'Δημοσιευμένη'
 
@@ -135,6 +136,10 @@ class Istotopos:
         an, sel, diktya, syndesmoi, r = fortose(a.dedomena, a.periexomeno)
         self.r, self.diktya, self.syndesmoi = r, sorted(diktya, key=lambda x: x['seira']), syndesmoi
         self.sel = [s for s in sel if s.get('katastasi') == DIMOSIEYMENI]
+        SELIDES_EN.clear()
+        for s in self.sel:   # κάθε δημοσιευμένη σελίδα μπορεί να «φιλοξενεί» αναρτήσεις (επιλογή στον Πίνακα: s:<id>)
+            if s.get('omada') in OMADES:
+                SELIDES_EN['s:' + s['id']] = (s['titlos'], f'{OMADES[s["omada"]][1]}{s["id"]}/', s['omada'])
         self.meson = Meson(a.meson, self.out)
         self.base = (a.base or '').rstrip('/')
         if a.tomeas:
@@ -180,8 +185,11 @@ class Istotopos:
                 x['keimeno'] = palio_re.sub(neo, x['keimeno'])
         self.etos = max(int(p['imerominia'][:4]) for p in posts) if posts else 2026
         self.ana_enotita = defaultdict(list)
+        for p in posts:   # κύρια θέση σε σελίδα που αποσύρθηκε: η ανάρτηση δεν χάνεται, πάει στις Ανακοινώσεις
+            if p.get('enotita') not in ENOTITES and p.get('enotita') not in SELIDES_EN:
+                p['enotita'] = 'anakoinoseis'
         for p in posts:   # μία κύρια ενότητα (διεύθυνση, διαδρομή) + όσες ακόμα επέλεξε ο συντάκτης (εμφάνιση και εκεί)
-            p['alles_enotites'] = [k for k in OrderedDict.fromkeys(p.get('alles_enotites') or []) if k in ENOTITES and k != p['enotita']]
+            p['alles_enotites'] = [k for k in OrderedDict.fromkeys(p.get('alles_enotites') or []) if (k in ENOTITES or k in SELIDES_EN) and k != p['enotita']]
             for k in [p['enotita']] + p['alles_enotites']:
                 self.ana_enotita[k].append(p)
         self.ana_diktyo = defaultdict(list)
@@ -229,7 +237,7 @@ class Istotopos:
         return (f'<article class="card rv{" card-lg" if megali else ""}">{eik}<div class="card-body">'
                 f'<p class="card-meta"><time datetime="{p["imerominia"]}">{imerominia(p["imerominia"])}</time>'
                 + (f'<span class="ora">, {ora(p)}</span>' if ora(p) and p['dimosiefthike'][:10] == p['imerominia'] else '') +
-                f' · {esc(ENOTITES.get(p["enotita"], ""))}</p>'
+                f' · {esc(titlos_enotitas(p["enotita"]))}</p>'
                 f'<{heading} class="card-t"><a href="{p["url"]}">{esc(p["titlos"])}</a></{heading}></div></article>')
 
     def lista(self, posts, heading='h3'):
@@ -311,7 +319,7 @@ class Istotopos:
     def anartisi(self, p, i):
         r = self.r
         fot = p.get('fotografies') or []
-        tags = [f'<a class="tag" href="{url_enotitas(k)}">{esc(ENOTITES.get(k, ""))}</a>' for k in [p["enotita"]] + p.get("alles_enotites", [])]
+        tags = [f'<a class="tag" href="{url_enotitas(k)}">{esc(titlos_enotitas(k))}</a>' for k in [p["enotita"]] + p.get("alles_enotites", [])]
         tags += [f'<span class="tag tag-g">{esc(t if t in ("Ένταξη", "Ολοήμερο") else t + "΄ τάξη")}</span>' for t in p.get('taxeis', [])]
         dk = {d['id']: d for d in self.diktya}
         tags += [f'<a class="tag tag-g" href="/diktya/{d}/">{esc(dk[d]["titlos"])}</a>' for d in p.get('diktya', []) if d in dk]
@@ -334,7 +342,7 @@ class Istotopos:
                 f'<dt>Ημερομηνία</dt><dd>{imerominia(p["imerominia"])}</dd>'
                 + (f'<dt>Ανέβηκε</dt><dd>{imerominia(p["dimosiefthike"][:10])}, {ora(p)}</dd>' if ora(p) else '') +
                 f'<dt>Σχολικό έτος</dt><dd><a href="/arxeio/{p["sxoliko_etos"]}/">{p["sxoliko_etos"].replace("-", "–")}</a></dd>'
-                f'<dt>{"Ενότητες" if p.get("alles_enotites") else "Ενότητα"}</dt><dd>' + ', '.join(f'<a href="{url_enotitas(k)}">{esc(ENOTITES.get(k, ""))}</a>' for k in [p["enotita"]] + p.get("alles_enotites", [])) + '</dd>'
+                f'<dt>{"Ενότητες" if p.get("alles_enotites") else "Ενότητα"}</dt><dd>' + ', '.join(f'<a href="{url_enotitas(k)}">{esc(titlos_enotitas(k))}</a>' for k in [p["enotita"]] + p.get("alles_enotites", [])) + '</dd>'
                 + (f'<dt>Τάξεις</dt><dd>{esc(tax)}</dd>' if tax else '') + '</dl>'
                 + (f'<p class="side-h">Δίκτυα</p><ul class="side-list">{dk_html}</ul>' if dk_html else '') + '</div>'
                 + (f'<div class="side-card rv"><p class="side-h">Από την ίδια ενότητα</p><ul class="side-list">'
@@ -352,7 +360,7 @@ class Istotopos:
                'publisher': {'@type': 'EducationalOrganization', 'name': r['onoma']}, 'mainEntityOfPage': r['tomeas'].rstrip('/') + p['url'],
                **({'image': r['tomeas'].rstrip('/') + e0['1600']} if e0 else {})}]
         self.grapse(p['url'], titlos=p['titlos'], perigrafi=perig, soma=soma, ld=ld, og_eikona=e0['1600'] if e0 else '',
-                    diadromi=[('Σχολική Ζωή', '/zoi/'), (ENOTITES.get(p['enotita'], ''), url_enotitas(p['enotita']))],
+                    diadromi=([OMADES[SELIDES_EN[p['enotita']][2]]] if p['enotita'] in SELIDES_EN else [('Σχολική Ζωή', '/zoi/')]) + [(titlos_enotitas(p['enotita']), url_enotitas(p['enotita']))],
                     k=md.keimeno_xoris_morfi(p.get('keimeno', ''))[:400])
 
     def enotita(self, k):
@@ -399,8 +407,10 @@ class Istotopos:
         path = f'{omada_url}{s["id"]}/'
         sim = f'<p class="note">{esc(s["simeiosi"])}</p>' if s.get('simeiosi') else ''
         sxet = ''
-        if s['omada'] == 'zoi' and s['id'] in ENOTITES and self.ana_enotita.get(s['id']):   # αναρτήσεις της ομώνυμης ενότητας
-            ps = self.ana_enotita[s['id']]
+        ps = list(self.ana_enotita.get(s['id'], [])) if s['omada'] == 'zoi' and s['id'] in ENOTITES else []   # αναρτήσεις της ομώνυμης ενότητας
+        ps += [p for p in self.ana_enotita.get('s:' + s['id'], []) if p not in ps]   # και όσες ο συντάκτης έβαλε σε αυτή τη σελίδα
+        ps.sort(key=lambda p: (p['imerominia'], p.get('id', '')), reverse=True)
+        if ps:
             sxet = f'<section class="related"><h2 class="h-sec rv">Αναρτήσεις ({len(ps)})</h2>{self.lista_ana_etos(ps)}</section>'
         elif s.get('diktyo_sxetika') and self.ana_diktyo.get(s['diktyo_sxetika']):
             sxet = f'<section class="related"><h2 class="h-sec rv">Σχετικές αναρτήσεις</h2>{self.lista(self.ana_diktyo[s["diktyo_sxetika"]][:6])}</section>'
@@ -499,11 +509,11 @@ class Istotopos:
         for et, ps in self.ana_etos.items():
             path = f'/arxeio/{et}/'
             omades = OrderedDict()
-            for k in ENOTITES:
+            for k in list(ENOTITES) + list(SELIDES_EN):
                 xs = [p for p in ps if p['enotita'] == k]
                 if xs:
                     omades[k] = xs
-            body = ''.join(f'<section class="zone"><h2 class="h-sec rv">{esc(ENOTITES[k])}</h2>{self.lista(xs)}</section>' for k, xs in omades.items())
+            body = ''.join(f'<section class="zone"><h2 class="h-sec rv">{esc(titlos_enotitas(k))}</h2>{self.lista(xs)}</section>' for k, xs in omades.items())
             self.grapse(path, titlos=f'Σχολικό έτος {et.replace("-", "–")}', perigrafi=f'Όλες οι αναρτήσεις του 1ου Δημοτικού Σχολείου Πολίχνης για το σχολικό έτος {et}.',
                         soma=self.kefali('Αρχείο', f'Σχολικό έτος {et.replace("-", "–")}', f'{len(ps)} αναρτήσεις') + f'<div class="wrap">{body}</div>',
                         diadromi=[('Αρχείο', '/arxeio/')])

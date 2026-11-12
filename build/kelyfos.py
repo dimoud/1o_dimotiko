@@ -25,7 +25,17 @@ ENOTITES = {
 }
 
 
+# Σελίδες των μενού όπου μπορεί να μπει και ανάρτηση (κωδικός «s:» + id). Τις γεμίζει το build.py από τις δημοσιευμένες σελίδες.
+SELIDES_EN = {}   # 's:id' -> (τίτλος, διεύθυνση, ομάδα)
+
+
+def titlos_enotitas(k):
+    return ENOTITES.get(k) or SELIDES_EN.get(k, ('',))[0]
+
+
 def url_enotitas(k):
+    if k in SELIDES_EN:
+        return SELIDES_EN[k][1]
     if k == 'diagonismoi':
         return '/diagonismoi/'
     if k == 'goneis':
