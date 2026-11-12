@@ -473,7 +473,14 @@ class Istotopos:
         hero_img = img_tag(hero_e, r['fotografia_kentriki_perigrafi'], cls='hero-img', sizes='(max-width: 734px) 100vw, 560px', lazy=False, fetchprio='high')
         # Εξώφυλλο που εναλλάσσει τις πιο πρόσφατες δράσεις (φωτογραφία + τίτλος + σύνδεσμος)· αν δεν υπάρχουν, η σταθερή φωτογραφία
         slides = []
-        for p in self.posts:
+        # (α) εξώφυλλο που όρισε το σχολείο (rythmiseis.json → exofyllo): φωτογραφίες με λεζάντα και σύνδεσμο σε ανάρτηση
+        ana_titlo = {p['titlos']: p for p in self.posts}
+        for x in r.get('exofyllo') or []:
+            e = self.meson.eikona(x.get('arxeio', ''))
+            if e:
+                p = ana_titlo.get(x.get('anartisi', ''))
+                slides.append(({'url': p['url'] if p else '', 'titlos': x.get('titlos', ''), 'epikefalida': x.get('epikefalida', '')}, e))
+        for p in ([] if slides else self.posts):
             if p['enotita'] in ('anakoinoseis', 'goneis'):
                 continue
             for f in (p.get('fotografies') or [])[:3]:
@@ -483,12 +490,14 @@ class Istotopos:
                     break
             if len(slides) == 6:
                 break
+        slides = slides[:16]
         if len(slides) >= 2:
             sl = []
             for n, (p, e) in enumerate(slides):
-                im = img_tag(e, '', cls='hero-img', sizes='(max-width: 734px) 100vw, 560px', lazy=n > 0, fetchprio='high' if n == 0 else '')
-                sl.append(f'<a class="hr-s{" on" if n == 0 else ""}" href="{p["url"]}"{"" if n == 0 else " tabindex=\"-1\" aria-hidden=\"true\""}>{im}'
-                          f'<span class="hr-cap"><span class="hr-d">{imerominia(p["imerominia"])}</span><span class="hr-t">{esc(p["titlos"])}</span></span></a>')
+                im = img_tag(e, p['titlos'], cls='hero-img', sizes='(max-width: 734px) 100vw, 560px', lazy=n > 0, fetchprio='high' if n == 0 else '')
+                tag, href = ('a', f' href="{p["url"]}"') if p.get('url') else ('div', '')
+                sl.append(f'<{tag} class="hr-s{" on" if n == 0 else ""}"{href}{"" if n == 0 else " tabindex=\"-1\" aria-hidden=\"true\""}>{im}'
+                          f'<span class="hr-cap"><span class="hr-d">{esc(p["epikefalida"]) if p.get("epikefalida") else imerominia(p["imerominia"])}</span><span class="hr-t">{esc(p["titlos"])}</span></span></{tag}>')
             dots = ''.join(f'<button type="button" class="hr-dot{" on" if n == 0 else ""}" aria-label="Δράση {n + 1}: {esc(p["titlos"])}"{" aria-current=\"true\"" if n == 0 else ""}></button>'
                            for n, (p, e) in enumerate(slides))
             hero_img = (f'<div class="hero-rot" role="region" aria-roledescription="εναλλαγή" aria-label="Πρόσφατες δράσεις του σχολείου">{"".join(sl)}'
