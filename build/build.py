@@ -106,6 +106,21 @@ HERO_ROT_JS = (
     "setTimeout(function(){var nx=S[1]&&S[1].querySelector('img');if(nx)nx.loading='eager';},2500);arm();})();")
 
 
+def ora(p):
+    """Ώρα πρώτης δημοσίευσης (ΩΩ:ΛΛ), αν την έχει καταγράψει ο Πίνακας (από 12/11/2026)."""
+    d = p.get('dimosiefthike') or ''
+    return d[11:16] if len(d) >= 16 else ''
+
+
+def anevike(p):
+    """«στις 10:42» αν ανέβηκε την ημερομηνία της ανάρτησης, αλλιώς «14 Νοεμβρίου 2026, 10:42»."""
+    o = ora(p)
+    if not o:
+        return ''
+    d = p['dimosiefthike'][:10]
+    return f'<time datetime="{p["dimosiefthike"][:16]}">' + (f'στις {o}' if d == p['imerominia'] else f'{imerominia(d)}, {o}') + '</time>'
+
+
 def imerologio(d):
     return (f'<time class="cal" datetime="{d}"><span class="cal-d">{int(d[8:10])}</span>'
             f'<span class="cal-m">{imerominia(d, False).split(" ")[1]}</span><span class="sr-only"> {d[:4]}</span></time>')
@@ -192,11 +207,23 @@ class Istotopos:
                else '<div class="card-img card-img-none" aria-hidden="true"></div>')
         return (f'<article class="card rv{" card-lg" if megali else ""}">{eik}<div class="card-body">'
                 f'<p class="card-meta"><time datetime="{p["imerominia"]}">{imerominia(p["imerominia"])}</time>'
+                + (f'<span class="ora">, {ora(p)}</span>' if ora(p) and p['dimosiefthike'][:10] == p['imerominia'] else '') +
                 f' · {esc(ENOTITES.get(p["enotita"], ""))}</p>'
                 f'<{heading} class="card-t"><a href="{p["url"]}">{esc(p["titlos"])}</a></{heading}></div></article>')
 
     def lista(self, posts, heading='h3'):
         return '<div class="cards">' + ''.join(self.karta(p, heading) for p in posts) + '</div>'
+
+    def slider(self, posts, etiketa, heading='h3'):
+        """Κάρτες σε οριζόντια σειρά που κυλά (σάρωμα, βελάκια, πληκτρολόγιο). Χωρίς JS: απλή οριζόντια κύλιση.
+        Έως 3 κάρτες: το κανονικό πλέγμα."""
+        if len(posts) <= 3:
+            return self.lista(posts, heading)
+        return (f'<div class="slider" data-slider><div class="sl-track" tabindex="0" role="region" aria-label="{esc(etiketa)}">'
+                + ''.join(self.karta(p, heading) for p in posts) + '</div>'
+                '<div class="sl-ctl" hidden><button type="button" class="sl-b sl-prev" aria-label="Προηγούμενες">‹</button>'
+                '<span class="sl-bar" aria-hidden="true"><span></span></span>'
+                '<button type="button" class="sl-b sl-next" aria-label="Επόμενες">›</button></div></div>')
 
     def lista_ana_etos(self, posts):
         if not posts:
@@ -226,7 +253,7 @@ class Istotopos:
                 per = ''          # όνομα αρχείου από το παλιό WordPress, όχι λεζάντα
             alt = per or f'{titlos}: φωτογραφία {i + 1}'
             cap = f'<figcaption>{esc(per)}</figcaption>' if per else ''
-            items.append(f'<figure><a href="{e["1600"]}" data-lb data-w="{e["w"]}" data-h="{e["h"]}">'
+            items.append(f'<figure class="rv"><a href="{e["1600"]}" data-lb data-w="{e["w"]}" data-h="{e["h"]}">'
                          f'{img_tag(e, alt, sizes="(max-width: 734px) 50vw, 300px")}</a>{cap}</figure>')
         if not items:
             return ''
@@ -276,23 +303,24 @@ class Istotopos:
         if nxt:
             nav += f'<a class="pn-next" href="{nxt["url"]}"><span>Επόμενη</span>{esc(nxt["titlos"])}</a>'
         nav += '</div>'
-        sxet = [x for x in self.ana_enotita[p['enotita']] if x is not p][:3]
-        sxet_html = (f'<section class="related wrap" aria-labelledby="sx"><h2 id="sx" class="h-sec rv">Από την ίδια ενότητα</h2>{self.lista(sxet)}</section>'
+        sxet = [x for x in self.ana_enotita[p['enotita']] if x is not p][:8]
+        sxet_html = (f'<section class="related wrap" aria-labelledby="sx"><h2 id="sx" class="h-sec rv">Από την ίδια ενότητα</h2>{self.slider(sxet, "Από την ίδια ενότητα")}</section>'
                      if sxet else '')
         e0 = self.meson.eikona(fot[0]['arxeio']) if fot else None
         dk_html = ''.join(f'<li><a href="/diktya/{d}/">{esc(dk[d]["titlos"])}</a></li>' for d in p.get('diktya', []) if d in dk)
         tax = ', '.join(t if t in ('Ένταξη', 'Ολοήμερο') else t + '΄' for t in p.get('taxeis', []))
         side = (f'<aside class="side"><div class="side-card rv"><p class="side-h">Στοιχεία</p><dl class="facts">'
                 f'<dt>Ημερομηνία</dt><dd>{imerominia(p["imerominia"])}</dd>'
+                + (f'<dt>Ανέβηκε</dt><dd>{imerominia(p["dimosiefthike"][:10])}, {ora(p)}</dd>' if ora(p) else '') +
                 f'<dt>Σχολικό έτος</dt><dd><a href="/arxeio/{p["sxoliko_etos"]}/">{p["sxoliko_etos"].replace("-", "–")}</a></dd>'
                 f'<dt>{"Ενότητες" if p.get("alles_enotites") else "Ενότητα"}</dt><dd>' + ', '.join(f'<a href="{url_enotitas(k)}">{esc(ENOTITES.get(k, ""))}</a>' for k in [p["enotita"]] + p.get("alles_enotites", [])) + '</dd>'
                 + (f'<dt>Τάξεις</dt><dd>{esc(tax)}</dd>' if tax else '') + '</dl>'
                 + (f'<p class="side-h">Δίκτυα</p><ul class="side-list">{dk_html}</ul>' if dk_html else '') + '</div>'
                 + (f'<div class="side-card rv"><p class="side-h">Από την ίδια ενότητα</p><ul class="side-list">'
-                   + ''.join(f'<li><a href="{x["url"]}">{esc(x["titlos"])}</a><span>{imerominia(x["imerominia"])}</span></li>' for x in sxet)
+                   + ''.join(f'<li><a href="{x["url"]}">{esc(x["titlos"])}</a><span>{imerominia(x["imerominia"])}</span></li>' for x in sxet[:3])
                    + '</ul></div>' if sxet else '') + '</aside>')
         soma = f'''<article class="post">
-<div class="page-band"><header class="page-head wrap"><p class="post-date">{imerologio(p["imerominia"])}<span>{imerominia(p["imerominia"])} · Σχολικό έτος {p["sxoliko_etos"].replace("-", "–")}</span></p>
+<div class="page-band"><header class="page-head wrap"><p class="post-date">{imerologio(p["imerominia"])}<span>{imerominia(p["imerominia"])} · Σχολικό έτος {p["sxoliko_etos"].replace("-", "–")}{" · ανέβηκε " + anevike(p) if ora(p) else ""}</span></p>
 <h1>{esc(p["titlos"])}</h1><p class="tags">{"".join(tags)}</p></header></div>
 <div class="wrap page-grid"><div class="main"><div class="prose">{keim}</div>{self.arxeia(p.get("arxeia", []))}{self.video(p.get("video"))}</div>{side}</div>
 <div class="wrap post-body">{self.gallery(fot, p["titlos"])}{nav}</div>
@@ -456,10 +484,10 @@ class Istotopos:
         anak = self.ana_enotita.get('anakoinoseis', [])[:5]
         anak_html = ''.join(f'<li class="rv"><a class="notice" href="{p["url"]}">{imerologio(p["imerominia"])}'
                             f'<span class="notice-body"><span class="notice-t">{esc(p["titlos"])}</span>'
-                            f'<span class="notice-m">{imerominia(p["imerominia"])} · Σχολικό έτος {p["sxoliko_etos"].replace("-", "–")}</span></span>'
+                            f'<span class="notice-m">{imerominia(p["imerominia"])}{", " + ora(p) if ora(p) and p["dimosiefthike"][:10] == p["imerominia"] else ""} · Σχολικό έτος {p["sxoliko_etos"].replace("-", "–")}</span></span>'
                             f'<span class="notice-go" aria-hidden="true">›</span></a></li>' for p in anak)
-        zoi = [p for p in self.posts if p['enotita'] not in ('anakoinoseis', 'goneis') and p.get('fotografies')][:6]
-        diak = self.ana_enotita.get('diagonismoi', [])[:3]
+        zoi = [p for p in self.posts if p['enotita'] not in ('anakoinoseis', 'goneis') and p.get('fotografies')][:10]
+        diak = self.ana_enotita.get('diagonismoi', [])[:9]
         hero_e = self.meson.eikona(r['fotografia_kentriki']) if r.get('fotografia_kentriki') else None
         if not hero_e:
             for p in self.posts:  # προσωρινά: η πρώτη οριζόντια φωτογραφία, έως ότου έρθει φωτογραφία του κτιρίου
@@ -558,11 +586,11 @@ class Istotopos:
 </div></section>
 <section class="sec band-g" aria-labelledby="h-zoi"><div class="wrap">
  <div class="zone-head"><h2 id="h-zoi" class="h-sec rv">Η σχολική μας ζωή</h2><a class="more" href="/zoi/">Όλη η Σχολική Ζωή<span aria-hidden="true"> ›</span></a></div>
- {self.lista(zoi)}
+ {self.slider(zoi, 'Η σχολική μας ζωή: πρόσφατες δράσεις')}
 </div></section>
 {f"""<section class="sec" aria-labelledby="h-diak"><div class="wrap">
  <div class="zone-head"><h2 id="h-diak" class="h-sec rv">Διαγωνισμοί, διακρίσεις, βραβεία</h2><a class="more" href="/diagonismoi/">Όλες οι διακρίσεις<span aria-hidden="true"> ›</span></a></div>
- {self.lista(diak)}
+ {self.slider(diak, 'Διαγωνισμοί και διακρίσεις')}
 </div></section>""" if diak else ""}
 <div class="flight flight-r" aria-hidden="true"><svg viewBox="0 0 1200 120" preserveAspectRatio="none"><path class="fl-path" d="M-10 92 C 180 18, 330 112, 520 64 S 840 4, 1000 52 S 1120 96, 1170 34"/></svg><svg class="fl-plane" viewBox="0 0 48 48"><path d="M3 22L45 4 33 44 23 28z" fill="#fff"/><path d="M23 28L45 4 15 25z" fill="#cfe2f6"/><path d="M3 22L45 4 33 44 23 28z" fill="none" stroke="#1e64a8" stroke-width="2.6" stroke-linejoin="round"/></svg><span class="fl-st s1"></span><span class="fl-st s2"></span><span class="fl-st s3"></span></div>
 <section class="sec band" aria-labelledby="h-ch"><div class="wrap">

@@ -221,3 +221,52 @@
     });
   });
 })();
+
+/* ── Οριζόντιες σειρές καρτών: βελάκια, μπάρα προόδου, σύρσιμο με ποντίκι, πληκτρολόγιο (12/11/2026) */
+(function () {
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('[data-slider]').forEach(function (s) {
+    var t = s.querySelector('.sl-track'), ctl = s.querySelector('.sl-ctl'), pr = s.querySelector('.sl-prev'), nx = s.querySelector('.sl-next'), bar = s.querySelector('.sl-bar span');
+    if (!t || !ctl) return;
+    s.classList.add('js-sl');
+    var raf = 0;
+    function upd() {
+      raf = 0;
+      var max = t.scrollWidth - t.clientWidth;
+      if (max < 4) { ctl.hidden = true; return; }
+      ctl.hidden = false;
+      var w = t.clientWidth / t.scrollWidth, x = Math.max(0, Math.min(1, t.scrollLeft / max));
+      bar.style.width = (w * 100).toFixed(2) + '%';
+      bar.style.transform = 'translateX(' + (x * (1 / w - 1) * 100).toFixed(2) + '%)';
+      pr.disabled = t.scrollLeft < 4; nx.disabled = t.scrollLeft > max - 4;
+    }
+    function bima() { var k = t.firstElementChild; if (!k) return t.clientWidth; return k.getBoundingClientRect().width + (parseFloat(getComputedStyle(t).columnGap) || 0); }
+    function pame(d) { var b = bima(), g = parseFloat(getComputedStyle(t).columnGap) || 0, n = Math.max(1, Math.floor((t.clientWidth + g + 4) / b)); t.scrollBy({ left: d * b * n, behavior: reduce ? 'auto' : 'smooth' }); }
+    pr.addEventListener('click', function () { pame(-1); });
+    nx.addEventListener('click', function () { pame(1); });
+    t.addEventListener('scroll', function () { if (!raf) raf = requestAnimationFrame(upd); }, { passive: true });
+    window.addEventListener('resize', function () { if (!raf) raf = requestAnimationFrame(upd); }, { passive: true });
+    t.addEventListener('keydown', function (e) {
+      if (e.target !== t) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); pame(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); pame(-1); }
+    });
+    /* σύρσιμο με το ποντίκι (στην αφή και στο touchpad η κύλιση είναι ήδη φυσική) */
+    var dr = null;
+    t.addEventListener('pointerdown', function (e) { if (e.pointerType !== 'mouse' || e.button) return; dr = { x: e.clientX, l: t.scrollLeft, m: false }; });
+    window.addEventListener('pointermove', function (e) {
+      if (!dr) return;
+      var dx = e.clientX - dr.x;
+      if (!dr.m && Math.abs(dx) > 6) { dr.m = true; t.classList.add('sl-drag'); }
+      if (dr.m) t.scrollLeft = dr.l - dx;
+    });
+    t.addEventListener('dragstart', function (e) { e.preventDefault(); });   // αλλιώς ο περιηγητής «σηκώνει» τη φωτογραφία/σύνδεσμο και χάνεται το σύρσιμο
+    function telos() {
+      if (!dr) return; var m = dr.m; dr = null;
+      if (m) { t.classList.remove('sl-drag'); var b = bima(); t.scrollTo({ left: Math.round(t.scrollLeft / b) * b, behavior: reduce ? 'auto' : 'smooth' });
+        var st = function (e) { e.preventDefault(); e.stopPropagation(); }; t.addEventListener('click', st, true); setTimeout(function () { t.removeEventListener('click', st, true); }, 60);
+        setTimeout(function () { t.classList.remove('sl-drag'); }, 0); }
+    }
+    window.addEventListener('pointerup', telos); window.addEventListener('pointercancel', telos);
+    upd();
+  });
+})();

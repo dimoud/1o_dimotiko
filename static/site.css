@@ -595,3 +595,40 @@ html.rv-fallback .pc,html.rv-fallback .kite{transform:none;opacity:1}
 .hr-paused .hr-p span{width:0;height:0;border:0;border-left:11px solid #fff;border-top:7px solid transparent;border-bottom:7px solid transparent}
 .hr-ctl button:focus-visible{outline:2px solid #fff;outline-offset:-2px;border-radius:6px}
 @media (prefers-reduced-motion:reduce){.hr-s,.hr-s.on{transition:none}}
+
+/* ── Οριζόντιες σειρές καρτών (slider) — 12/11/2026. Χωρίς JS: απλή οριζόντια κύλιση με snap. */
+.slider{position:relative;--g:24px}
+.sl-track{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 2 * var(--g)) / 3);gap:var(--g);overflow-x:auto;overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;padding:6px 4px 16px;margin:-6px -4px 0;scrollbar-width:thin}
+.sl-track>*{scroll-snap-align:start}
+.sl-track:focus-visible{outline:3px solid #f2b233;outline-offset:2px;border-radius:12px}
+.js-sl .sl-track{scrollbar-width:none}.js-sl .sl-track::-webkit-scrollbar{display:none}
+.sl-track.sl-drag{scroll-snap-type:none;cursor:grabbing;user-select:none}
+.sl-track.sl-drag a{pointer-events:none}
+@media (prefers-reduced-motion:no-preference){.sl-track{scroll-behavior:smooth}.sl-track.sl-drag{scroll-behavior:auto}}
+@media (max-width:1068px){.sl-track{grid-auto-columns:calc((100% - var(--g)) / 2)}}
+@media (max-width:734px){.slider{--g:14px}.sl-track{grid-auto-columns:82%}}
+@media (max-width:560px){.sl-track .card{flex-direction:column;min-height:0}.sl-track .card-img{flex:none;aspect-ratio:3/2;min-height:0}}
+.sl-ctl{display:flex;align-items:center;gap:14px;margin-top:6px}
+.sl-ctl[hidden]{display:none}
+.sl-b{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:26px;line-height:1;
+  cursor:pointer;box-shadow:var(--sh);transition:background .2s,color .2s,opacity .2s}
+.sl-b:hover:not(:disabled){background:var(--blue);color:#fff;border-color:var(--blue)}
+.sl-b:disabled{opacity:.35;cursor:default;box-shadow:none}
+.sl-b:focus-visible{outline:3px solid #f2b233;outline-offset:2px}
+.sl-bar{flex:1;height:4px;border-radius:4px;background:var(--line);position:relative;overflow:hidden}
+.sl-bar span{position:absolute;top:0;bottom:0;left:0;width:30%;border-radius:4px;background:var(--blue);will-change:transform}
+/* οι κάρτες της σειράς φτάνουν από δεξιά, μία-μία (ήρεμα, χωρίς υπέρβαση) */
+@keyframes rv-x{from{opacity:0;translate:36px 0}to{opacity:1;translate:0 0}}
+html.anim-ready .sl-track>.rv.rv-in{animation:rv-x .9s cubic-bezier(.22,.61,.36,1) both}
+@media (max-width:734px){@keyframes rv-x{from{opacity:0;translate:20px 0}to{opacity:1;translate:0 0}}html.anim-ready .sl-track>.rv.rv-in{animation-duration:.7s}}
+/* ανακοινώσεις: γλιστρούν από αριστερά, σαν σημειώσεις που μπαίνουν στη σειρά */
+@keyframes rv-l{from{opacity:0;translate:-12px 0}to{opacity:1;translate:0 0}}
+html.anim-ready .notices>li.rv.rv-in{animation:rv-l .9s cubic-bezier(.22,.61,.36,1) both}
+/* «Στο σχολείο μας»: η εικόνα κάθε κεφαλαίου κάθεται στη θέση της λίγο μετά την κάρτα */
+@keyframes settle{from{opacity:0;transform:rotate(-6deg) translateY(10px) scale(.94)}to{opacity:1;transform:none}}
+html.anim-ready .chapters>li.rv.rv-in .ch-art img{animation:settle .9s cubic-bezier(.22,.61,.36,1) .18s both}
+/* φωτογραφίες ανάρτησης: ανεβαίνουν ήπια, κλιμακωτά */
+html.anim-ready .gallery>figure.rv.rv-in{animation-duration:.8s}
+@media (prefers-reduced-motion:reduce){.sl-track>.rv,.notices>li.rv,.chapters .ch-art img{animation:none!important;opacity:1!important;translate:none!important;transform:none!important}}
+.card-meta .ora{white-space:nowrap}

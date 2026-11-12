@@ -155,7 +155,8 @@ def main():
                 'fotografies': [x for x in ({'arxeio': foto(f['id']), 'perigrafi': f.get('perigrafi', '')} for f in r.get('fotografies') or []) if x['arxeio']],
                 'arxeia': [arxeio(f) for f in r.get('arxeia') or []],
                 'video': r.get('video') or [], 'syggrafeas': r.get('syggrafeas') or '', 'enotita': r['enotita'], 'alles_enotites': r.get('alles_enotites') or [],
-                'taxeis': r.get('taxeis') or [], 'diktya': r.get('diktya') or [], 'katastasi': 'Δημοσιευμένη'})
+                'taxeis': r.get('taxeis') or [], 'diktya': r.get('diktya') or [], 'katastasi': 'Δημοσιευμένη',
+                'dimosiefthike': str(r.get('dimosiefthike') or '')[:16]})
         except Exception as e:
             print(f'  παράλειψη ανάρτησης {r.get("id")}: {e}', file=sys.stderr)
     json.dump(out, open(dd / 'anartiseis.json', 'w', encoding='utf-8'), ensure_ascii=False)

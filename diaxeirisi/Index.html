@@ -55,6 +55,11 @@ html{scroll-padding-top:calc(var(--hdr,0px) + 110px)}
 .ph .img:focus-visible{outline:3px solid #f2b233;outline-offset:-3px}
 .ph-odig{grid-column:1/-1;margin:0;font-size:14px;color:var(--ink2)}
 body.ph-sernei{cursor:grabbing;user-select:none}
+.xoros{margin:8px 0 0;padding:10px 14px;border-radius:12px;background:var(--blue-bg,#eef4fb);font-size:15px;display:flex;flex-direction:column;gap:6px}
+.xoros.warn{background:#fff4dc}.xoros.bad{background:#fde7e4}
+.xoros-bar{height:8px;border-radius:6px;background:rgba(0,0,0,.08);overflow:hidden}
+.xoros-bar span{display:block;height:100%;border-radius:6px;background:#2e7d32}
+.xoros.warn .xoros-bar span{background:#e08a00}.xoros.bad .xoros-bar span{background:#c62828}
 .tholosi{display:flex;gap:10px;align-items:center;margin:10px 0 0;font-size:16px;font-weight:600;cursor:pointer}
 .tholosi input{width:22px;height:22px}
 .th-card{max-width:min(1100px,96vw)!important}
@@ -284,6 +289,7 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
  <div id="homeMsg"></div>
  <div class="tiles" id="tiles"></div>
  <div id="ygeia" class="ygeia hidden" role="status"></div>
+ <div id="xoros" class="xoros hidden" role="status"></div>
  <div class="card">
   <h2>Πώς ανεβαίνει μια ανάρτηση</h2>
   <p class="muted" style="margin:0">1. Πατάτε <b>Νέα ανάρτηση</b>. 2. Γράφετε τίτλο και κείμενο. 3. Προσθέτετε φωτογραφίες. 4. Πατάτε <b>Αποστολή</b>. Η Διεύθυνση την ελέγχει και τη δημοσιεύει.</p>
@@ -612,7 +618,7 @@ function home() {
   $('tiles').innerHTML = t;
   var prn = prDiavase_('pr_neo');
   if (prn) msg('homeMsg', '💾 Υπάρχει νέα ανάρτηση που δεν αποθηκεύτηκε: «' + (prn.d.titlos || '(χωρίς τίτλο)') + '». Πατήστε «Νέα ανάρτηση» για να τη συνεχίσετε.', 'info');
-  ygeia_();
+  ygeia_(); xoros_();
   run('listaAnartiseon', [T], function (l) {
     ALL = l;
     if ($('waitN')) $('waitN').textContent = l.filter(isWaiting).length;
@@ -635,6 +641,20 @@ function ygeia_() {
     if (c === 'bad' && ROLE === 'diefthynsi' && !(o.xoris_kleidi || o.sfalma === 401)) h += ' <button class="btn light" style="margin-left:6px" onclick="xanaDimosiefsi_(this)" title="Ξεκινά ξανά τώρα την ενημέρωση της ιστοσελίδας">🔄 Ξαναδοκίμασε τώρα</button>';
     b.className = 'ygeia ' + c; b.innerHTML = h;
   }, 'homeMsg');
+}
+/* Χώρος στο Google Drive: μπάρα στην αρχική (ενημέρωση κάθε ώρα από τον διακομιστή) */
+function xoros_() {
+  google.script.run.withSuccessHandler(function (o) {
+    var b = $('xoros'); if (!b || !o) return;
+    var gb = function (x) { return (x / 1073741824).toFixed(1).replace('.', ',') + ' GB'; };
+    if (!o.limit) { b.className = 'xoros'; b.innerHTML = '💾 Χώρος στο Google Drive: ' + gb(o.used) + ' σε χρήση.'; return; }
+    var p = o.pososto, c = p >= 95 ? 'bad' : p >= 85 ? 'warn' : 'ok';
+    b.className = 'xoros ' + c;
+    b.title = 'Εκεί αποθηκεύονται οι φωτογραφίες και τα έγγραφα των αναρτήσεων. Ο Κάδος του Drive και το Gmail μετρούν στον ίδιο χώρο.';
+    b.innerHTML = '<span>💾 Χώρος στο Google Drive: <b>' + gb(o.used) + '</b> από ' + gb(o.limit) + ' (' + String(p).replace('.', ',') + '%)' +
+      (c === 'bad' ? ' · <b>σχεδόν γέμισε</b>: αδειάστε τον Κάδο του Drive ή σβήστε μεγάλα αρχεία.' : c === 'warn' ? ' · λιγοστεύει.' : ' · αρκετός.') + '</span>' +
+      '<span class="xoros-bar" aria-hidden="true"><span style="width:' + Math.min(100, p) + '%"></span></span>';
+  }).withFailureHandler(function () {}).xoros(T);
 }
 function xanaDimosiefsi_(btn) {
   run('xanaDimosiefsi', [T], function (r) { if (r.ok) { parakolouthisi('Ενημέρωση της ιστοσελίδας'); $('ygeia').className = 'ygeia on'; $('ygeia').textContent = '🟡 Η ενημέρωση ξεκίνησε ξανά.'; } else msg('homeMsg', r.minima, 'bad'); }, 'homeMsg', btn);

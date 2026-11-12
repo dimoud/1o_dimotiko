@@ -13,7 +13,7 @@
 var FYLLA = {
   anartiseis: ['id', 'katastasi', 'imerominia', 'titlos', 'enotita', 'alles_enotites', 'taxeis', 'diktya', 'keimeno',
                'fotografies', 'arxeia', 'video', 'syggrafeas', 'synainesi', 'sxolio', 'url_slug',
-               'protasi', 'dimiourgia', 'tropopoiisi', 'arithmos', 'ekdosi', 'teleftaios'],
+               'protasi', 'dimiourgia', 'tropopoiisi', 'arithmos', 'ekdosi', 'teleftaios', 'dimosiefthike'],
   selides: ['id', 'omada', 'seira', 'titlos', 'perigrafi', 'keimeno', 'fotografies', 'arxeia', 'simeiosi', 'katastasi', 'tropopoiisi', 'ekdosi', 'teleftaios'],
   istoriko: ['xronos', 'rolos', 'onoma', 'energeia', 'id', 'titlos']
 };
@@ -23,7 +23,7 @@ var ETIKETES = { id: 'Κωδικός', katastasi: 'Κατάσταση', imeromin
   syggrafeas: 'Συντάκτης', synainesi: 'Συγκατάθεση κηδεμόνων', sxolio: 'Σχόλιο Διεύθυνσης', url_slug: 'Διεύθυνση σελίδας',
   protasi: 'Πρόταση αλλαγής', dimiourgia: 'Δημιουργία', tropopoiisi: 'Τελευταία αλλαγή', omada: 'Ομάδα', seira: 'Σειρά',
   perigrafi: 'Περιγραφή', simeiosi: 'Σημείωση', arithmos: 'Α/Α', xronos: 'Χρόνος', rolos: 'Ρόλος', onoma: 'Όνομα', energeia: 'Ενέργεια',
-  ekdosi: 'Έκδοση', teleftaios: 'Τελευταία αλλαγή από' };
+  ekdosi: 'Έκδοση', teleftaios: 'Τελευταία αλλαγή από', dimosiefthike: 'Δημοσιεύτηκε' };
 function etiketa_(k) { return ETIKETES[k] || k; }
 function kleidi_(h) { for (var k in ETIKETES) if (ETIKETES[k] === h) return k; return h; }
 
@@ -229,7 +229,7 @@ function rpc_(b) {
             rythmiseis: rythmiseis, allagiKodikou: allagiKodikou, allagiEmail: allagiEmail,
             katastasiDimosiefsis: katastasiDimosiefsis, odigies: odigies, odigosPdf: odigosPdf,
             emailSyntakton: emailSyntakton, apothikefsiEmailSyntakton: apothikefsiEmailSyntakton,
-            neaSelida: neaSelida, afairesiSelidas: afairesiSelidas, xanaDimosiefsi: xanaDimosiefsi, anoixti: anoixti };
+            neaSelida: neaSelida, afairesiSelidas: afairesiSelidas, xanaDimosiefsi: xanaDimosiefsi, anoixti: anoixti, xoros: xoros };
   if (!b || !F[b.fn]) return out({ sfalma: 'άγνωστη κλήση' });
   try {
     var r = F[b.fn].apply(null, b.args || []);
@@ -250,6 +250,7 @@ function gia_dimosiefsi_(r) {
   o.diktya = (r.diktya || '').toString().split(',').map(function (x) { return x.trim(); }).filter(String);
   o.video = (r.video || '').toString().split(/\s+/).map(youtubeId_).filter(String).map(function (id) { return { eidos: 'youtube', id: id }; });
   if (r.imerominia instanceof Date) o.imerominia = Utilities.formatDate(r.imerominia, 'Europe/Athens', 'yyyy-MM-dd');
+  o.dimosiefthike = r.dimosiefthike instanceof Date ? Utilities.formatDate(r.dimosiefthike, 'Europe/Athens', "yyyy-MM-dd'T'HH:mm") : '';
   return o;
 }
 
@@ -373,7 +374,7 @@ function apothikefsi(token, d, energeia) {
   if (energeia === 'dimosiefsi' && s.rolos !== 'diefthynsi') throw new Error('Μόνο η Διεύθυνση δημοσιεύει.');
   var lock = kleidoma_();
   try {
-    var sh = fyllo_('anartiseis'); stili_(sh, 'alles_enotites'); stili_(sh, 'ekdosi'); stili_(sh, 'teleftaios');
+    var sh = fyllo_('anartiseis'); stili_(sh, 'alles_enotites'); stili_(sh, 'ekdosi'); stili_(sh, 'teleftaios'); stili_(sh, 'dimosiefthike');
     var r = d.id ? vres_('anartiseis', d.id) : null, now = new Date(), epanalipsi = false;
     if (!r && !d.id && /^a\d{14}$/.test(d.neo_id || '')) {   // νέα ανάρτηση με κωδικό από τη συσκευή: αν ξαναπατηθεί (π.χ. κόπηκε η σύνδεση), δεν γίνεται διπλή
       r = vres_('anartiseis', d.neo_id);
@@ -398,7 +399,7 @@ function apothikefsi(token, d, energeia) {
       return { ok: true, id: r.id, ekdosi: pedia.ekdosi, minima: 'Η αλλαγή στάλθηκε στη Διεύθυνση. Η ανάρτηση μένει όπως είναι μέχρι την έγκριση.' };
     }
     pedia.katastasi = energeia === 'dimosiefsi' ? 'Δημοσιευμένη' : energeia === 'egkrisi' ? 'Προς έγκριση' : 'Πρόχειρο';
-    if (energeia === 'dimosiefsi') { pedia.protasi = ''; pedia.sxolio = ''; }
+    if (energeia === 'dimosiefsi') { pedia.protasi = ''; pedia.sxolio = ''; if (!(r && r.dimosiefthike instanceof Date)) pedia.dimosiefthike = now; }   // η ώρα της ΠΡΩΤΗΣ δημοσίευσης
     var id = r ? r.id : /^a\d{14}$/.test(d.neo_id || '') ? d.neo_id : 'a' + Utilities.formatDate(now, 'Europe/Athens', 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
     if (r) grapse_(sh, r._row, pedia);
     else { pedia.id = id; pedia.dimiourgia = now; pedia.arithmos = arithmisi_() + 1; prosthese_(sh, 'anartiseis', pedia); }
@@ -423,6 +424,7 @@ function apofasi(token, id, praxi, sxolio, ekdosi) {
     if (praxi === 'egkrisi') {
       var pedia = r.protasi ? json_(r.protasi, {}) : {};
       pedia.katastasi = 'Δημοσιευμένη'; pedia.protasi = ''; pedia.sxolio = ''; pedia.tropopoiisi = new Date(); pedia.ekdosi = nea.ekdosi; pedia.teleftaios = nea.teleftaios;
+      stili_(sh, 'dimosiefthike'); pedia.dimosiefthike = r.dimosiefthike instanceof Date ? r.dimosiefthike : new Date();
       if (!(pedia.synainesi === true || (r.synainesi === true || r.synainesi === 'TRUE'))) throw new Error('Λείπει η επιβεβαίωση συγκατάθεσης κηδεμόνων.');
       grapse_(sh, r._row, pedia);
     } else if (praxi === 'epistrofi') {
@@ -726,8 +728,35 @@ function egkatastasiFylaka() {
   console.log('Ο φύλακας εγκαταστάθηκε: τρέχει κάθε 30 λεπτά. Ειδοποιήσεις στο ' + systimaEmail_());
   fylakas();
 }
+/* ═══ Χώρος στο Google Drive (του λογαριασμού που τρέχει το script, εκεί μπαίνουν φωτογραφίες και έγγραφα) ═══ */
+function xorosDrive_(fresko) {
+  var c = CacheService.getScriptCache(), k = 'xoros_drive';
+  if (!fresko) { var x = c.get(k); if (x) try { return JSON.parse(x); } catch (e) {} }
+  var used = DriveApp.getStorageUsed(), limit = DriveApp.getStorageLimit();
+  var o = { used: used, limit: limit > 0 ? limit : 0, pososto: limit > 0 ? Math.round(used / limit * 1000) / 10 : null, pote: new Date().toISOString() };
+  c.put(k, JSON.stringify(o), 3600);
+  return o;
+}
+function xoros(token) { synedria_(token); return xorosDrive_(false); }
+function gb_(b) { return (b / 1073741824).toFixed(1).replace('.', ',') + ' GB'; }
+/* μία φορά την ημέρα: ≥ 85% → email μία φορά την εβδομάδα· ≥ 95% → κάθε μέρα */
+function elegxosXorou_(p, simera) {
+  if (p.getProperty('XOROS_ELEGXOS') === simera) return;
+  p.setProperty('XOROS_ELEGXOS', simera);
+  var o; try { o = xorosDrive_(true); } catch (e) { return; }
+  if (o.pososto === null || o.pososto < 85) return;
+  var teleft = p.getProperty('XOROS_EIDOP') || '', meres = teleft ? (new Date(simera) - new Date(teleft)) / 86400000 : 999;
+  if (o.pososto < 95 && meres < 7) return;
+  p.setProperty('XOROS_EIDOP', simera);
+  eidopoiisiSystimatos_((o.pososto >= 95 ? 'Ο χώρος στο Google Drive σχεδόν τελείωσε' : 'Ο χώρος στο Google Drive λιγοστεύει') + ' (' + String(o.pososto).replace('.', ',') + '%)',
+    'Χρησιμοποιούνται ' + gb_(o.used) + ' από ' + gb_(o.limit) + '. Όταν γεμίσει, δεν θα ανεβαίνουν νέες φωτογραφίες και έγγραφα, και δεν θα έρχονται email στον λογαριασμό.\n\n' +
+    'Τι μπορείτε να κάνετε:\n1. Να αδειάσετε τον Κάδο στο Google Drive και στο Gmail (μετρούν στον χώρο).\n2. Να σβήσετε μεγάλα αρχεία που δεν χρειάζονται (drive.google.com/drive/quota δείχνει τα μεγαλύτερα).\n' +
+    '3. Να αποσύρετε από τον Πίνακα παλιές αναρτήσεις που δεν χρειάζονται: μετά από ' + KADOS_MERES + ' ημέρες οι φωτογραφίες τους πάνε στον Κάδο του Drive, και ο χώρος ελευθερώνεται όταν αδειάσει ο Κάδος.\n' +
+    '4. Αν χρειάζεται, περισσότερος χώρος με Google One.');
+}
 function fylakas() {
   var p = P(), t = p.getProperty('GITHUB_TOKEN'), repo = p.getProperty('GITHUB_REPO');
+  try { elegxosXorou_(p, Utilities.formatDate(new Date(), 'Europe/Athens', 'yyyy-MM-dd')); } catch (e) {}
   if (!t || !repo) return;
   var res = UrlFetchApp.fetch('https://api.github.com/repos/' + repo + '/actions/workflows/dimosieusi.yml/runs?per_page=5', {
     muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + t, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' } });
