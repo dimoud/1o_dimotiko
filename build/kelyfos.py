@@ -110,8 +110,7 @@ def ypo(r, etos):
    <p class="foot-name">{esc(r['onoma'])}</p>
    <ul class="foot-list">
     <li>{esc(r['dieythynsi'])}</li>
-    <li>Τηλέφωνο <a href="tel:{esc(r['tilefono'].replace(' ', ''))}">{esc(r['tilefono'])}</a></li>
-    <li>Fax {esc(r['fax'])}</li>{email}
+    <li>Τηλέφωνο <a href="tel:{esc(r['tilefono'].replace(' ', ''))}">{esc(r['tilefono'])}</a></li>{email}
    </ul>
   </div>
   <div>

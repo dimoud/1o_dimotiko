@@ -20,7 +20,6 @@ var FORMA = {
   geniki: '1ου Δημοτικού Σχολείου Πολίχνης',
   dieythynsi: 'Σχολείου 1, 565 33 Πολίχνη Θεσσαλονίκης',
   tilefono: '2310 654739',
-  fax: '2310 587767',
   site: 'https://1dim-polichnis.gr/',
   logo: 'https://www.expertease.eu/1o_dimotiko/email-logo.png',
   mple: '#1e64a8', skouro: '#14324f',
@@ -118,7 +117,7 @@ function formaPlaisio_(eswteriko, hasLogo, proeskopisi) {
     '<tr><td style="padding:22px 28px 26px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#1b2633">' + eswteriko + '</td></tr>' +
     '<tr><td style="padding:16px 28px;background:' + F.skouro + ';font-family:Arial,Helvetica,sans-serif;font-size:12.5px;line-height:1.7;color:#cfdbe8">' +
     '<strong style="color:#ffffff">' + F.onoma + '</strong><br>' + F.dieythynsi + '<br>' +
-    'Τηλ. ' + F.tilefono + ' · Fax ' + F.fax + '<br>' +
+    'Τηλ. ' + F.tilefono + '<br>' +
     '<a href="mailto:' + F.sxoleio + '" style="color:#ffffff">' + F.sxoleio + '</a> · ' +
     '<a href="' + F.site + '" style="color:#ffffff">Ιστοσελίδα σχολείου</a></td></tr>' +
     '</table></td></tr></table></body></html>';

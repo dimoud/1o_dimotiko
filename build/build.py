@@ -627,7 +627,6 @@ class Istotopos:
 </div></section>'''
         ld = [{'@context': 'https://schema.org', '@type': ['EducationalOrganization', 'ElementarySchool'], 'name': r['onoma'],
                'alternateName': r['onoma_epiftimo'], 'url': r['tomeas'], 'telephone': '+30' + r['tilefono'].replace(' ', ''),
-               'faxNumber': '+30' + r['fax'].replace(' ', ''),
                'address': {'@type': 'PostalAddress', 'streetAddress': 'Σχολείου 1', 'postalCode': '56533', 'addressLocality': 'Πολίχνη',
                            'addressRegion': 'Θεσσαλονίκη', 'addressCountry': 'GR'},
                'geo': {'@type': 'GeoCoordinates', 'latitude': r['xartis_lat'], 'longitude': r['xartis_lng']}}]
@@ -641,7 +640,6 @@ class Istotopos:
         ic = {
             'dieythynsi': '<path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
             'tilefono': '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/>',
-            'fax': '<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M7 14h10v7H7z"/>',
             'email': '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
             'ypagogi': '<path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/>',
         }
@@ -649,8 +647,7 @@ class Istotopos:
             return (f'<li><span class="ci-ic" aria-hidden="true"><svg viewBox="0 0 24 24">{ic[k]}</svg></span>'
                     f'<span class="ci-t"><span class="ci-l">{label}</span><span class="ci-v">{value}</span></span></li>')
         rows = [li('dieythynsi', 'Διεύθυνση', esc(r['dieythynsi'])),
-                li('tilefono', 'Τηλέφωνο', f'<a href="tel:{r["tilefono"].replace(" ", "")}">{esc(r["tilefono"])}</a>'),
-                li('fax', 'Fax', esc(r['fax']))]
+                li('tilefono', 'Τηλέφωνο', f'<a href="tel:{r["tilefono"].replace(" ", "")}">{esc(r["tilefono"])}</a>')]
         if r.get('email'):
             rows.append(li('email', 'Email', f'<a class="nw" href="mailto:{esc(r["email"])}">{esc(r["email"])}</a>'))
         rows.append(li('ypagogi', 'Υπαγωγή', esc(r['ypagogi'])))
