@@ -13,8 +13,8 @@
 var FYLLA = {
   anartiseis: ['id', 'katastasi', 'imerominia', 'titlos', 'enotita', 'alles_enotites', 'taxeis', 'diktya', 'keimeno',
                'fotografies', 'arxeia', 'video', 'syggrafeas', 'synainesi', 'sxolio', 'url_slug',
-               'protasi', 'dimiourgia', 'tropopoiisi', 'arithmos'],
-  selides: ['id', 'omada', 'seira', 'titlos', 'perigrafi', 'keimeno', 'fotografies', 'arxeia', 'simeiosi', 'katastasi', 'tropopoiisi'],
+               'protasi', 'dimiourgia', 'tropopoiisi', 'arithmos', 'ekdosi', 'teleftaios'],
+  selides: ['id', 'omada', 'seira', 'titlos', 'perigrafi', 'keimeno', 'fotografies', 'arxeia', 'simeiosi', 'katastasi', 'tropopoiisi', 'ekdosi', 'teleftaios'],
   istoriko: ['xronos', 'rolos', 'onoma', 'energeia', 'id', 'titlos']
 };
 // Επικεφαλίδες στηλών στο Φύλλο (ελληνικά). Ο κώδικας δουλεύει με τα λατινικά κλειδιά.
@@ -22,7 +22,8 @@ var ETIKETES = { id: 'Κωδικός', katastasi: 'Κατάσταση', imeromin
   taxeis: 'Τάξεις', diktya: 'Δίκτυα', keimeno: 'Κείμενο', fotografies: 'Φωτογραφίες', arxeia: 'Αρχεία', video: 'Βίντεο',
   syggrafeas: 'Συντάκτης', synainesi: 'Συγκατάθεση κηδεμόνων', sxolio: 'Σχόλιο Διεύθυνσης', url_slug: 'Διεύθυνση σελίδας',
   protasi: 'Πρόταση αλλαγής', dimiourgia: 'Δημιουργία', tropopoiisi: 'Τελευταία αλλαγή', omada: 'Ομάδα', seira: 'Σειρά',
-  perigrafi: 'Περιγραφή', simeiosi: 'Σημείωση', arithmos: 'Α/Α', xronos: 'Χρόνος', rolos: 'Ρόλος', onoma: 'Όνομα', energeia: 'Ενέργεια' };
+  perigrafi: 'Περιγραφή', simeiosi: 'Σημείωση', arithmos: 'Α/Α', xronos: 'Χρόνος', rolos: 'Ρόλος', onoma: 'Όνομα', energeia: 'Ενέργεια',
+  ekdosi: 'Έκδοση', teleftaios: 'Τελευταία αλλαγή από' };
 function etiketa_(k) { return ETIKETES[k] || k; }
 function kleidi_(h) { for (var k in ETIKETES) if (ETIKETES[k] === h) return k; return h; }
 
@@ -228,7 +229,7 @@ function rpc_(b) {
             rythmiseis: rythmiseis, allagiKodikou: allagiKodikou, allagiEmail: allagiEmail,
             katastasiDimosiefsis: katastasiDimosiefsis, odigies: odigies, odigosPdf: odigosPdf,
             emailSyntakton: emailSyntakton, apothikefsiEmailSyntakton: apothikefsiEmailSyntakton,
-            neaSelida: neaSelida, afairesiSelidas: afairesiSelidas, xanaDimosiefsi: xanaDimosiefsi };
+            neaSelida: neaSelida, afairesiSelidas: afairesiSelidas, xanaDimosiefsi: xanaDimosiefsi, anoixti: anoixti };
   if (!b || !F[b.fn]) return out({ sfalma: 'άγνωστη κλήση' });
   try {
     var r = F[b.fn].apply(null, b.args || []);
@@ -328,7 +329,7 @@ function epiloges_() {
 function listaAnartiseon(token) {
   synedria_(token);
   if (diavase_('anartiseis').some(function (r) { return !Number(r.arithmos); })) {
-    var lock = LockService.getScriptLock(); lock.waitLock(20000);
+    var lock = kleidoma_();
     try { arithmisi_(); } finally { lock.releaseLock(); }
   }
   return diavase_('anartiseis').map(function (r) {
@@ -357,7 +358,8 @@ function morfi_(r) {
            taxeis: (r.taxeis || '').toString(), diktya: (r.diktya || '').toString(), alles_enotites: (r.alles_enotites || '').toString(), keimeno: r.keimeno,
            fotografies: json_(r.fotografies, []), arxeia: json_(r.arxeia, []), video: r.video || '',
            syggrafeas: r.syggrafeas, synainesi: r.synainesi === true || r.synainesi === 'TRUE', sxolio: r.sxolio || '',
-           arithmos: Number(r.arithmos) || 0, meres_kadou: r.katastasi === 'Αποσυρμένη' ? meresKadou_(r) : null };
+           arithmos: Number(r.arithmos) || 0, meres_kadou: r.katastasi === 'Αποσυρμένη' ? meresKadou_(r) : null,
+           ekdosi: Number(r.ekdosi) || 0, teleftaios: String(r.teleftaios || ''), tropopoiisi: r.tropopoiisi instanceof Date ? r.tropopoiisi.toISOString() : '' };
 }
 
 /**
@@ -369,62 +371,72 @@ function apothikefsi(token, d, energeia) {
   var s = synedria_(token);
   elegxos_(d, energeia);
   if (energeia === 'dimosiefsi' && s.rolos !== 'diefthynsi') throw new Error('Μόνο η Διεύθυνση δημοσιεύει.');
-  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  var lock = kleidoma_();
   try {
-    var sh = fyllo_('anartiseis'); stili_(sh, 'alles_enotites');
-    var r = d.id ? vres_('anartiseis', d.id) : null, now = new Date();
+    var sh = fyllo_('anartiseis'); stili_(sh, 'alles_enotites'); stili_(sh, 'ekdosi'); stili_(sh, 'teleftaios');
+    var r = d.id ? vres_('anartiseis', d.id) : null, now = new Date(), epanalipsi = false;
+    if (!r && !d.id && /^a\d{14}$/.test(d.neo_id || '')) {   // νέα ανάρτηση με κωδικό από τη συσκευή: αν ξαναπατηθεί (π.χ. κόπηκε η σύνδεση), δεν γίνεται διπλή
+      r = vres_('anartiseis', d.neo_id);
+      var idia = r && String(r.syggrafeas || '').trim() === String(d.syggrafeas || '').trim() && r.dimiourgia instanceof Date && now - r.dimiourgia < 3600000;
+      if (r && !idia) { r = null; d.neo_id = ''; }   // σπάνια σύμπτωση κωδικού με ανάρτηση άλλου: νέος κωδικός, τίποτα δεν πατιέται
+      epanalipsi = !!r;
+    }
+    if (r && !epanalipsi) elegxosEkdosis_(r, d.ekdosi);
     var pedia = {
       imerominia: d.imerominia, titlos: d.titlos.trim(), enotita: d.enotita,
       alles_enotites: (d.alles_enotites || []).filter(function (k) { return k && k !== d.enotita && ENOTITES.some(function (e) { return e[0] === k; }); }).join(','),
       taxeis: (d.taxeis || []).join(','),
       diktya: (d.diktya || []).join(','), keimeno: d.keimeno || '', fotografies: JSON.stringify(d.fotografies || []),
       arxeia: JSON.stringify(d.arxeia || []), video: d.video || '', syggrafeas: (d.syggrafeas || '').trim(),
-      synainesi: !!d.synainesi, tropopoiisi: now
+      synainesi: !!d.synainesi, tropopoiisi: now,
+      ekdosi: r ? (Number(r.ekdosi) || 0) + 1 : 1, teleftaios: poios_(s, d)
     };
     if (r && r.katastasi === 'Δημοσιευμένη' && s.rolos !== 'diefthynsi') {
-      grapse_(sh, r._row, { protasi: JSON.stringify(pedia), sxolio: '' });
+      grapse_(sh, r._row, { protasi: JSON.stringify(pedia), sxolio: '', ekdosi: pedia.ekdosi, teleftaios: pedia.teleftaios });
       katagrafi_(s.rolos, pedia.syggrafeas, 'Πρόταση αλλαγής σε δημοσιευμένη', r.id, pedia.titlos);
       eidopoiisi_('Πρόταση αλλαγής: ' + pedia.titlos, pedia.syggrafeas + ' πρότεινε αλλαγή σε δημοσιευμένη ανάρτηση.');
-      return { ok: true, id: r.id, minima: 'Η αλλαγή στάλθηκε στη Διεύθυνση. Η ανάρτηση μένει όπως είναι μέχρι την έγκριση.' };
+      return { ok: true, id: r.id, ekdosi: pedia.ekdosi, minima: 'Η αλλαγή στάλθηκε στη Διεύθυνση. Η ανάρτηση μένει όπως είναι μέχρι την έγκριση.' };
     }
     pedia.katastasi = energeia === 'dimosiefsi' ? 'Δημοσιευμένη' : energeia === 'egkrisi' ? 'Προς έγκριση' : 'Πρόχειρο';
     if (energeia === 'dimosiefsi') { pedia.protasi = ''; pedia.sxolio = ''; }
-    var id = r ? r.id : 'a' + Utilities.formatDate(now, 'Europe/Athens', 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
+    var id = r ? r.id : /^a\d{14}$/.test(d.neo_id || '') ? d.neo_id : 'a' + Utilities.formatDate(now, 'Europe/Athens', 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
     if (r) grapse_(sh, r._row, pedia);
     else { pedia.id = id; pedia.dimiourgia = now; pedia.arithmos = arithmisi_() + 1; prosthese_(sh, 'anartiseis', pedia); }
     katagrafi_(s.rolos, pedia.syggrafeas, { proxeiro: 'Αποθήκευση προχείρου', egkrisi: 'Αποστολή για έγκριση', dimosiefsi: 'Δημοσίευση' }[energeia], id, pedia.titlos);
     if (energeia === 'egkrisi') eidopoiisi_('Νέα ανάρτηση προς έγκριση: ' + pedia.titlos, (pedia.syggrafeas || 'Συντάκτης') + ' έστειλε ανάρτηση για έγκριση.');
   } finally { lock.releaseLock(); }
-  var apot = { ok: true, id: id, minima: { proxeiro: 'Αποθηκεύτηκε ως πρόχειρο.', egkrisi: 'Στάλθηκε στη Διεύθυνση για έγκριση.', dimosiefsi: 'Δημοσιεύεται. Θα φανεί στον ιστότοπο μέσα σε μισή ώρα.' }[energeia] };
+  var apot = { ok: true, id: id, ekdosi: pedia.ekdosi, minima: { proxeiro: 'Αποθηκεύτηκε ως πρόχειρο.', egkrisi: 'Στάλθηκε στη Διεύθυνση για έγκριση.', dimosiefsi: 'Δημοσιεύεται. Θα φανεί στον ιστότοπο μέσα σε μισή ώρα.' }[energeia] };
   if (energeia === 'dimosiefsi') apot.github = ksekinaDimosiefsi_();
   return apot;
 }
 
 /** Διεύθυνση: έγκριση πρότασης, επιστροφή με σχόλιο, απόσυρση. */
-function apofasi(token, id, praxi, sxolio) {
+function apofasi(token, id, praxi, sxolio, ekdosi) {
   var s = synedria_(token, 'diefthynsi');
-  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  var lock = kleidoma_();
   var r, sh = fyllo_('anartiseis');
   try {
     r = vres_('anartiseis', id);
     if (!r) throw new Error('Δεν βρέθηκε η ανάρτηση.');
+    if (praxi === 'egkrisi' || praxi === 'epistrofi') elegxosEkdosis_(r, ekdosi);   // να εγκρίνεται αυτό που είδε η Διεύθυνση
+    var nea = { ekdosi: (Number(r.ekdosi) || 0) + 1, teleftaios: poios_(s) };
     if (praxi === 'egkrisi') {
       var pedia = r.protasi ? json_(r.protasi, {}) : {};
-      pedia.katastasi = 'Δημοσιευμένη'; pedia.protasi = ''; pedia.sxolio = ''; pedia.tropopoiisi = new Date();
+      pedia.katastasi = 'Δημοσιευμένη'; pedia.protasi = ''; pedia.sxolio = ''; pedia.tropopoiisi = new Date(); pedia.ekdosi = nea.ekdosi; pedia.teleftaios = nea.teleftaios;
       if (!(pedia.synainesi === true || (r.synainesi === true || r.synainesi === 'TRUE'))) throw new Error('Λείπει η επιβεβαίωση συγκατάθεσης κηδεμόνων.');
       grapse_(sh, r._row, pedia);
     } else if (praxi === 'epistrofi') {
-      if (r.protasi) grapse_(sh, r._row, { protasi: '', sxolio: sxolio || '' });
-      else grapse_(sh, r._row, { katastasi: 'Επιστράφηκε', sxolio: sxolio || '' });
+      if (r.protasi) grapse_(sh, r._row, { protasi: '', sxolio: sxolio || '', ekdosi: nea.ekdosi, teleftaios: nea.teleftaios });
+      else grapse_(sh, r._row, { katastasi: 'Επιστράφηκε', sxolio: sxolio || '', ekdosi: nea.ekdosi, teleftaios: nea.teleftaios });
     } else if (praxi === 'aposyrsi') {
-      grapse_(sh, r._row, { katastasi: 'Αποσυρμένη', protasi: '', tropopoiisi: new Date() });
+      grapse_(sh, r._row, { katastasi: 'Αποσυρμένη', protasi: '', tropopoiisi: new Date(), ekdosi: nea.ekdosi, teleftaios: nea.teleftaios });
       egkatastasiKadou_();
     } else if (praxi === 'diagrafi') {      // οριστική διαγραφή: μόνο από τον κάδο
       if (r.katastasi !== 'Αποσυρμένη') throw new Error('Οριστική διαγραφή γίνεται μόνο σε ανάρτηση που είναι στον κάδο.');
       oristikiDiagrafi_(sh, diavase_('anartiseis'), [r], 'διεύθυνση', 'Οριστική διαγραφή');
       return { ok: true, minima: 'Η ανάρτηση διαγράφηκε οριστικά. Οι φωτογραφίες της πήγαν στον Κάδο του Google Drive (30 ημέρες).' };
     } else if (praxi === 'epanafora') {
-      grapse_(sh, r._row, { katastasi: 'Δημοσιευμένη', tropopoiisi: new Date() });
+      grapse_(sh, r._row, { katastasi: 'Δημοσιευμένη', tropopoiisi: new Date(), ekdosi: nea.ekdosi, teleftaios: nea.teleftaios });
     } else throw new Error('Άγνωστη ενέργεια.');
   } finally { lock.releaseLock(); }
   katagrafi_('διεύθυνση', 'Διεύθυνση', { egkrisi: 'Έγκριση και δημοσίευση', epistrofi: 'Επιστροφή με σχόλιο', aposyrsi: 'Απόσυρση', epanafora: 'Επαναφορά' }[praxi], id, r.titlos);
@@ -435,6 +447,7 @@ function apofasi(token, id, praxi, sxolio) {
 
 function elegxos_(d, energeia) {
   var l = [];
+  if (String(d.keimeno || '').length > MEGISTO_KEIMENO) l.push(MINIMA_MEGETHOUS);
   if (!d.titlos || d.titlos.trim().length < 5) l.push('Ο τίτλος θέλει τουλάχιστον 5 χαρακτήρες.');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d.imerominia || '')) l.push('Λείπει η ημερομηνία.');
   else if (d.imerominia < '2024-01-01') l.push('Η ημερομηνία πρέπει να είναι από 1/1/2024 και μετά.');
@@ -509,18 +522,27 @@ function listaSelidon(token) {
   synedria_(token, 'diefthynsi');
   return diavase_('selides').map(function (r) {
     return { id: r.id, omada: r.omada, seira: r.seira, titlos: r.titlos, perigrafi: r.perigrafi, keimeno: r.keimeno,
-             simeiosi: r.simeiosi, katastasi: r.katastasi, fotografies: json_(r.fotografies, []), arxeia: json_(r.arxeia, []) };
+             simeiosi: r.simeiosi, katastasi: r.katastasi, fotografies: json_(r.fotografies, []), arxeia: json_(r.arxeia, []),
+             ekdosi: Number(r.ekdosi) || 0, teleftaios: String(r.teleftaios || ''), tropopoiisi: r.tropopoiisi instanceof Date ? r.tropopoiisi.toISOString() : '' };
   });
 }
 
 function apothikefsiSelidas(token, d, dimosiefsi) {
-  synedria_(token, 'diefthynsi');
-  var r = vres_('selides', d.id);
-  if (!r) throw new Error('Δεν βρέθηκε η σελίδα.');
-  grapse_(fyllo_('selides'), r._row, { titlos: d.titlos, perigrafi: d.perigrafi, keimeno: d.keimeno, simeiosi: d.simeiosi || '',
-    katastasi: d.katastasi, arxeia: JSON.stringify(d.arxeia || []), fotografies: JSON.stringify(d.fotografies || []), tropopoiisi: new Date() });
+  var s = synedria_(token, 'diefthynsi');
+  if (String(d.keimeno || '').length > MEGISTO_KEIMENO) throw new Error(MINIMA_MEGETHOUS);
+  var lock = kleidoma_(), ekd;
+  try {
+    var sh = fyllo_('selides'); stili_(sh, 'ekdosi'); stili_(sh, 'teleftaios');
+    var r = vres_('selides', d.id);
+    if (!r) throw new Error('Δεν βρέθηκε η σελίδα.');
+    elegxosEkdosis_(r, d.ekdosi);
+    ekd = (Number(r.ekdosi) || 0) + 1;
+    grapse_(sh, r._row, { titlos: d.titlos, perigrafi: d.perigrafi, keimeno: d.keimeno, simeiosi: d.simeiosi || '',
+      katastasi: d.katastasi, arxeia: JSON.stringify(d.arxeia || []), fotografies: JSON.stringify(d.fotografies || []), tropopoiisi: new Date(),
+      ekdosi: ekd, teleftaios: poios_(s) });
+  } finally { lock.releaseLock(); }
   katagrafi_('διεύθυνση', 'Διεύθυνση', 'Αλλαγή σελίδας', d.id, d.titlos);
-  var ap = { ok: true, minima: dimosiefsi ? 'Δημοσιεύεται. Θα φανεί μέσα σε μισή ώρα.' : 'Αποθηκεύτηκε.' };
+  var ap = { ok: true, ekdosi: ekd, minima: dimosiefsi ? 'Δημοσιεύεται. Θα φανεί μέσα σε μισή ώρα.' : 'Αποθηκεύτηκε.' };
   if (dimosiefsi) ap.github = ksekinaDimosiefsi_();
   return ap;
 }
@@ -540,7 +562,7 @@ function neaSelida(token, d) {
   var tit = String((d && d.titlos) || '').trim();
   if (tit.length < 3) throw new Error('Γράψτε τίτλο για τη νέα σελίδα (τουλάχιστον 3 γράμματα).');
   var om = d.omada === 'goneis' ? 'goneis' : 'sxoleio';
-  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  var lock = kleidoma_();
   try {
     var rows = diavase_('selides'), ids = rows.map(function (r) { return String(r.id); });
     var base = slugSelidas_(tit) || 'selida', id = base, n = 2;
@@ -557,9 +579,12 @@ function neaSelida(token, d) {
 /** Αφαίρεση σελίδας από την ιστοσελίδα (κατάσταση «Αποσυρμένη») ή επαναφορά. Το κείμενο μένει στο Φύλλο. */
 function afairesiSelidas(token, id, epanafora) {
   synedria_(token, 'diefthynsi');
-  var r = vres_('selides', id);
-  if (!r) throw new Error('Δεν βρέθηκε η σελίδα.');
-  grapse_(fyllo_('selides'), r._row, { katastasi: epanafora ? 'Δημοσιευμένη' : 'Αποσυρμένη', tropopoiisi: new Date() });
+  var lock = kleidoma_(), r;
+  try {
+    r = vres_('selides', id);
+    if (!r) throw new Error('Δεν βρέθηκε η σελίδα.');
+    grapse_(fyllo_('selides'), r._row, { katastasi: epanafora ? 'Δημοσιευμένη' : 'Αποσυρμένη', tropopoiisi: new Date(), ekdosi: (Number(r.ekdosi) || 0) + 1 });
+  } finally { lock.releaseLock(); }
   katagrafi_('διεύθυνση', 'Διεύθυνση', epanafora ? 'Επαναφορά σελίδας' : 'Αφαίρεση σελίδας', id, r.titlos);
   return { ok: true, minima: epanafora ? 'Η σελίδα θα ξαναφανεί στην ιστοσελίδα μέσα σε μισή ώρα.' : 'Η σελίδα θα αφαιρεθεί από την ιστοσελίδα μέσα σε μισή ώρα. Μπορείτε να την επαναφέρετε όποτε θέλετε.',
            github: ksekinaDimosiefsi_() };
@@ -670,7 +695,7 @@ function antigrafo() {
 
 function katagrafi_(rolos, onoma, energeia, id, titlos) {
   var sh = fyllo_('istoriko');
-  sh.appendRow([new Date(), rolos === 'diefthynsi' ? 'διεύθυνση' : rolos === 'syntaktis' ? 'συντάκτης' : rolos, onoma || '', energeia, id || '', titlos || '']);
+  sh.appendRow([new Date(), rolos === 'diefthynsi' ? 'διεύθυνση' : rolos === 'syntaktis' ? 'συντάκτης' : rolos, keli_(String(onoma || '')), energeia, id || '', keli_(String(titlos || '').slice(0, 300))]);
 }
 
 function istoriko_(n) {
@@ -724,7 +749,9 @@ function fylakas() {
     return;
   }
   if (code !== 200) return;   // παροδικό· ξανά σε μισή ώρα
-  var runs = JSON.parse(res.getContentText()).workflow_runs || [], last = runs[0], now = Date.now();
+  var runs = JSON.parse(res.getContentText()).workflow_runs || [], now = Date.now();
+  runs = runs.filter(function (r) { return r.conclusion !== 'cancelled'; });   // ακυρώνεται όταν μια νεότερη την αντικαθιστά· δεν είναι βλάβη
+  var last = runs[0];
   var entoli = Number(p.getProperty('TELEFTAIA_ENTOLI') || 0), prosp = Number(p.getProperty('FYLAKAS_PROSP') || 0);
   function xanadokimi(aitia) {
     if (prosp < 2) {
@@ -937,12 +964,50 @@ function diavase_(k) {
 
 function vres_(k, id) { return diavase_(k).filter(function (r) { return String(r.id) === String(id); })[0] || null; }
 
+/* Μία εγγραφή = μία κίνηση στο Φύλλο (όλη η γραμμή μαζί): πιο γρήγορα, και όποιος διαβάζει την ίδια στιγμή
+ * (π.χ. η δημοσίευση) δεν βλέπει ποτέ μισή αλλαγή. */
 function grapse_(sh, row, pedia) {
-  var kef = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(kleidi_);
-  Object.keys(pedia).forEach(function (k) {
-    var c = kef.indexOf(k);
-    if (c >= 0) sh.getRange(row, c + 1).setValue(pedia[k]);
-  });
+  var n = sh.getLastColumn(), kef = sh.getRange(1, 1, 1, n).getValues()[0].map(kleidi_);
+  var rg = sh.getRange(row, 1, 1, n), v = rg.getValues()[0], f = rg.getFormulas()[0];
+  for (var j = 0; j < n; j++) v[j] = f[j] ? f[j] : keli_(v[j]);   // τύπος που έβαλε κάποιος με το χέρι μένει τύπος· το κείμενο μένει κείμενο
+  Object.keys(pedia).forEach(function (k) { var c = kef.indexOf(k); if (c >= 0) v[c] = keli_(pedia[k]); });
+  rg.setValues([v]);
+}
+var MEGISTO_KEIMENO = 45000;
+var MINIMA_MEGETHOUS = 'Το κείμενο είναι πολύ μεγάλο για μία ανάρτηση (πάνω από 45.000 χαρακτήρες). Χωρίστε το σε δύο αναρτήσεις.';
+/* Τιμή για κελί: κείμενο που αρχίζει με = + - @ το Φύλλο θα το έπαιρνε για τύπο (π.χ. «- λίστα», «==σημαντικό==») */
+function keli_(x) {
+  if (typeof x !== 'string') return x;
+  if (x.length > 49000) throw new Error('Το κείμενο είναι πολύ μεγάλο για να αποθηκευτεί. Χωρίστε το σε δύο μέρη.');
+  return /^[=+\-@]/.test(x) ? "'" + x : x;
+}
+function kleidoma_() {
+  var l = LockService.getScriptLock();
+  if (!l.tryLock(30000)) throw new Error('Ο Πίνακας αποθηκεύει αυτή τη στιγμή αλλαγή άλλου χρήστη. Περιμένετε λίγα δευτερόλεπτα και πατήστε ξανά· ό,τι γράψατε είναι φυλαγμένο.');
+  return l;
+}
+/* Ποιος έκανε την αλλαγή (για το μήνυμα «την άλλαξε η …»). */
+function poios_(s, d) {
+  if (s.rolos === 'diefthynsi') return 'Διεύθυνση';
+  return String(s.onoma || (d && d.syggrafeas) || s.email || 'εκπαιδευτικός').trim().slice(0, 80);
+}
+/* Αισιόδοξος έλεγχος ταυτόχρονης αλλαγής: η συσκευή στέλνει την έκδοση που άνοιξε· αν στο μεταξύ
+ * αποθήκευσε κάποιος άλλος, η αποθήκευση σταματά (ο Πίνακας ρωτά τι θα γίνει) αντί να σβήσει τη δουλειά του. */
+function elegxosEkdosis_(r, ekdosi) {
+  if (ekdosi === undefined || ekdosi === null || ekdosi === '') return;   // παλιά καρτέλα χωρίς έκδοση
+  if ((Number(r.ekdosi) || 0) === Number(ekdosi)) return;
+  var t = r.tropopoiisi instanceof Date ? Utilities.formatDate(r.tropopoiisi, 'Europe/Athens', 'HH:mm, dd/MM') : '';
+  throw new Error('SYGKROUSI|' + String(r.teleftaios || 'άλλος χρήστης') + '|' + t + '|' + r.id);
+}
+/* Ποιος άλλος έχει ανοιχτή την ίδια ανάρτηση/σελίδα (ενημερώνεται κάθε λεπτό από τον Πίνακα, λήγει σε 3 λεπτά). */
+function anoixti(token, id, kleisimo) {
+  var s = synedria_(token), c = CacheService.getScriptCache(), k = 'an_' + String(id).slice(0, 80), now = Date.now();
+  var l = []; try { l = JSON.parse(c.get(k) || '[]'); } catch (e) {}
+  var ego = String(token).slice(0, 12);
+  l = l.filter(function (x) { return x.t !== ego && now - x.w < 180000; });
+  if (!kleisimo) l.push({ t: ego, o: poios_(s), w: now });
+  c.put(k, JSON.stringify(l), 600);
+  return l.filter(function (x) { return x.t !== ego; }).map(function (x) { return { onoma: x.o, apo: Math.round((now - x.w) / 1000) }; });
 }
 
 function stili_(sh, k) {   // νέα στήλη στο τέλος, αν λείπει (π.χ. «Και σε ενότητες»)
@@ -952,7 +1017,7 @@ function stili_(sh, k) {   // νέα στήλη στο τέλος, αν λείπ
 
 function prosthese_(sh, k, pedia) {   // κατά τις επικεφαλίδες του Φύλλου (όχι κατά θέση: στήλες μπορεί να προστεθούν)
   var kef = sh.getLastColumn() ? sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(kleidi_) : FYLLA[k];
-  sh.appendRow(kef.map(function (h) { return pedia[h] === undefined ? '' : pedia[h]; }));
+  sh.appendRow(kef.map(function (h) { return pedia[h] === undefined ? '' : keli_(pedia[h]); }));
 }
 
 /* ═══════════════ Αρίθμηση αναρτήσεων (Α/Α) ═══════════════

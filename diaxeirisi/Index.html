@@ -523,13 +523,16 @@ function vimaPub() {
   });
 }
 function hmer(d) { return d ? d.split('-').reverse().join('/') : ''; }
-function run(fn, args, ok, el, btn) {
+function run(fn, args, ok, el, btn, onFail) {
   if (btn) btn.disabled = true;
   var r = google.script.run.withSuccessHandler(function (x) { if (btn) btn.disabled = false; ok(x); })
     .withFailureHandler(function (e) {
       if (btn) btn.disabled = false;
+      if (onFail) try { onFail(); } catch (x) {}
       var m = (e && e.message) || String(e);
-      if (/έληξε|άλλαξαν/.test(m)) { logout(); msg('loginMsg', m, 'bad'); return; }
+      if (m.indexOf('SYGKROUSI|') >= 0) { sygkrousi_(m.slice(m.indexOf('SYGKROUSI|')), fn, args, ok, el, btn); return; }
+      if (/έληξε|άλλαξαν/.test(m)) { fylaxeTora_(); logout(); msg('loginMsg', m + ' Ό,τι γράφατε είναι φυλαγμένο σε αυτή τη συσκευή και θα σας προταθεί όταν ξανανοίξετε την ανάρτηση.', 'bad'); return; }
+      if (/Failed to fetch|NetworkError|Load failed|network/i.test(m)) m = 'Δεν υπάρχει σύνδεση με το διαδίκτυο αυτή τη στιγμή. Ό,τι γράψατε είναι φυλαγμένο σε αυτή τη συσκευή· δοκιμάστε ξανά σε λίγο.';
       msg(el, m, 'bad');
     });
   r[fn].apply(r, args);
@@ -594,6 +597,7 @@ function start() {
   if (location.hash === '#odigies') { try { history.replaceState(null, '', location.pathname); } catch (x) {} nav('odigies'); } else home();
 }
 function home() {
+  parousiaStop_();
   nav('home'); msg('homeMsg', '');
   var onoma = store('onoma');
   $('hello').textContent = 'Καλώς ήρθατε' + (onoma ? ', ' + onoma.split(/[ ,]/)[0] : '');
@@ -909,6 +913,20 @@ function htmlToMd(root) {
     return s;
   }
   function pre(al) { return al && al !== 'aristera' ? '{' + al + '} ' : ''; }
+  /* λίστα → γραμμές· οι υπο-λίστες (π.χ. από Word) γίνονται δικά τους σημεία, δεν κολλάνε στο προηγούμενο */
+  function listaGrammes_(lst, c2) {
+    var out = [], k = 0, t = lst.tagName;
+    Array.prototype.forEach.call(lst.children, function (li) {
+      if (/^(UL|OL)$/.test(li.tagName)) { out.push.apply(out, listaGrammes_(li, c2)); return; }
+      var klon = li.cloneNode(true);
+      Array.prototype.slice.call(klon.querySelectorAll('ul,ol')).forEach(function (x) { x.remove(); });
+      var ypo = Array.prototype.filter.call(li.querySelectorAll('ul,ol'), function (x) { return x.parentNode.closest('li') === li; });
+      var keim = inl(klon, merge(c2, li)).replace(/\s*\n\s*/g, ' ').trim();
+      if (keim) { k++; out.push((t === 'OL' ? k + '. ' : '- ') + keim); }
+      ypo.forEach(function (x) { out.push.apply(out, listaGrammes_(x, c2)); });
+    });
+    return out;
+  }
   function block(n, al, ctx) {
     // διαδοχικά κείμενα/έντονα/πλάγια/σύνδεσμοι μένουν ΜΙΑ παράγραφος (πριν: η πρώτη γραμμή με έντονη λέξη έσπαγε σε 3)
     var parts = [], buf = '';
@@ -929,10 +947,7 @@ function htmlToMd(root) {
         if (md) parts.push(md);
       }
       else if (/^H[1-6]$/.test(t)) parts.push(pre(al2) + '### ' + inl(c, c2).trim());
-      else if (t === 'UL' || t === 'OL') {
-        var k = 0;
-        parts.push(Array.prototype.map.call(c.children, function (li) { k++; return (t === 'OL' ? k + '. ' : '- ') + inl(li, merge(c2, li)).replace(/\s*\n\s*/g, ' ').trim(); }).join('\n'));
-      }
+      else if (t === 'UL' || t === 'OL') { var gl = listaGrammes_(c, c2); if (gl.length) parts.push(gl.join('\n')); }
       else if (/^(P|DIV|BLOCKQUOTE|SECTION|ARTICLE)$/.test(t)) { var x = c.querySelector('p,div,ul,ol,h1,h2,h3,h4,table') ? block(c, al2, c2) : pre(al2) + inl(c, c2).trim(); if (x.replace(/^\{[a-z]+\} /, '')) parts.push(x); }
       else if (t === 'BR') parts.push('');
       else { var y = inl(c, c2).trim(); if (y) parts.push(y); }
@@ -1205,12 +1220,32 @@ function bindEditor(tbar, rte) {
     var h = e.clipboardData && e.clipboardData.getData('text/html');
     var t = e.clipboardData && e.clipboardData.getData('text/plain');
     e.preventDefault();
+    var eik = eikonesApo_(e.clipboardData);
+    if (eik.length || /<img\b/i.test(h || '')) eikonesSeKeimeno_(eik, rte);
+    if (!h && !t) return;
     var md;
     if (h) md = htmlToMd(apoWord(h)); else md = diorthosiKeimenou(t || '');
     document.execCommand('insertHTML', false, mdToHtml(md) || esc(diorthosiKeimenou(t || '')));
   });
 }
 
+/* Φωτογραφίες που επικολλήθηκαν ή ρίχτηκαν μέσα στο κείμενο: δεν μπαίνουν στο κείμενο (θα χάνονταν σιωπηλά),
+ * πάνε στο βήμα 3 «Φωτογραφίες» της ανάρτησης, με μήνυμα. */
+function eikonesApo_(dt) { var o = []; if (dt && dt.files) for (var i = 0; i < dt.files.length; i++) if (/^image\//.test(dt.files[i].type)) o.push(dt.files[i]); return o; }
+function eikonesSeKeimeno_(eik, ed) {
+  var seAnartisi = ed && ed.id === 'rte' && CUR && !$('v-edit').classList.contains('hidden');
+  if (eik.length && seAnartisi) { addPhotos(eik); msg('edMsg', (eik.length === 1 ? 'Η φωτογραφία μπήκε' : 'Οι φωτογραφίες μπήκαν') + ' στο βήμα 3 «Φωτογραφίες» (όχι μέσα στο κείμενο).', 'info'); }
+  else msg(seAnartisi ? 'edMsg' : 'pMsg', 'Οι φωτογραφίες δεν μπαίνουν μέσα στο κείμενο. ' + (seAnartisi ? 'Προσθέστε τις στο βήμα 3 «Φωτογραφίες».' : 'Στις σελίδες μπαίνουν έγγραφα για λήψη.'), 'info');
+}
+document.addEventListener('dragover', function (e) { if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') >= 0 && !(e.target.closest && e.target.closest('#drop, .drop'))) e.preventDefault(); });
+document.addEventListener('drop', function (e) {   // αρχείο που πέφτει έξω από τη ζώνη φωτογραφιών: ποτέ μην ανοίξει στη θέση του Πίνακα
+  if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+  if (e.target.closest && e.target.closest('#drop, .drop')) return;
+  e.preventDefault();
+  var ed = e.target.closest && e.target.closest('.rte');
+  var eik = eikonesApo_(e.dataTransfer);
+  if (ed || eik.length) eikonesSeKeimeno_(eik, ed || $('rte'));
+});
 /* ─── ανάρτηση ─── */
 function setSec(v) {
   CUR.enotita = v; document.querySelectorAll('.sec-btn').forEach(function (b) { b.classList.toggle('on', b.dataset.v === v); });
@@ -1251,10 +1286,13 @@ function edit(a, fromProp) {
   }
   act += '<button class="small-link" onclick="leave()">Πίσω χωρίς αποθήκευση</button>';
   $('edActions').innerHTML = act;
-  nav('edit');
+  nav('edit'); BROMIKO = false;
+  if (CUR.id) parousia_(CUR.id, 'edNote'); else parousiaStop_();
   if (!fromProp) setTimeout(prEpanafora_, 50);
 }
-function leave() { if (BUSY) { dlg({ icon: '⏳', title: 'Ανεβαίνουν ακόμα φωτογραφίες', text: 'Περιμένετε λίγα δευτερόλεπτα να τελειώσουν.', cancel: false }); return; } home(); }
+function leave(sigoura) {
+  if (BROMIKO && !sigoura && !BUSY) { dlg({ icon: '✋', title: 'Φεύγετε χωρίς αποθήκευση;', text: 'Έχετε αλλαγές που δεν αποθηκεύτηκαν. Μένουν φυλαγμένες σε αυτή τη συσκευή και θα σας προταθούν όταν ξανανοίξετε την ανάρτηση.', ok: 'Ναι, πίσω', noLabel: 'Όχι, μένω', noValue: undefined }, function () { leave(true); }); return; }
+  if (BUSY) { dlg({ icon: '⏳', title: 'Ανεβαίνουν ακόμα φωτογραφίες', text: 'Περιμένετε λίγα δευτερόλεπτα να τελειώσουν.', cancel: false }); return; } fylaxeTora_(); parousiaStop_(); BROMIKO = false; home(); }
 
 /* φωτογραφίες: μεγάλες μικρογραφίες, σειρά με σύρσιμο (ή βελάκια πληκτρολογίου), η πρώτη = εξώφυλλο */
 function drawPhotos() {
@@ -1514,8 +1552,12 @@ function keimeno() { return $('plain').classList.contains('hidden') ? htmlToMd($
 function collect() {
   return { id: CUR.id, imerominia: $('f-imer').value, titlos: $('f-titl').value, enotita: CUR.enotita, alles_enotites: getChips('f-alles').filter(function (k) { return k !== CUR.enotita; }), taxeis: getChips('f-tax'), diktya: getChips('f-dik'),
     keimeno: keimeno(), fotografies: CUR.fotografies.filter(function (f) { return f.id; }).map(function (f) { return { id: f.id, perigrafi: f.perigrafi || '' }; }),
-    arxeia: CUR.arxeia, video: $('f-vid').value.trim(), syggrafeas: $('f-syg').value.trim(), synainesi: $('f-syn').checked };
+    arxeia: CUR.arxeia, video: $('f-vid').value.trim(), syggrafeas: $('f-syg').value.trim(), synainesi: $('f-syn').checked,
+    ekdosi: CUR.id ? (CUR.ekdosi || 0) : undefined, neo_id: CUR.id ? undefined : (CUR._neo || (CUR._neo = neoKodikos_())) };
 }
+/* κωδικός νέας ανάρτησης από τη συσκευή: αν ξαναπατηθεί η αποθήκευση (π.χ. κόπηκε η σύνδεση), δεν γίνεται διπλή */
+function neoKodikos_() { var d = new Date(), p = function (n) { return ('0' + n).slice(-2); };
+  return 'a' + String(d.getFullYear()).slice(2) + p(d.getMonth() + 1) + p(d.getDate()) + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds()) + p(Math.floor(Math.random() * 90 + 10)); }
 /* ═══ Αυτόματη φύλαξη πρόχειρου στη συσκευή: αν λήξει η σύνδεση ή κλείσει η καρτέλα, τίποτα δεν χάνεται ═══ */
 var PR_T = null;
 function prKleidi_() { return 'pr_' + ((CUR && CUR.id) || 'neo'); }
@@ -1536,17 +1578,29 @@ function prEpanafora_() {
   var now = collect();
   if (pr.d.titlos === now.titlos && pr.d.keimeno === now.keimeno && JSON.stringify(pr.d.fotografies) === JSON.stringify(now.fotografies)) { prSvise_(k); return; }
   var w = new Date(pr.t), wr = ('0' + w.getHours()).slice(-2) + ':' + ('0' + w.getMinutes()).slice(-2) + ', ' + w.getDate() + '/' + (w.getMonth() + 1);
+  if (SYG_POIOS) {   // ήρθαμε από σύγκρουση: πρώτα να δει τι έγραψε ο άλλος, χωρίς παράθυρο από πάνω
+    var poios = SYG_POIOS; SYG_POIOS = '';
+    $('edMsg').innerHTML = '<div class="msg info">Βλέπετε τώρα ό,τι αποθήκευσε ' + esc(poios) + '. Η δική σας εκδοχή (από ' + wr + ') είναι φυλαγμένη. ' +
+      '<button class="btn light" style="min-height:40px;margin-top:8px" onclick="prEfarmogi_(\'' + k + '\')">Να μπει η δική μου εκδοχή στη θέση της</button></div>';
+    return;
+  }
   dlg({ icon: '💾', title: 'Βρέθηκε κείμενο που δεν αποθηκεύτηκε', text: '«' + (pr.d.titlos || '(χωρίς τίτλο)') + '», από ' + wr + '. Να συνεχίσετε από εκεί που το αφήσατε;',
         ok: 'Ναι, συνέχεια από εκεί', kind: 'green', noLabel: 'Όχι, να ανοίξει όπως είναι αποθηκευμένο', noValue: 'oxi' }, function (v) {
     if (v === 'oxi') { prSvise_(k); return; }
-    var d = pr.d;
+    prEfarmogi_(k);
+  });
+}
+function prEfarmogi_(k) {
+  var pr = prDiavase_(k); if (!pr) return;
+  (function () {
+    var d = pr.d; BROMIKO = true;
     $('f-titl').value = d.titlos || ''; $('f-imer').value = d.imerominia || $('f-imer').value; $('f-vid').value = d.video || ''; $('f-syg').value = d.syggrafeas || $('f-syg').value;
     $('rte').innerHTML = mdToHtml(d.keimeno || ''); $('f-syn').checked = !!d.synainesi;
     CUR.fotografies = (d.fotografies || []).map(function (f) { return { id: f.id, perigrafi: f.perigrafi || '' }; }); CUR.arxeia = d.arxeia || [];
     setChips('f-tax', d.taxeis); setChips('f-dik', d.diktya); setChips('f-alles', d.alles_enotites); setSec(d.enotita || pr.en || '');
     drawPhotos(); drawDocs('docs', CUR.arxeia); loadThumbs(CUR.fotografies.map(function (f) { return f.id; }));
     msg('edMsg', 'Συνεχίζετε από το κείμενο που δεν είχε αποθηκευτεί. Μην ξεχάσετε να το αποθηκεύσετε.', 'info');
-  });
+  })();
 }
 var PS_T = null;
 function psFylaxe_() {
@@ -1566,7 +1620,9 @@ function psEpanafora_() {
     msg('pMsg', 'Συνεχίζετε από τις αλλαγές που δεν είχαν αποθηκευτεί. Μην ξεχάσετε την αποθήκευση.', 'info');
   });
 }
+var SAVING = false;
 function save(en, btn) {
+  if (SAVING) { msg('edMsg', 'Γίνεται ήδη αποθήκευση· περιμένετε λίγα δευτερόλεπτα.', 'info'); return; }
   if (BUSY) { msg('edMsg', 'Περιμένετε λίγο να ανέβουν όλες οι φωτογραφίες.', 'info'); return; }
   var d = collect();
   if (!d.titlos.trim()) { msg('edMsg', 'Γράψτε έναν τίτλο (βήμα 1).', 'bad'); $('f-titl').focus(); return; }
@@ -1581,12 +1637,16 @@ function save(en, btn) {
   if (btn) btn._ok = false;
   if (d.syggrafeas) store('onoma', d.syggrafeas);
   var prk = prKleidi_();
+  fylaxeTora_(); SAVING = true; msg('edMsg', 'Αποθήκευση…', 'info');
+  document.querySelectorAll('#edActions button').forEach(function (b) { b.disabled = true; });
+  var xekleidose = function () { SAVING = false; document.querySelectorAll('#edActions button').forEach(function (b) { b.disabled = false; }); };
   run('apothikefsi', [T, d, en], function (r) {
-    prSvise_(prk); prSvise_('pr_' + r.id); CUR.id = r.id;
+    xekleidose(); BROMIKO = false; parousiaStop_();
+    prSvise_(prk); prSvise_('pr_' + r.id); CUR.id = r.id; CUR.ekdosi = r.ekdosi;
     var t = r.minima + (r.github && !r.github.ok ? '\n' + r.github.minima : '');
     home(); msg('homeMsg', '✔ ' + t, r.github && !r.github.ok ? 'bad' : 'ok');
     if (en === 'dimosiefsi' && r.github && r.github.ok) parakolouthisi(d.titlos);
-  }, 'edMsg', btn);
+  }, 'edMsg', btn, xekleidose);
 }
 /* ═══ Προεπισκόπηση ΑΚΡΙΒΩΣ όπως η δημοσίευση: ίδιο site.css, ίδια μετατροπή κειμένου με το build/md.py, ίδια διάταξη σελίδας ═══ */
 var SITE = /1dim-polichnis\.gr$/.test(location.hostname) ? location.origin : 'https://1dim-polichnis.gr';
@@ -1767,7 +1827,7 @@ function decide(p, ok) {
             epanafora: { icon: '♻️', title: 'Επαναφορά στην ιστοσελίδα', text: 'Θα ξαναφανεί μέσα σε μισή ώρα.', ok: 'Ναι, επαναφορά', kind: 'green' } }[p];
   if (q && !ok) { dlg(q, function () { decide(p, true); }); return; }
   var el = $('v-review').classList.contains('hidden') ? 'edMsg' : 'rvMsg';
-  run('apofasi', [T, CUR.id, p, CUR._sx || ''], function (r) {
+  run('apofasi', [T, CUR.id, p, CUR._sx || '', CUR.ekdosi || 0], function (r) {
     CUR._sx = ''; home(); msg('homeMsg', '✔ ' + r.minima + (r.github && !r.github.ok ? '\n' + r.github.minima : ''), 'ok');
     if (p !== 'epistrofi' && p !== 'diagrafi' && r.github && r.github.ok) parakolouthisi(CUR.titlos || (CUR.protasi && CUR.protasi.titlos) || 'Ανάρτηση', p === 'aposyrsi');
   }, el);
@@ -1788,7 +1848,7 @@ function editPage(s) {
   PCUR = JSON.parse(JSON.stringify(s));
   $('pT').textContent = s.titlos; $('p-titl').value = s.titlos; $('p-per').value = s.perigrafi || ''; $('prte').innerHTML = mdToHtml(s.keimeno || ''); istReset($('prte'));
   $('p-draft').checked = s.katastasi === 'Πρόχειρο' && !s._nea; drawDocs('pDocs', PCUR.arxeia); msg('pMsg', s._nea ? 'Νέα σελίδα: γράψτε το κείμενο και πατήστε «Αποθήκευση και δημοσίευση».' : '', s._nea ? 'info' : ''); nav('page');
-  setTimeout(psEpanafora_, 50);
+  setTimeout(psEpanafora_, 50); BROMIKO = false; parousia_('sel_' + s.id, 'pMsgP');
   $('pAfair').textContent = s.katastasi === 'Αποσυρμένη' ? '♻️ Επαναφορά της σελίδας στην ιστοσελίδα' : '🗑️ Αφαίρεση της σελίδας από την ιστοσελίδα';
 }
 function neaSelidaUI() {
@@ -1809,8 +1869,9 @@ function afairesiSelidasUI() {
 }
 function savePage(pub) {
   var d = { id: PCUR.id, titlos: $('p-titl').value, perigrafi: $('p-per').value, keimeno: htmlToMd($('prte')), simeiosi: PCUR.simeiosi || '',
-            katastasi: PCUR.katastasi === 'Αποσυρμένη' ? 'Αποσυρμένη' : $('p-draft').checked ? 'Πρόχειρο' : 'Δημοσιευμένη', arxeia: PCUR.arxeia, fotografies: PCUR.fotografies };
-  run('apothikefsiSelidas', [T, d, pub], function (r) { prSvise_('ps_' + d.id); PCUR.katastasi = d.katastasi; PCUR.keimeno = d.keimeno; PCUR.titlos = d.titlos; PCUR.perigrafi = d.perigrafi; msg('pMsg', '✔ ' + r.minima, 'ok'); }, 'pMsg');
+            katastasi: PCUR.katastasi === 'Αποσυρμένη' ? 'Αποσυρμένη' : $('p-draft').checked ? 'Πρόχειρο' : 'Δημοσιευμένη', arxeia: PCUR.arxeia, fotografies: PCUR.fotografies,
+            ekdosi: PCUR.ekdosi || 0 };
+  run('apothikefsiSelidas', [T, d, pub], function (r) { prSvise_('ps_' + d.id); PCUR.ekdosi = r.ekdosi; BROMIKO = false; PCUR.katastasi = d.katastasi; PCUR.keimeno = d.keimeno; PCUR.titlos = d.titlos; PCUR.perigrafi = d.perigrafi; msg('pMsg', '✔ ' + r.minima, 'ok'); }, 'pMsg');
 }
 
 /* ─── ρυθμίσεις ─── */
@@ -1850,7 +1911,70 @@ function emDel(i) {
 }
 function chMail() { run('allagiEmail', [T, $('s-mail').value], function (r) { msg('sMsg', r.minima, 'ok'); }, 'sMsg'); }
 
-window.addEventListener('beforeunload', function (e) { if (BUSY) { e.preventDefault(); e.returnValue = ''; } });
+window.addEventListener('beforeunload', function (e) { fylaxeTora_(); if (BUSY || BROMIKO) { e.preventDefault(); e.returnValue = ''; } });
+/* ═══ Ταυτόχρονη δουλειά (12/11/2026) ═══
+ * 1) Ο Πίνακας δείχνει αν την ίδια ανάρτηση/σελίδα την έχει ανοιχτή και κάποιος άλλος (ενημέρωση κάθε λεπτό).
+ * 2) Αν δύο αποθηκεύσουν την ίδια, ο δεύτερος δεν σβήνει τη δουλειά του πρώτου: ο Πίνακας ρωτά τι θα γίνει.
+ * 3) Ό,τι γράφεται φυλάγεται στη συσκευή, ακόμα κι αν λήξει η σύνδεση ή κοπεί το διαδίκτυο. */
+var BROMIKO = false, PAR = null, SYG_POIOS = '';
+document.addEventListener('input', function (e) { if (e.target.closest && e.target.closest('#v-edit, #v-page')) BROMIKO = true; }, true);
+function fylaxeTora_() {
+  try {
+    if (CUR && !$('v-edit').classList.contains('hidden')) { var d = collect(); if (d.titlos.trim() || d.keimeno.trim()) localStorage.setItem(prKleidi_(), JSON.stringify({ t: Date.now(), d: d, en: CUR.enotita })); }
+    if (PCUR && !$('v-page').classList.contains('hidden')) localStorage.setItem('ps_' + PCUR.id, JSON.stringify({ t: Date.now(), d: { titlos: $('p-titl').value, perigrafi: $('p-per').value, keimeno: htmlToMd($('prte')) } }));
+  } catch (x) {}
+}
+function parousia_(id, el) {
+  parousiaStop_();
+  PAR = { id: id, el: el };
+  var kane = function () {
+    if (!PAR || PAR.id !== id || !T) return;
+    google.script.run.withSuccessHandler(function (l) {
+      if (!PAR || PAR.id !== id) return;
+      var b = document.getElementById('parBox');
+      if (!l || !l.length) { if (b) b.remove(); return; }
+      var on = l.map(function (x) { return x.onoma; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).join(', ');
+      var t = '👥 Την ίδια στιγμή την έχει ανοιχτή και: <b>' + esc(on) + '</b>. Αν αλλάξετε και οι δύο κάτι, ο Πίνακας θα σας ρωτήσει πριν σβηστεί οτιδήποτε. Καλύτερα να τη γράφει ένας τη φορά.';
+      if (!b) { b = document.createElement('div'); b.id = 'parBox'; b.className = 'note'; b.style.borderLeft = '5px solid #f2b233';
+        var host = id.indexOf('sel_') === 0 ? $('v-page') : $('edNote'); if (id.indexOf('sel_') === 0) host.insertBefore(b, host.children[1] || null); else host.prepend(b); }
+      b.innerHTML = t;
+    }).withFailureHandler(function () {}).anoixti(T, id);
+  };
+  kane(); PAR.t = setInterval(kane, 60000);
+}
+function parousiaStop_() {
+  if (!PAR) return;
+  clearInterval(PAR.t); var id = PAR.id; PAR = null;
+  var b = document.getElementById('parBox'); if (b) b.remove();
+  if (T) try { google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).anoixti(T, id, true); } catch (x) {}
+}
+/* Σύγκρουση: κάποιος άλλος αποθήκευσε στο μεταξύ. Τίποτα δεν χάνεται: η δική μας εκδοχή είναι φυλαγμένη στη συσκευή. */
+function sygkrousi_(m, fn, args, ok, el, btn) {
+  fylaxeTora_();
+  var p = m.split('|'), poios = p[1] || 'άλλος χρήστης', pote = p[2] ? ' (στις ' + p[2] + ')' : '', id = p[3] || '';
+  if (fn === 'apothikefsi') {
+    dlg({ icon: '👥', title: 'Κάποιος άλλος άλλαξε στο μεταξύ την ανάρτηση', text: 'Όσο τη γράφατε, ' + poios + ' αποθήκευσε αλλαγές' + pote + '. Για να μη χαθεί η δουλειά κανενός, διαλέξτε. Η δική σας εκδοχή είναι φυλαγμένη.',
+          ok: 'Να γίνει η δική μου ξεχωριστό πρόχειρο', kind: 'green', noLabel: 'Να δω πρώτα τι άλλαξε ο άλλος', noValue: 'dei' }, function (v) {
+      if (v === 'dei') { SYG_POIOS = poios; openPost(id); return; }   // ξανανοίγει την τρέχουσα· η δική μας προτείνεται αμέσως («Βρέθηκε κείμενο που δεν αποθηκεύτηκε»)
+      var d = JSON.parse(JSON.stringify(args[1]));
+      d.id = ''; d.ekdosi = undefined; d.neo_id = neoKodikos_(); d.titlos = d.titlos.replace(/\s*\(δεύτερη εκδοχή\)$/, '') + ' (δεύτερη εκδοχή)';
+      run('apothikefsi', [args[0], d, 'proxeiro'], function (r) {
+        prSvise_('pr_' + id); BROMIKO = false; parousiaStop_(); home();
+        msg('homeMsg', '✔ Η δική σας εκδοχή φυλάχτηκε ως ξεχωριστό πρόχειρο: «' + d.titlos + '». Η αρχική ανάρτηση έμεινε όπως την άφησε ' + poios + '.', 'ok');
+      }, el);
+    });
+  } else if (fn === 'apothikefsiSelidas') {
+    dlg({ icon: '👥', title: 'Η σελίδα άλλαξε στο μεταξύ', text: 'Όσο τη γράφατε, ' + poios + ' αποθήκευσε αλλαγές' + pote + '. Οι δικές σας αλλαγές είναι φυλαγμένες σε αυτή τη συσκευή.',
+          ok: 'Να μείνει η δική μου εκδοχή', kind: 'coral', noLabel: 'Να δω πρώτα την τρέχουσα', noValue: 'dei' }, function (v) {
+      if (v === 'dei') { run('listaSelidon', [T], function (l) { PAGES = l; var s = l.filter(function (x) { return x.id === args[1].id; })[0]; if (s) editPage(s); }, el); return; }
+      var d = JSON.parse(JSON.stringify(args[1])); d.ekdosi = undefined;   // ρητή επιλογή του χρήστη: αντικατάσταση
+      run('apothikefsiSelidas', [args[0], d, args[2]], ok, el);
+    });
+  } else {
+    dlg({ icon: '👥', title: 'Η ανάρτηση άλλαξε από τότε που την ανοίξατε', text: poios + ' έκανε αλλαγή' + pote + '. Ανοίγει ξανά για να δείτε την τελευταία εκδοχή πριν αποφασίσετε.', cancel: false },
+      function () { openPost(id || (CUR && CUR.id)); });
+  }
+}
 (function () {
   try { T = sessionStorage.getItem('t'); ROLE = sessionStorage.getItem('r'); OPT = JSON.parse(sessionStorage.getItem('o') || 'null'); } catch (x) {}
   var em0 = store('em'); if (em0) $('lemail').value = em0;
