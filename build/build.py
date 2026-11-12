@@ -159,6 +159,25 @@ class Istotopos:
             seen.add((p['imerominia'][:4], s))
             p['url'] = f'/anartiseis/{p["imerominia"][:4]}/{s}/'
         self.posts = posts
+        # σύνδεσμοι μέσα στα κείμενα προς την παλιά ιστοσελίδα (που καταργείται): στην αντίστοιχη νέα σελίδα, αλλιώς στην αρχική
+        palia = {}
+        try:
+            palia = {str(x.get('slug')): str(x.get('id')) for x in json.load(open(RIZA / 'periexomeno' / 'anartiseis.json', encoding='utf-8')) if x.get('slug')}
+        except Exception:
+            pass
+        ana_id = {str(p.get('id')): p['url'] for p in posts}
+        sel_wp = {s.get('apo_wp'): f'/{s["omada"]}/{s["id"]}/' for s in sel if s.get('apo_wp')}
+        sel_wp.update({'sxoleio-epikoinonia-xartis': '/epikoinonia/', 'sxoliki-vivliothiki': sel_wp.get('sxoliki-vivliothiki', '/sxoleio/vivliothiki/')})
+        def neo(m):
+            seg = [x for x in re.split(r'[/?#]', m.group(2)) if x and '=' not in x]
+            s = seg[-1] if seg else ''
+            i = palia.get(s, '')   # στο Φύλλο οι αναρτήσεις του WordPress έχουν κωδικό «wp» + αριθμό
+            u = (ana_id.get(i) or ana_id.get('wp' + i)) if i else ''
+            return '(' + (u or sel_wp.get(s, '') or '/') + ')'
+        palio_re = re.compile(r'\((https?://1dim-polichn(?:-new)?\.thess\.sch\.gr)([^)\s]*)\)')
+        for x in list(posts) + list(sel):
+            if x.get('keimeno') and 'thess.sch.gr' in x['keimeno']:
+                x['keimeno'] = palio_re.sub(neo, x['keimeno'])
         self.etos = max(int(p['imerominia'][:4]) for p in posts) if posts else 2026
         self.ana_enotita = defaultdict(list)
         for p in posts:   # μία κύρια ενότητα (διεύθυνση, διαδρομή) + όσες ακόμα επέλεξε ο συντάκτης (εμφάνιση και εκεί)
