@@ -422,7 +422,14 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
   <p class="muted" style="margin:0 0 6px">Για πίνακα: πατήστε μέσα σε ένα κελί και γράψτε. Με «＋ Γραμμή» / «＋ Στήλη» μεγαλώνει. Μπορείτε και να επικολλήσετε πίνακα από το Word.</p>
   <div class="toolbar" id="ptb"></div>
   <div class="rte" id="prte" contenteditable="true"></div>
-  <div class="step"><span class="n">4</span><h3>Έγγραφα (PDF, Word, Excel)</h3></div>
+  <div class="step"><span class="n">4</span><h3>Φωτογραφίες <span class="opt">(μία φωτογραφία μπαίνει μεγάλη πάνω από το κείμενο· περισσότερες γίνονται συλλογή)</span></h3></div>
+  <div class="drop" id="pdrop" tabindex="0" role="button" onclick="$('p-foto').click()" onkeydown="if(event.key==='Enter')$('p-foto').click()">
+   <span class="em">📷</span>Πατήστε εδώ για να διαλέξετε φωτογραφίες<br><span class="muted" style="font-weight:400">ή σύρετέ τες μέσα σε αυτό το πλαίσιο</span>
+  </div>
+  <label class="tholosi" title="Πριν ανέβει, η φωτογραφία ελέγχεται στον υπολογιστή σας και τα πρόσωπα θολώνονται. Θα δείτε το αποτέλεσμα και θα μπορείτε να διορθώσετε."><input type="checkbox" id="p-tholosi"> Θόλωσε τα πρόσωπα στις φωτογραφίες που θα προσθέσω</label>
+  <input type="file" id="p-foto" accept="image/*" multiple class="hidden" onchange="addPhotos(this.files);this.value=''">
+  <div class="photos" id="pPhotos"></div>
+  <div class="step"><span class="n">5</span><h3>Έγγραφα (PDF, Word, Excel)</h3></div>
   <button type="button" class="btn light" onclick="$('p-pdf').click()">📄 Προσθήκη εγγράφου</button>
   <input type="file" id="p-pdf" accept="application/pdf,.pdf,.doc,.docx,.xls,.xlsx,.odt,.ods" multiple class="hidden" onchange="addPdfs(this,'page')">
   <div id="pDocs"></div>
@@ -478,7 +485,7 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
 <script>
 var T = null, ROLE = null, OPT = null, ALL = [], CUR = null, FILTER = 'all', THEMA = '', TAXI = '', ETOS = '', PAGES = [], PCUR = null, THUMBS = {}, BUSY = 0;
 var ICON = { anakoinoseis: '📢', draseis: '📚', episkepseis: '🚌', giortes: '🎉', dimiourgies: '🎨', synergasies: '🤝',
-             perivallon: '🌱', 'energos-politis': '🏛️', diagonismoi: '🏆', goneis: '👪' };
+             perivallon: '🌱', kipos: '🥕', 'energos-politis': '🏛️', diagonismoi: '🏆', goneis: '👪' };
 var $ = function (id) { return document.getElementById(id); };
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 function msg(el, text, kind) { $(el).innerHTML = text ? '<div class="msg ' + (kind || 'info') + '">' + esc(text) + '</div>' : ''; if (text) $(el).scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
@@ -1265,12 +1272,14 @@ function bindEditor(tbar, rte) {
 }
 
 /* Φωτογραφίες που επικολλήθηκαν ή ρίχτηκαν μέσα στο κείμενο: δεν μπαίνουν στο κείμενο (θα χάνονταν σιωπηλά),
- * πάνε στο βήμα 3 «Φωτογραφίες» της ανάρτησης, με μήνυμα. */
+ * πάνε στο βήμα «Φωτογραφίες» της ανάρτησης ή της σελίδας, με μήνυμα. */
 function eikonesApo_(dt) { var o = []; if (dt && dt.files) for (var i = 0; i < dt.files.length; i++) if (/^image\//.test(dt.files[i].type)) o.push(dt.files[i]); return o; }
 function eikonesSeKeimeno_(eik, ed) {
   var seAnartisi = ed && ed.id === 'rte' && CUR && !$('v-edit').classList.contains('hidden');
-  if (eik.length && seAnartisi) { addPhotos(eik); msg('edMsg', (eik.length === 1 ? 'Η φωτογραφία μπήκε' : 'Οι φωτογραφίες μπήκαν') + ' στο βήμα 3 «Φωτογραφίες» (όχι μέσα στο κείμενο).', 'info'); }
-  else msg(seAnartisi ? 'edMsg' : 'pMsg', 'Οι φωτογραφίες δεν μπαίνουν μέσα στο κείμενο. ' + (seAnartisi ? 'Προσθέστε τις στο βήμα 3 «Φωτογραφίες».' : 'Στις σελίδες μπαίνουν έγγραφα για λήψη.'), 'info');
+  var seSelida = ed && ed.id === 'prte' && PCUR && !$('v-page').classList.contains('hidden');
+  var vima = seAnartisi ? 'βήμα 3' : 'βήμα 4';
+  if (eik.length && (seAnartisi || seSelida)) { PHS = seSelida; addPhotos(eik); msg(PHMSG_(), (eik.length === 1 ? 'Η φωτογραφία μπήκε' : 'Οι φωτογραφίες μπήκαν') + ' στο ' + vima + ' «Φωτογραφίες» (όχι μέσα στο κείμενο).', 'info'); }
+  else msg(seAnartisi ? 'edMsg' : 'pMsg', 'Οι φωτογραφίες δεν μπαίνουν μέσα στο κείμενο. Προσθέστε τις στο ' + vima + ' «Φωτογραφίες».', 'info');
 }
 document.addEventListener('dragover', function (e) { if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') >= 0 && !(e.target.closest && e.target.closest('#drop, .drop'))) e.preventDefault(); });
 document.addEventListener('drop', function (e) {   // αρχείο που πέφτει έξω από τη ζώνη φωτογραφιών: ποτέ μην ανοίξει στη θέση του Πίνακα
@@ -1290,6 +1299,7 @@ function setChips(id, csv) { var v = String(csv || '').split(',').map(function (
 function getChips(id) { return Array.prototype.slice.call(document.querySelectorAll('#' + id + ' input:checked')).map(function (c) { return c.value; }); }
 function edit(a, fromProp) {
   if (!rte) initRte();
+  PHS = false;
   CUR = a ? JSON.parse(JSON.stringify(a)) : { id: '', katastasi: 'Πρόχειρο', imerominia: new Date().toISOString().slice(0, 10), titlos: '', enotita: '', taxeis: '', diktya: '',
         keimeno: '', fotografies: [], arxeia: [], video: '', syggrafeas: store('onoma') || '', synainesi: false, alles_enotites: '' };
   if (fromProp && CUR.protasi) { var p = CUR.protasi; ['titlos', 'keimeno', 'enotita', 'video', 'syggrafeas'].forEach(function (k) { if (p[k] !== undefined) CUR[k] = p[k]; });
@@ -1330,27 +1340,32 @@ function leave(sigoura) {
   if (BUSY) { dlg({ icon: '⏳', title: 'Ανεβαίνουν ακόμα φωτογραφίες', text: 'Περιμένετε λίγα δευτερόλεπτα να τελειώσουν.', cancel: false }); return; } fylaxeTora_(); parousiaStop_(); BROMIKO = false; home(); }
 
 /* φωτογραφίες: μεγάλες μικρογραφίες, σειρά με σύρσιμο (ή βελάκια πληκτρολογίου), η πρώτη = εξώφυλλο */
+/* οι φωτογραφίες δουλεύουν ίδια στην ανάρτηση (CUR) και στη σελίδα (PCUR): PHS = true όταν είναι ανοιχτή σελίδα */
+var PHS = false;
+function PHO_() { return PHS ? PCUR : CUR; }
+function PHEL_() { return $(PHS ? 'pPhotos' : 'photos'); }
+function PHMSG_() { return PHS ? 'pMsg' : 'edMsg'; }
 function drawPhotos() {
-  var f = CUR.fotografies;
-  $('photos').innerHTML = (f.length > 1 ? '<p class="ph-odig">Για να αλλάξετε τη σειρά, σύρετε μια φωτογραφία στη θέση που θέλετε. Η πρώτη είναι το εξώφυλλο.</p>' : '') +
+  var f = PHO_().fotografies;
+  PHEL_().innerHTML = (f.length > 1 ? '<p class="ph-odig">Για να αλλάξετε τη σειρά, σύρετε μια φωτογραφία στη θέση που θέλετε. Η πρώτη είναι το εξώφυλλο.</p>' : '') +
     f.map(function (p, i) {
     var src = p.src || THUMBS[p.id];
     return '<div class="ph" data-i="' + i + '">' + (i === 0 ? '<span class="cover">Εξώφυλλο</span>' : '') +
       '<div class="img" tabindex="0" role="button" aria-label="Φωτογραφία ' + (i + 1) + ' από ' + f.length + '. Σύρετε για αλλαγή σειράς ή πατήστε τα βελάκια του πληκτρολογίου." title="Σύρετε για να αλλάξετε θέση" data-th="' + (p.id || '') + '"' + (src ? ' style="background-image:url(' + src + ')"' : '') + '>' + (src ? '' : 'φόρτωση…') + '</div>' +
       (p.up ? '<div class="prog">Ανεβαίνει…</div>' : '') +
       '<div class="acts" style="justify-content:flex-end"><button type="button" class="x" title="Αφαίρεση της φωτογραφίας" onclick="rmPhoto(' + i + ')">✕</button></div>' +
-      '<input type="text" placeholder="Λεζάντα (προαιρετικό)" value="' + esc(p.perigrafi || '') + '" oninput="CUR.fotografies[' + i + '].perigrafi=this.value"></div>';
+      '<input type="text" placeholder="Λεζάντα (προαιρετικό)" value="' + esc(p.perigrafi || '') + '" oninput="PHO_().fotografies[' + i + '].perigrafi=this.value;BROMIKO=true"></div>';
   }).join('');
-  $('consentBox').classList.toggle('hidden', !f.length);
+  if (!PHS) $('consentBox').classList.toggle('hidden', !f.length);
   loadThumbs(f.filter(function (p) { return !p.src; }).map(function (p) { return p.id; }));
 }
-function mvPhoto(i, d) { var f = CUR.fotografies, j = i + d; if (j < 0 || j >= f.length) return; var t = f[i]; f[i] = f[j]; f[j] = t; drawPhotos(); }
+function mvPhoto(i, d) { var f = PHO_().fotografies, j = i + d; if (j < 0 || j >= f.length) return; var t = f[i]; f[i] = f[j]; f[j] = t; drawPhotos(); }
 /* σύρσιμο με Pointer Events: ίδιος κώδικας για ποντίκι, αφή και γραφίδα */
 (function () {
   var drag = null;
-  function kelia() { return [].slice.call($('photos').querySelectorAll('.ph')); }
+  function kelia() { return [].slice.call(PHEL_().querySelectorAll('.ph')); }
   document.addEventListener('pointerdown', function (e) {
-    var img = e.target.closest && e.target.closest('#photos .ph .img'); if (!img || e.button > 0) return;
+    var img = e.target.closest && e.target.closest('.photos .ph .img'); if (!img || e.button > 0) return;
     drag = { el: img.parentNode, x: e.clientX, y: e.clientY, on: false, id: e.pointerId };
   });
   document.addEventListener('pointermove', function (e) {
@@ -1378,24 +1393,24 @@ function mvPhoto(i, d) { var f = CUR.fotografies, j = i + d; if (j < 0 || j >= f
     var d = drag; drag = null;
     document.body.classList.remove('ph-sernei');
     if (!d.on) return;
-    var f = CUR.fotografies, nea = kelia().map(function (c) { return f[+c.getAttribute('data-i')]; });
-    CUR.fotografies = nea; drawPhotos();
+    var f = PHO_().fotografies, nea = kelia().map(function (c) { return f[+c.getAttribute('data-i')]; });
+    PHO_().fotografies = nea; BROMIKO = true; drawPhotos();
   }
   document.addEventListener('pointerup', telos);
   document.addEventListener('pointercancel', telos);
   document.addEventListener('keydown', function (e) {
-    var img = e.target.closest && e.target.closest('#photos .ph .img'); if (!img) return;
+    var img = e.target.closest && e.target.closest('.photos .ph .img'); if (!img) return;
     var d = e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : 0; if (!d) return;
     e.preventDefault(); var i = +img.parentNode.getAttribute('data-i'); mvPhoto(i, d);
-    var n = $('photos').querySelector('.ph[data-i="' + Math.max(0, Math.min(CUR.fotografies.length - 1, i + d)) + '"] .img'); if (n) n.focus();
+    var n = PHEL_().querySelector('.ph[data-i="' + Math.max(0, Math.min(PHO_().fotografies.length - 1, i + d)) + '"] .img'); if (n) n.focus();
   });
 })();
 function rmPhoto(i) {
-  var p = CUR.fotografies[i];
-  dlg({ icon: '🖼️', title: 'Να βγει αυτή η φωτογραφία;', text: 'Η φωτογραφία βγαίνει από την ανάρτηση. Οι υπόλοιπες μένουν.', ok: 'Ναι, να βγει', kind: 'coral' }, function () {
-    var i2 = CUR.fotografies.indexOf(p); if (i2 < 0) return;
-    CUR.fotografies.splice(i2, 1); drawPhotos();
-    if (ROLE === 'diefthynsi' && CUR.id && CUR.katastasi === 'Δημοσιευμένη' && p.id) {
+  var A = PHO_(), p = A.fotografies[i];
+  dlg({ icon: '🖼️', title: 'Να βγει αυτή η φωτογραφία;', text: PHS ? 'Η φωτογραφία βγαίνει από τη σελίδα όταν πατήσετε αποθήκευση. Οι υπόλοιπες μένουν.' : 'Η φωτογραφία βγαίνει από την ανάρτηση. Οι υπόλοιπες μένουν.', ok: 'Ναι, να βγει', kind: 'coral' }, function () {
+    var i2 = A.fotografies.indexOf(p); if (i2 < 0) return;
+    A.fotografies.splice(i2, 1); BROMIKO = true; drawPhotos();
+    if (!PHS && ROLE === 'diefthynsi' && CUR.id && CUR.katastasi === 'Δημοσιευμένη' && p.id) {
       dlg({ icon: '🗑️', title: 'Να φύγει και από την ιστοσελίδα τώρα;', text: 'Π.χ. αν ένας γονέας ανακάλεσε τη συγκατάθεση. Αλλιώς θα φύγει όταν αποθηκεύσετε την ανάρτηση.', ok: 'Ναι, αφαίρεση τώρα', kind: 'coral' }, function () {
         run('afairesiFotografias', [T, CUR.id, p.id], function (r) { msg('edMsg', r.minima, 'ok'); }, 'edMsg');
       });
@@ -1537,8 +1552,8 @@ function addPhotos(files) {
   files = Array.prototype.slice.call(files).filter(function (f) { return /^image\//.test(f.type); });
   if (!files.length) return;
   files.forEach(function (file) {
-    var p = { id: '', perigrafi: '', src: '', up: true }; CUR.fotografies.push(p); BUSY++;
-    var thol = $('f-tholosi') && $('f-tholosi').checked;
+    var A = PHO_(), M = PHMSG_(), p = { id: '', perigrafi: '', src: '', up: true }; A.fotografies.push(p); BUSY++; BROMIKO = true;
+    var thol = $(PHS ? 'p-tholosi' : 'f-tholosi') && $(PHS ? 'p-tholosi' : 'f-tholosi').checked;
     shrink(file).then(function (data) {
       if (!thol) return data;   // μία φωτογραφία τη φορά στον έλεγχο θόλωσης
       var pr = PROSOPA.oura.then(function () { return elegxosTholosis_(data, file.name); });
@@ -1548,17 +1563,17 @@ function addPhotos(files) {
       p.src = data; drawPhotos();
       anevasmaEpimono_([T, file.name.replace(/\.\w+$/, '') + '.jpg', 'image/jpeg', data.split(',')[1], 'foto'],
         function (r) { p.id = r.id; p.up = false; BUSY--; THUMBS[r.id] = data; drawPhotos(); },
-        function (e) { BUSY--; CUR.fotografies.splice(CUR.fotografies.indexOf(p), 1); drawPhotos(); msg('edMsg', e.message, 'bad'); });
-    }, function (e) { BUSY--; CUR.fotografies.splice(CUR.fotografies.indexOf(p), 1); drawPhotos(); if (!e || !e.akyro) msg('edMsg', (e && e.message) || 'Η φωτογραφία δεν προστέθηκε.', 'bad'); });
+        function (e) { BUSY--; A.fotografies.splice(A.fotografies.indexOf(p), 1); drawPhotos(); msg(M, e.message, 'bad'); });
+    }, function (e) { BUSY--; A.fotografies.splice(A.fotografies.indexOf(p), 1); drawPhotos(); if (!e || !e.akyro) msg(M, (e && e.message) || 'Η φωτογραφία δεν προστέθηκε.', 'bad'); });
   });
   drawPhotos();
 }
-(function () {
-  var d = $('drop');
+['drop', 'pdrop'].forEach(function (id) {
+  var d = $(id);
   ['dragenter', 'dragover'].forEach(function (ev) { d.addEventListener(ev, function (e) { e.preventDefault(); d.classList.add('over'); }); });
   ['dragleave', 'drop'].forEach(function (ev) { d.addEventListener(ev, function (e) { e.preventDefault(); d.classList.remove('over'); }); });
   d.addEventListener('drop', function (e) { addPhotos(e.dataTransfer.files); });
-})();
+});
 function drawDocs(el, arr) {
   $(el).innerHTML = arr.map(function (d, i) { return '<div class="post" style="cursor:default"><div class="thumb" style="width:56px;flex-basis:56px;height:56px;font-size:12px;font-weight:700">' + esc(((d.onoma || '').split('.').pop() || '').toUpperCase().slice(0, 4)) + '</div><div class="t"><b>' + esc(d.onoma) + '</b></div><button class="small-link" style="color:var(--coral)" onclick="rmDoc(\'' + el + '\',' + i + ')">Αφαίρεση</button></div>'; }).join('');
 }
@@ -1882,9 +1897,11 @@ function loadPages() {
 }
 function editPage(s) {
   if (!rte) initRte();
-  PCUR = JSON.parse(JSON.stringify(s));
+  PCUR = JSON.parse(JSON.stringify(s)); PHS = true;
+  PCUR.fotografies = (PCUR.fotografies || []).filter(function (f) { return f && f.id; }).map(function (f) { return { id: f.id, perigrafi: f.perigrafi || '' }; });
+  if ($('p-tholosi')) $('p-tholosi').checked = false;
   $('pT').textContent = s.titlos; $('p-titl').value = s.titlos; $('p-omada').value = s.omada || 'sxoleio'; $('p-per').value = s.perigrafi || ''; $('prte').innerHTML = mdToHtml(s.keimeno || ''); istReset($('prte'));
-  $('p-draft').checked = s.katastasi === 'Πρόχειρο' && !s._nea; drawDocs('pDocs', PCUR.arxeia); msg('pMsg', s._nea ? 'Νέα σελίδα: γράψτε το κείμενο και πατήστε «Αποθήκευση και δημοσίευση».' : '', s._nea ? 'info' : ''); nav('page');
+  $('p-draft').checked = s.katastasi === 'Πρόχειρο' && !s._nea; drawDocs('pDocs', PCUR.arxeia); drawPhotos(); msg('pMsg', s._nea ? 'Νέα σελίδα: γράψτε το κείμενο και πατήστε «Αποθήκευση και δημοσίευση».' : '', s._nea ? 'info' : ''); nav('page');
   setTimeout(psEpanafora_, 50); BROMIKO = false; parousia_('sel_' + s.id, 'pMsgP');
   $('pAfair').textContent = s.katastasi === 'Αποσυρμένη' ? '♻️ Επαναφορά της σελίδας στην ιστοσελίδα' : '🗑️ Αφαίρεση της σελίδας από την ιστοσελίδα';
 }
@@ -1907,8 +1924,9 @@ function afairesiSelidasUI() {
   });
 }
 function savePage(pub) {
+  if (BUSY) { dlg({ icon: '⏳', title: 'Ανεβαίνουν ακόμα φωτογραφίες', text: 'Περιμένετε λίγα δευτερόλεπτα να τελειώσουν και πατήστε ξανά.', cancel: false }); return; }
   var d = { id: PCUR.id, titlos: $('p-titl').value, perigrafi: $('p-per').value, keimeno: htmlToMd($('prte')), simeiosi: PCUR.simeiosi || '',
-            katastasi: PCUR.katastasi === 'Αποσυρμένη' ? 'Αποσυρμένη' : $('p-draft').checked ? 'Πρόχειρο' : 'Δημοσιευμένη', arxeia: PCUR.arxeia, fotografies: PCUR.fotografies,
+            katastasi: PCUR.katastasi === 'Αποσυρμένη' ? 'Αποσυρμένη' : $('p-draft').checked ? 'Πρόχειρο' : 'Δημοσιευμένη', arxeia: PCUR.arxeia, fotografies: PCUR.fotografies.filter(function (f) { return f.id; }).map(function (f) { return { id: f.id, perigrafi: f.perigrafi || '' }; }),
             ekdosi: PCUR.ekdosi || 0, omada: $('p-omada').value };
   run('apothikefsiSelidas', [T, d, pub], function (r) { prSvise_('ps_' + d.id); PCUR.ekdosi = r.ekdosi; PCUR.omada = d.omada; BROMIKO = false; PCUR.katastasi = d.katastasi; PCUR.keimeno = d.keimeno; PCUR.titlos = d.titlos; PCUR.perigrafi = d.perigrafi; msg('pMsg', '✔ ' + r.minima, 'ok'); }, 'pMsg');
 }

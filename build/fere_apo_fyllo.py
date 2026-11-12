@@ -171,13 +171,19 @@ def main():
         for k in ('titlos', 'perigrafi', 'keimeno', 'simeiosi', 'katastasi'):
             if f.get(k) not in (None, ''):
                 s[k] = f[k]
+        if f.get('omada') in ('sxoleio', 'goneis', 'zoi'):   # μενού και σειρά: όπως τα όρισε η Διεύθυνση στον Πίνακα
+            s['omada'] = f['omada']
+            try:
+                s['seira'] = float(f['seira'])
+            except (KeyError, TypeError, ValueError):
+                pass
         s['fotografies'] = [y for y in ({'arxeio': foto(x['id']), 'perigrafi': x.get('perigrafi', '')} for x in f.get('fotografies') or []) if y['arxeio']]
         s['arxeia'] = [arxeio(x) for x in f.get('arxeia') or []]
         s.pop('apo_wp', None)
     # Νέες σελίδες που έφτιαξε η Διεύθυνση από τον Πίνακα (υπάρχουν μόνο στο Φύλλο)
     yparxoun = {s['id'] for s in base}
     for f in d.get('selides', []):
-        if not f.get('id') or f['id'] in yparxoun or f.get('omada') not in ('sxoleio', 'goneis'):
+        if not f.get('id') or f['id'] in yparxoun or f.get('omada') not in ('sxoleio', 'goneis', 'zoi'):
             continue
         try:
             seira = float(f.get('seira') or 99)

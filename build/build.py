@@ -178,7 +178,8 @@ class Istotopos:
     # ── δομή μενού από τα δεδομένα (καμία κενή ενότητα στο μενού)
     def domi(self):
         sx = [(s['titlos'], f'/sxoleio/{s["id"]}/') for s in sorted(self.sel, key=lambda x: x['seira']) if s['omada'] == 'sxoleio']
-        zoi = [(ENOTITES[k], url_enotitas(k)) for k in ENOTITES if k not in ('diagonismoi', 'goneis') and self.ana_enotita.get(k)] + \
+        zoi_mon = {s['id'] for s in self.sel if s['omada'] == 'zoi'}
+        zoi = [(ENOTITES[k], url_enotitas(k)) for k in ENOTITES if k not in ('diagonismoi', 'goneis') and k not in zoi_mon and self.ana_enotita.get(k)] + \
               [(s['titlos'], f'/zoi/{s["id"]}/') for s in sorted(self.sel, key=lambda x: x['seira']) if s['omada'] == 'zoi']
         dk = [(d['titlos'], f'/diktya/{d["id"]}/') for d in self.diktya]
         gon = ([('Ενημερώσεις γονέων', '/goneis/enimeroseis/')] if self.ana_enotita.get('goneis') else []) + \
@@ -339,6 +340,8 @@ class Istotopos:
         posts = self.ana_enotita.get(k, [])
         if not posts:
             return
+        if any(s['id'] == k and s['omada'] == 'zoi' for s in self.sel):
+            return   # π.χ. Σχολικός κήπος: οι αναρτήσεις μπαίνουν κάτω από τη μόνιμη σελίδα /zoi/kipos/
         path = url_enotitas(k)
         tit = ENOTITES[k]
         perig = f'{tit} του 1ου Δημοτικού Σχολείου Πολίχνης, ανά σχολικό έτος, από το 2024.'
@@ -360,7 +363,7 @@ class Istotopos:
         sx_ids = {x['id'] for x in self.sel if x['omada'] == 'sxoleio'}
         for x in mon:
             self.stathera(x, '/zoi/', 'Σχολική Ζωή')
-            if x['id'] not in sx_ids and x['id'] not in ENOTITES:
+            if x['id'] not in sx_ids:
                 f = self.out / 'sxoleio' / x['id'] / 'index.html'
                 f.parent.mkdir(parents=True, exist_ok=True)
                 f.write_text(f'<!DOCTYPE html><html lang="el"><head><meta charset="utf-8"><title>{esc(x["titlos"])}</title>'
@@ -377,7 +380,10 @@ class Istotopos:
         path = f'{omada_url}{s["id"]}/'
         sim = f'<p class="note">{esc(s["simeiosi"])}</p>' if s.get('simeiosi') else ''
         sxet = ''
-        if s.get('diktyo_sxetika') and self.ana_diktyo.get(s['diktyo_sxetika']):
+        if s['omada'] == 'zoi' and s['id'] in ENOTITES and self.ana_enotita.get(s['id']):   # αναρτήσεις της ομώνυμης ενότητας
+            ps = self.ana_enotita[s['id']]
+            sxet = f'<section class="related"><h2 class="h-sec rv">Αναρτήσεις ({len(ps)})</h2>{self.lista_ana_etos(ps)}</section>'
+        elif s.get('diktyo_sxetika') and self.ana_diktyo.get(s['diktyo_sxetika']):
             sxet = f'<section class="related"><h2 class="h-sec rv">Σχετικές αναρτήσεις</h2>{self.lista(self.ana_diktyo[s["diktyo_sxetika"]][:6])}</section>'
         adelfes = [x for x in sorted(self.sel, key=lambda x: x['seira']) if x['omada'] == s['omada']]
         side = ('<aside class="side"><div class="side-card rv"><p class="side-h">' + esc(omada_titlos) + '</p><ul class="side-list side-nav">'
