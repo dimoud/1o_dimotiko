@@ -270,3 +270,26 @@
     upd();
   });
 })();
+
+/* αριθμοί που μετρούν από το 0 όταν φανούν (μία φορά)· χωρίς JS ή με μειωμένη κίνηση: ο τελικός αριθμός */
+(function () {
+  var el = document.querySelectorAll('[data-count]');
+  if (!el.length || !document.documentElement.classList.contains('anim-ready') || !('IntersectionObserver' in window)) return;
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var io = new IntersectionObserver(function (ent) {
+    ent.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      io.unobserve(e.target);
+      var b = e.target, n = +b.getAttribute('data-count') || 0, t0 = null, d = Math.min(1400, 500 + n * 60);
+      setTimeout(function () {
+        requestAnimationFrame(function step(now) {
+          if (t0 === null) t0 = now;
+          var x = Math.min(1, (now - t0) / d), k = 1 - Math.pow(1 - x, 3);
+          b.textContent = String(Math.round(n * k));
+          if (x < 1) requestAnimationFrame(step);
+        });
+      }, 250);
+    });
+  }, { threshold: 0.6 });
+  el.forEach(function (b) { b.setAttribute('aria-label', b.textContent); b.textContent = '0'; io.observe(b); });
+})();

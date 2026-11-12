@@ -436,9 +436,8 @@ class Istotopos:
                     + '</ul></div>')
             soma = (f'<div class="page-band"><header class="page-head wrap net-head {cc}"><div class="net-logo">{logo}</div><div><p class="label">{esc(d["eidos"])}</p>'
                     f'<h1>{esc(d["titlos"])}</h1>{yp}</div></header></div>'
-                    f'<div class="wrap page-grid"><div class="main"><div class="prose net-intro"><p class="rv">{esc(d["perigrafi"])}</p>{ext}</div></div>'
-                    f'<aside class="side">{arithmoi}{alla}</aside></div>'
-                    f'<div class="wrap post-body">{rel}</div>')
+                    f'<div class="wrap page-grid net-grid"><div class="main"><div class="prose net-intro"><p class="rv">{esc(d["perigrafi"])}</p>{ext}</div>{rel}</div>'
+                    f'<aside class="side">{arithmoi}{alla}</aside></div>')
             self.grapse(path, titlos=d['titlos'], perigrafi=f'{d["eidos"]}: {d["perigrafi"]}'[:158], soma=soma,
                         diadromi=[('Δίκτυα και Προγράμματα', '/diktya/')])
             tiles.append(f'<li class="rv"><a class="net-tile {cc}" href="{path}"><span class="net-logo">{logo}</span>'
