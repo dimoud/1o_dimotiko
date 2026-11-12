@@ -422,10 +422,23 @@ class Istotopos:
             yp = f'<p class="lead">{esc(d["ypotitlos"])}</p>' if d.get('ypotitlos') else ''
             ext = (f'<p><a class="btn" href="{esc(d["syndesmos"])}" target="_blank" rel="noopener">Επίσημη σελίδα του φορέα'
                    f'<span class="sr-only"> (ανοίγει σε νέα καρτέλα)</span></a></p>') if d.get('syndesmos') else ''
-            rel = (f'<section class="related"><h2 class="h-sec rv">Οι δράσεις μας</h2>{self.lista(ps)}</section>' if ps else '')
+            rel = (f'<section class="related"><h2 class="h-sec rv">Οι δράσεις μας</h2>{self.slider(ps, "Οι δράσεις μας")}</section>' if ps else '')
+            # πλαϊνή στήλη: αριθμοί που μετρούν όταν φανούν + τα άλλα δίκτυα (η σελίδα γεμίζει όλο το πλάτος)
+            eti = sorted({p['sxoliko_etos'] for p in ps})
+            arithmoi = ''
+            if ps:
+                arithmoi = (f'<div class="side-card rv net-facts"><p class="side-h">Με μια ματιά</p><ul class="nf">'
+                            f'<li><b data-count="{len(ps)}">{len(ps)}</b><span>{"δράση" if len(ps) == 1 else "δράσεις"} στην ιστοσελίδα</span></li>'
+                            f'<li><b data-count="{len(eti)}">{len(eti)}</b><span>{"σχολικό έτος" if len(eti) == 1 else "σχολικά έτη"}</span></li></ul>'
+                            f'<p class="nf-last">Πιο πρόσφατη: <a href="{ps[0]["url"]}">{esc(ps[0]["titlos"])}</a><span>{imerominia(ps[0]["imerominia"])}</span></p></div>')
+            alla = ('<div class="side-card rv"><p class="side-h">Τα δίκτυά μας</p><ul class="side-list side-nav">'
+                    + ''.join(('<li class="on"><a aria-current="page" ' if x is d else '<li><a ') + f'href="/diktya/{x["id"]}/">{esc(x["titlos"])}</a></li>' for x in self.diktya)
+                    + '</ul></div>')
             soma = (f'<div class="page-band"><header class="page-head wrap net-head {cc}"><div class="net-logo">{logo}</div><div><p class="label">{esc(d["eidos"])}</p>'
                     f'<h1>{esc(d["titlos"])}</h1>{yp}</div></header></div>'
-                    f'<div class="wrap post-body"><div class="prose"><p>{esc(d["perigrafi"])}</p>{ext}</div>{rel}</div>')
+                    f'<div class="wrap page-grid"><div class="main"><div class="prose net-intro"><p class="rv">{esc(d["perigrafi"])}</p>{ext}</div></div>'
+                    f'<aside class="side">{arithmoi}{alla}</aside></div>'
+                    f'<div class="wrap post-body">{rel}</div>')
             self.grapse(path, titlos=d['titlos'], perigrafi=f'{d["eidos"]}: {d["perigrafi"]}'[:158], soma=soma,
                         diadromi=[('Δίκτυα και Προγράμματα', '/diktya/')])
             tiles.append(f'<li class="rv"><a class="net-tile {cc}" href="{path}"><span class="net-logo">{logo}</span>'
@@ -773,6 +786,9 @@ class Istotopos:
             json.dump(self.search, open(self.out / 'search-index.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
         shutil.copy2(RIZA / 'static' / 'favicon.svg', self.out / 'favicon.svg')
         shutil.copy2(RIZA / 'static' / 'email-logo.png', self.out / 'email-logo.png')
+        for f in sorted((RIZA / 'riza').glob('*')) if (RIZA / 'riza').is_dir() else []:   # αρχεία που πρέπει να είναι αυτούσια στη ρίζα (π.χ. επαλήθευση Google Search Console)
+            if f.is_file():
+                shutil.copy2(f, self.out / f.name)
         if self.r.get('cname'):
             (self.out / 'CNAME').write_text(self.r['cname'] + '\n')
         (self.out / '.nojekyll').write_text('')
