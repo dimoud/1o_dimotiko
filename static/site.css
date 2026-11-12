@@ -632,3 +632,7 @@ html.anim-ready .chapters>li.rv.rv-in .ch-art img{animation:settle .9s cubic-bez
 html.anim-ready .gallery>figure.rv.rv-in{animation-duration:.8s}
 @media (prefers-reduced-motion:reduce){.sl-track>.rv,.notices>li.rv,.chapters .ch-art img{animation:none!important;opacity:1!important;translate:none!important;transform:none!important}}
 .card-meta .ora{white-space:nowrap}
+
+/* σελίδα με μία εικόνα: εικόνα πάνω από το κείμενο */
+.page-banner{margin:0 0 22px;border-radius:var(--r,14px);overflow:hidden;box-shadow:var(--sh)}
+.page-banner img{display:block;width:100%;height:auto}

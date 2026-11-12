@@ -178,7 +178,8 @@ class Istotopos:
     # ── δομή μενού από τα δεδομένα (καμία κενή ενότητα στο μενού)
     def domi(self):
         sx = [(s['titlos'], f'/sxoleio/{s["id"]}/') for s in sorted(self.sel, key=lambda x: x['seira']) if s['omada'] == 'sxoleio']
-        zoi = [(ENOTITES[k], url_enotitas(k)) for k in ENOTITES if k not in ('diagonismoi', 'goneis') and self.ana_enotita.get(k)]
+        zoi = [(ENOTITES[k], url_enotitas(k)) for k in ENOTITES if k not in ('diagonismoi', 'goneis') and self.ana_enotita.get(k)] + \
+              [(s['titlos'], f'/zoi/{s["id"]}/') for s in sorted(self.sel, key=lambda x: x['seira']) if s['omada'] == 'zoi']
         dk = [(d['titlos'], f'/diktya/{d["id"]}/') for d in self.diktya]
         gon = ([('Ενημερώσεις γονέων', '/goneis/enimeroseis/')] if self.ana_enotita.get('goneis') else []) + \
               [(s['titlos'], f'/goneis/{s["id"]}/') for s in sorted(self.sel, key=lambda x: x['seira']) if s['omada'] == 'goneis']
@@ -354,6 +355,21 @@ class Istotopos:
                 continue
             blocks.append(f'<section class="zone" aria-labelledby="z-{k}"><div class="zone-head"><h2 id="z-{k}" class="h-sec rv">{esc(ENOTITES[k])}</h2>'
                           f'<a class="more" href="{url_enotitas(k)}">Όλες ({len(ps)})<span aria-hidden="true"> ›</span></a></div>{self.lista(ps[:3])}</section>')
+        # μόνιμες σελίδες της Σχολικής Ζωής (π.χ. Σχολικός κήπος): σελίδα + πλακίδιο στην κορυφή + ανακατεύθυνση από /sxoleio/
+        mon = [x for x in sorted(self.sel, key=lambda x: x['seira']) if x['omada'] == 'zoi']
+        sx_ids = {x['id'] for x in self.sel if x['omada'] == 'sxoleio'}
+        for x in mon:
+            self.stathera(x, '/zoi/', 'Σχολική Ζωή')
+            if x['id'] not in sx_ids and x['id'] not in ENOTITES:
+                f = self.out / 'sxoleio' / x['id'] / 'index.html'
+                f.parent.mkdir(parents=True, exist_ok=True)
+                f.write_text(f'<!DOCTYPE html><html lang="el"><head><meta charset="utf-8"><title>{esc(x["titlos"])}</title>'
+                             f'<meta name="robots" content="noindex"><link rel="canonical" href="{self.r["tomeas"].rstrip("/")}/zoi/{x["id"]}/">'
+                             f'<meta http-equiv="refresh" content="0; url=/zoi/{x["id"]}/"></head><body><p><a href="/zoi/{x["id"]}/">{esc(x["titlos"])}</a></p></body></html>', encoding='utf-8')
+        if mon:
+            blocks.insert(0, '<section class="zone"><ul class="tiles">' + ''.join(
+                f'<li class="rv"><a class="tile c{n % 5 + 1}" href="/zoi/{x["id"]}/"><span class="tile-t">{esc(x["titlos"])}</span>'
+                f'<span class="tile-d">{esc(x.get("perigrafi", ""))}</span></a></li>' for n, x in enumerate(mon, 2)) + '</ul></section>')
         self.grapse('/zoi/', titlos='Σχολική Ζωή', perigrafi='Ανακοινώσεις, δράσεις, επισκέψεις, γιορτές και δημιουργίες των μαθητών του 1ου Δημοτικού Σχολείου Πολίχνης.',
                     soma=self.kefali('', 'Σχολική Ζωή', 'Ό,τι συμβαίνει στο σχολείο μας, ανά ενότητα.') + f'<div class="wrap">{"".join(blocks)}</div>')
 
@@ -367,10 +383,17 @@ class Istotopos:
         side = ('<aside class="side"><div class="side-card rv"><p class="side-h">' + esc(omada_titlos) + '</p><ul class="side-list side-nav">'
                 + ''.join(('<li class="on"><a aria-current="page" ' if x is s else '<li><a ') + f'href="{omada_url}{x["id"]}/">{esc(x["titlos"])}</a></li>' for x in adelfes)
                 + '</ul></div>' + '</aside>')
+        fot = s.get('fotografies', []) or []
+        banner, gal = '', fot
+        if len(fot) == 1:   # μία εικόνα: μπαίνει πάνω από το κείμενο, όχι ως «Φωτογραφίες (1)»
+            e1 = self.meson.eikona(fot[0]['arxeio'])
+            if e1:
+                banner = (f'<figure class="page-banner rv">{img_tag(e1, fot[0].get("perigrafi") or s["titlos"], sizes="(max-width: 734px) 100vw, 760px")}</figure>')
+                gal = []
         soma = (self.kefali(omada_titlos, s['titlos'], esc(s.get('perigrafi', ''))) +
-                f'<div class="wrap page-grid"><div class="main"><div class="prose">{sim}{md.pros_html(s.get("keimeno", ""))}</div>'
+                f'<div class="wrap page-grid"><div class="main">{banner}<div class="prose">{sim}{md.pros_html(s.get("keimeno", ""))}</div>'
                 f'{self.arxeia(s.get("arxeia", []))}</div>{side}</div>'
-                f'<div class="wrap post-body">{self.gallery(s.get("fotografies", []), s["titlos"])}{sxet}</div>')
+                f'<div class="wrap post-body">{self.gallery(gal, s["titlos"])}{sxet}</div>')
         self.grapse(path, titlos=s['titlos'], perigrafi=s['perigrafi'], soma=soma, diadromi=[(omada_titlos, omada_url)],
                     k=md.keimeno_xoris_morfi(s.get('keimeno', ''))[:400])
 
@@ -550,7 +573,8 @@ class Istotopos:
         if 'vivliothiki' in sel:
             chapters += kef('vivliothiki', 'Σχολική βιβλιοθήκη', 'Δανεισμός βιβλίων Δευτέρα, Πέμπτη και Παρασκευή, δράσεις φιλαναγνωσίας.', '/sxoleio/vivliothiki/')
         if 'kipos' in sel:
-            chapters += kef('kipos', 'Σχολικός κήπος', 'Ο λαχανόκηπος που φυτεύουν και φροντίζουν οι μαθητές μας.', '/sxoleio/kipos/')
+            chapters += kef('kipos', 'Σχολικός κήπος', 'Ο λαχανόκηπος που φυτεύουν και φροντίζουν οι μαθητές μας.',
+                            '/zoi/kipos/' if sel['kipos'].get('omada') == 'zoi' else '/sxoleio/kipos/')
         chapters += kef('ksl', 'KIDS SAVE LIVES', 'Πρώτες βοήθειες και ΚΑΡΠΑ για όλη τη σχολική κοινότητα.', '/diktya/kids-save-lives/')
         chapters += kef('aed', 'Υγεία και ασφάλεια', 'Το σχολείο διαθέτει αυτόματο εξωτερικό απινιδωτή (AED).',
                         '/sxoleio/ygeia-asfaleia/' if 'ygeia-asfaleia' in sel else '/diktya/kids-save-lives/')

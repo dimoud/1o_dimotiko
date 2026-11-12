@@ -406,7 +406,7 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
 <section id="v-pages" class="wrap hidden">
  <h2>Σελίδες του σχολείου</h2>
  <p class="muted">Σύλλογος διδασκόντων, ωράριο, βιβλιοθήκη, έντυπα κ.λπ. Πατήστε μια σελίδα για να την αλλάξετε.</p>
- <p><button class="btn green" onclick="neaSelidaUI()" title="Φτιάχνει νέα σελίδα στο μενού «Το Σχολείο μας» ή «Γονείς και Κηδεμόνες»">➕ Νέα σελίδα</button></p>
+ <p><button class="btn green" onclick="neaSelidaUI()" title="Φτιάχνει νέα σελίδα στο μενού «Το Σχολείο μας», «Σχολική Ζωή» ή «Γονείς και Κηδεμόνες»">➕ Νέα σελίδα</button></p>
  <div id="pList"></div>
 </section>
 <section id="v-page" class="wrap wrap-ed hidden">
@@ -414,6 +414,8 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
   <h2 id="pT"></h2>
   <div class="step"><span class="n">1</span><h3>Τίτλος</h3></div>
   <input class="title-in" id="p-titl" type="text">
+  <label style="display:flex;gap:10px;align-items:center;margin:10px 0 0;font-weight:700" title="Σε ποιο μενού της ιστοσελίδας εμφανίζεται η σελίδα">Μενού:
+   <select class="field" id="p-omada" style="max-width:320px;margin:0"><option value="sxoleio">🏫 Το Σχολείο μας</option><option value="zoi">🌱 Σχολική Ζωή</option><option value="goneis">👪 Γονείς και Κηδεμόνες</option></select></label>
   <div class="step"><span class="n">2</span><h3>Σύντομη περιγραφή <span class="opt">(μία πρόταση)</span></h3></div>
   <input class="field" id="p-per" type="text">
   <div class="step"><span class="n">3</span><h3>Κείμενο</h3></div>
@@ -1775,8 +1777,10 @@ function selidaAnartisis_(a, fot) {
     '<div class="wrap page-grid"><div class="main"><div class="prose">' + (siteMd(a.keimeno) || '<p style="color:#888">(χωρίς κείμενο)</p>') + '</div>' + docs + vid + '</div>' + side + '</div>' +
     '<div class="wrap post-body">' + galH + '</div></article>';
 }
+var OMADES_SELIDON = [['sxoleio', '🏫 Το Σχολείο μας'], ['zoi', '🌱 Σχολική Ζωή'], ['goneis', '👪 Γονείς και Κηδεμόνες']];
+function omadaTitlos_(o) { return o === 'goneis' ? 'Γονείς και Κηδεμόνες' : o === 'zoi' ? 'Σχολική Ζωή' : 'Το Σχολείο μας'; }
 function selidaSelidas_(s) {   // μόνιμη σελίδα (Σύλλογος Γονέων, Έντυπα κ.λπ.) όπως το build.py (stathera)
-  var om = PCUR && PCUR.omada === 'goneis' ? 'Γονείς και Κηδεμόνες' : 'Το Σχολείο μας';
+  var om = omadaTitlos_(PCUR && ($('p-omada') ? $('p-omada').value : PCUR.omada));
   var docs = (s.arxeia || []).length ? '<section class="docs"><h2 class="h-sec">Έγγραφα</h2><ul class="doc-list">' + s.arxeia.map(function (x) {
     return '<li><a class="doc" href="#"><span class="doc-ext">' + esc((x.onoma || '').split('.').pop().toUpperCase()) + '</span><span>' + esc((x.onoma || '').replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ')) + '</span></a></li>'; }).join('') + '</ul></section>' : '';
   var sim = PCUR && PCUR.simeiosi ? '<p class="note">' + esc(PCUR.simeiosi) + '</p>' : '';
@@ -1830,7 +1834,7 @@ function showPagePreview() {
   $('modalBody').classList.add('wide');
   $('modalBody').innerHTML = '<h2>Προεπισκόπηση σελίδας</h2><div id="pvBox"></div><p><button class="btn wide" onclick="$(\'modal\').classList.add(\'hidden\');$(\'modalBody\').classList.remove(\'wide\')">Κλείσιμο</button></p>';
   $('modal').classList.remove('hidden');
-  deixePreview_($('pvBox'), function () { return selidaSelidas_(s); }, PCUR.omada === 'goneis' ? 'g4' : 'g1');
+  deixePreview_($('pvBox'), function () { return selidaSelidas_(s); }, PCUR.omada === 'goneis' ? 'g4' : PCUR.omada === 'zoi' ? 'g2' : 'g1');
 }
 
 /* ─── έλεγχος Διεύθυνσης ─── */
@@ -1871,7 +1875,7 @@ function loadPages() {
   run('listaSelidon', [T], function (l) {
     PAGES = l;
     $('pList').innerHTML = l.map(function (s, i) {
-      return '<div class="post" data-i="' + i + '"' + (s.katastasi === 'Αποσυρμένη' ? ' style="opacity:.6"' : '') + '><div class="thumb">' + (s.omada === 'goneis' ? '👪' : '🏫') + '</div><div class="t"><b>' + esc(s.titlos) + '</b><span class="m">' + esc(s.simeiosi || s.perigrafi || '') + '</span><div><span class="badge b-' + esc(String(s.katastasi).replace(' ', '_')) + '">' + esc(s.katastasi) + '</span></div></div></div>';
+      return '<div class="post" data-i="' + i + '"' + (s.katastasi === 'Αποσυρμένη' ? ' style="opacity:.6"' : '') + '><div class="thumb">' + (s.omada === 'goneis' ? '👪' : s.omada === 'zoi' ? '🌱' : '🏫') + '</div><div class="t"><b>' + esc(s.titlos) + '</b><span class="m">' + esc(s.simeiosi || s.perigrafi || '') + '</span><div><span class="badge b-' + esc(String(s.katastasi).replace(' ', '_')) + '">' + esc(s.katastasi) + '</span></div></div></div>';
     }).join('') || '<div class="empty">Δεν υπάρχουν σελίδες ακόμα.</div>';
     $('pList').onclick = function (e) { var d = e.target.closest('.post'); if (d) editPage(PAGES[d.dataset.i]); };
   }, 'pList');
@@ -1879,7 +1883,7 @@ function loadPages() {
 function editPage(s) {
   if (!rte) initRte();
   PCUR = JSON.parse(JSON.stringify(s));
-  $('pT').textContent = s.titlos; $('p-titl').value = s.titlos; $('p-per').value = s.perigrafi || ''; $('prte').innerHTML = mdToHtml(s.keimeno || ''); istReset($('prte'));
+  $('pT').textContent = s.titlos; $('p-titl').value = s.titlos; $('p-omada').value = s.omada || 'sxoleio'; $('p-per').value = s.perigrafi || ''; $('prte').innerHTML = mdToHtml(s.keimeno || ''); istReset($('prte'));
   $('p-draft').checked = s.katastasi === 'Πρόχειρο' && !s._nea; drawDocs('pDocs', PCUR.arxeia); msg('pMsg', s._nea ? 'Νέα σελίδα: γράψτε το κείμενο και πατήστε «Αποθήκευση και δημοσίευση».' : '', s._nea ? 'info' : ''); nav('page');
   setTimeout(psEpanafora_, 50); BROMIKO = false; parousia_('sel_' + s.id, 'pMsgP');
   $('pAfair').textContent = s.katastasi === 'Αποσυρμένη' ? '♻️ Επαναφορά της σελίδας στην ιστοσελίδα' : '🗑️ Αφαίρεση της σελίδας από την ιστοσελίδα';
@@ -1887,8 +1891,10 @@ function editPage(s) {
 function neaSelidaUI() {
   dlg({ icon: '📄', title: 'Νέα σελίδα', text: 'Γράψτε τον τίτλο της σελίδας, όπως θα φαίνεται στο μενού.', ok: 'Συνέχεια', input: { placeholder: 'π.χ. Πρόγραμμα εκδρομών' } }, function (t) {
     t = (t || '').trim(); if (t.length < 3) { dlg({ icon: '⚠️', title: 'Γράψτε τίτλο', text: 'Ο τίτλος χρειάζεται τουλάχιστον 3 γράμματα.', cancel: false }); return; }
-    dlg({ icon: '🧭', title: 'Σε ποιο μενού θα μπει;', text: '«' + t + '»', ok: '🏫 Το Σχολείο μας', noLabel: '👪 Γονείς και Κηδεμόνες', noValue: 'goneis' }, function (v) {
-      run('neaSelida', [T, { titlos: t, omada: v === 'goneis' ? 'goneis' : 'sxoleio' }], function (s) { s._nea = true; PAGES.push(s); editPage(s); }, 'pList');
+    var ftiaxe = function (om) { run('neaSelida', [T, { titlos: t, omada: om }], function (s) { s._nea = true; PAGES.push(s); editPage(s); }, 'pList'); };
+    dlg({ icon: '🧭', title: 'Σε ποιο μενού θα μπει;', text: '«' + t + '»', ok: '🏫 Το Σχολείο μας', noLabel: 'Άλλο μενού…', noValue: 'allo' }, function (v) {
+      if (v !== 'allo') { ftiaxe('sxoleio'); return; }
+      dlg({ icon: '🧭', title: 'Σε ποιο μενού θα μπει;', text: '«' + t + '»', ok: '🌱 Σχολική Ζωή', noLabel: '👪 Γονείς και Κηδεμόνες', noValue: 'goneis' }, function (v2) { ftiaxe(v2 === 'goneis' ? 'goneis' : 'zoi'); });
     });
   });
 }
@@ -1903,8 +1909,8 @@ function afairesiSelidasUI() {
 function savePage(pub) {
   var d = { id: PCUR.id, titlos: $('p-titl').value, perigrafi: $('p-per').value, keimeno: htmlToMd($('prte')), simeiosi: PCUR.simeiosi || '',
             katastasi: PCUR.katastasi === 'Αποσυρμένη' ? 'Αποσυρμένη' : $('p-draft').checked ? 'Πρόχειρο' : 'Δημοσιευμένη', arxeia: PCUR.arxeia, fotografies: PCUR.fotografies,
-            ekdosi: PCUR.ekdosi || 0 };
-  run('apothikefsiSelidas', [T, d, pub], function (r) { prSvise_('ps_' + d.id); PCUR.ekdosi = r.ekdosi; BROMIKO = false; PCUR.katastasi = d.katastasi; PCUR.keimeno = d.keimeno; PCUR.titlos = d.titlos; PCUR.perigrafi = d.perigrafi; msg('pMsg', '✔ ' + r.minima, 'ok'); }, 'pMsg');
+            ekdosi: PCUR.ekdosi || 0, omada: $('p-omada').value };
+  run('apothikefsiSelidas', [T, d, pub], function (r) { prSvise_('ps_' + d.id); PCUR.ekdosi = r.ekdosi; PCUR.omada = d.omada; BROMIKO = false; PCUR.katastasi = d.katastasi; PCUR.keimeno = d.keimeno; PCUR.titlos = d.titlos; PCUR.perigrafi = d.perigrafi; msg('pMsg', '✔ ' + r.minima, 'ok'); }, 'pMsg');
 }
 
 /* ─── ρυθμίσεις ─── */

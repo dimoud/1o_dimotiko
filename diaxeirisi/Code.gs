@@ -539,9 +539,14 @@ function apothikefsiSelidas(token, d, dimosiefsi) {
     if (!r) throw new Error('Δεν βρέθηκε η σελίδα.');
     elegxosEkdosis_(r, d.ekdosi);
     ekd = (Number(r.ekdosi) || 0) + 1;
-    grapse_(sh, r._row, { titlos: d.titlos, perigrafi: d.perigrafi, keimeno: d.keimeno, simeiosi: d.simeiosi || '',
+    var allagi = { titlos: d.titlos, perigrafi: d.perigrafi, keimeno: d.keimeno, simeiosi: d.simeiosi || '',
       katastasi: d.katastasi, arxeia: JSON.stringify(d.arxeia || []), fotografies: JSON.stringify(d.fotografies || []), tropopoiisi: new Date(),
-      ekdosi: ekd, teleftaios: poios_(s) });
+      ekdosi: ekd, teleftaios: poios_(s) };
+    if (['sxoleio', 'goneis', 'zoi'].indexOf(d.omada) >= 0 && d.omada !== r.omada) {   // μεταφορά σε άλλο μενού: μπαίνει τελευταία εκεί
+      var seira = 0; diavase_('selides').forEach(function (x) { if (x.omada === d.omada && Number(x.seira) > seira) seira = Number(x.seira); });
+      allagi.omada = d.omada; allagi.seira = seira + 1;
+    }
+    grapse_(sh, r._row, allagi);
   } finally { lock.releaseLock(); }
   katagrafi_('διεύθυνση', 'Διεύθυνση', 'Αλλαγή σελίδας', d.id, d.titlos);
   var ap = { ok: true, ekdosi: ekd, minima: dimosiefsi ? 'Δημοσιεύεται. Θα φανεί μέσα σε μισή ώρα.' : 'Αποθηκεύτηκε.' };
@@ -563,7 +568,7 @@ function neaSelida(token, d) {
   synedria_(token, 'diefthynsi');
   var tit = String((d && d.titlos) || '').trim();
   if (tit.length < 3) throw new Error('Γράψτε τίτλο για τη νέα σελίδα (τουλάχιστον 3 γράμματα).');
-  var om = d.omada === 'goneis' ? 'goneis' : 'sxoleio';
+  var om = ['goneis', 'zoi'].indexOf(d.omada) >= 0 ? d.omada : 'sxoleio';
   var lock = kleidoma_();
   try {
     var rows = diavase_('selides'), ids = rows.map(function (r) { return String(r.id); });
