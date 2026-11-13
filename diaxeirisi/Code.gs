@@ -230,7 +230,7 @@ function rpc_(b) {
             katastasiDimosiefsis: katastasiDimosiefsis, odigies: odigies, odigosPdf: odigosPdf,
             emailSyntakton: emailSyntakton, apothikefsiEmailSyntakton: apothikefsiEmailSyntakton,
             neaSelida: neaSelida, afairesiSelidas: afairesiSelidas, xanaDimosiefsi: xanaDimosiefsi, anoixti: anoixti, xoros: xoros,
-            epiloges: epiloges };
+            epiloges: epiloges, anaforaSfalmatos: anaforaSfalmatos };
   if (!b || !F[b.fn]) return out({ sfalma: 'άγνωστη κλήση' });
   try {
     var r = F[b.fn].apply(null, b.args || []);
@@ -338,6 +338,36 @@ function enotitesOles_() {
   sel.sort(function (a, b) { return (SEIRA_OM[a.omada] - SEIRA_OM[b.omada]) || (Number(a.seira) - Number(b.seira)); });
   return ENOTITES.concat(sel.map(function (s) { return ['s:' + s.id, String(s.titlos), s.omada]; }));
 }
+/** Αναφορά προβλήματος από το κουμπί «🐞» του Πίνακα: email στον υπεύθυνο ανάπτυξης (DEV_EMAIL στις ρυθμίσεις του
+ *  script, όχι στον κώδικα: το αποθετήριο είναι δημόσιο). Δουλεύει και χωρίς σύνδεση (π.χ. «δεν μπορώ να μπω»),
+ *  με όριο αποστολών για να μη γίνει κανάλι ανεπιθύμητων. */
+function anaforaSfalmatos(token, perigrafi, plaisio) {
+  perigrafi = String(perigrafi || '').trim();
+  if (perigrafi.length < 5) throw new Error('Γράψτε με λίγα λόγια τι έγινε (τουλάχιστον μία πρόταση).');
+  if (perigrafi.length > 5000) perigrafi = perigrafi.slice(0, 5000) + ' …';
+  var s = null;
+  try { s = token ? synedria_(token) : null; } catch (e) { s = null; }
+  var c = CacheService.getScriptCache(), kl = 'anafora_' + (s ? (s.email || s.rolos) : 'anonymo'), n = Number(c.get(kl) || 0);
+  if (n >= (s ? 10 : 3)) throw new Error('Στάλθηκαν ήδη αρκετές αναφορές την τελευταία ώρα. Δοκιμάστε ξανά αργότερα ή τηλεφωνήστε.');
+  c.put(kl, String(n + 1), 3600);
+  var p = P(), pros = p.getProperty('DEV_EMAIL') || p.getProperty('NOTIFY_EMAIL');
+  if (!pros) throw new Error('Δεν έχει οριστεί email για αναφορές.');
+  var pl = {}; try { pl = typeof plaisio === 'object' && plaisio ? plaisio : JSON.parse(plaisio || '{}'); } catch (e) { pl = {}; }
+  var poios = s ? ((s.rolos === 'diefthynsi' ? 'Διεύθυνση' : 'Συντάκτης') + (s.onoma ? ' · ' + s.onoma : '') + (s.email ? ' · ' + s.email : '')) : 'χωρίς σύνδεση';
+  var gr = function (k, v) { return v === undefined || v === null || v === '' ? '' : k + ': ' + String(v).slice(0, 1500) + '\n'; };
+  var soma = 'Αναφορά προβλήματος από τον Πίνακα διαχείρισης\n\n' + perigrafi + '\n\n——— Τεχνικά στοιχεία ———\n' +
+    gr('Ποιος', poios) + gr('Ώρα', Utilities.formatDate(new Date(), 'Europe/Athens', 'dd/MM/yyyy HH:mm:ss')) +
+    gr('Οθόνη Πίνακα', pl.othoni) + gr('Ανάρτηση/σελίδα', pl.anartisi) + gr('Τελευταία μηνύματα λάθους', pl.lathi) +
+    gr('Σφάλματα JavaScript', pl.js) + gr('Τελευταίες κλήσεις', pl.kliseis) + gr('Συσκευή', pl.syskevi) + gr('Διεύθυνση', pl.url) +
+    gr('Έκδοση Πίνακα', pl.ekdosi);
+  var email = s && s.email ? s.email : '';
+  var mail = { to: pros, subject: '🐞 Πίνακας ιστοσελίδας: αναφορά προβλήματος (' + poios.split(' · ')[0] + ')', body: soma, name: 'Πίνακας ιστοσελίδας σχολείου' };
+  if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) mail.replyTo = email;   // «Απάντηση» πηγαίνει κατευθείαν στον εκπαιδευτικό
+  MailApp.sendEmail(mail);
+  katagrafi_(s ? s.rolos : 'anonymo', s ? (s.onoma || s.email || '') : '', 'Αναφορά προβλήματος', '', perigrafi.slice(0, 120));
+  return { ok: true, minima: 'Ευχαριστούμε! Η αναφορά στάλθηκε στον υπεύθυνο της ιστοσελίδας.' };
+}
+
 /** Ανανέωση των επιλογών στον Πίνακα (κάθε φόρτωση με ενεργή σύνδεση). */
 function epiloges(token) { synedria_(token); return epiloges_(); }
 function epiloges_() {

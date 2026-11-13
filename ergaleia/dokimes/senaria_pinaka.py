@@ -252,6 +252,20 @@ def senaria(browser):
             D.pg.click('#listMore'); D.pg.wait_for_timeout(150)
         ok('10. με «Περισσότερες» φαίνονται όλες', D.pg.eval_on_selector_all('#list .post', 'e=>e.length') >= 120 + 4)
 
+    # ── 12. Αναφορά προβλήματος: κουμπί ορατό παντού, στέλνει με τα στοιχεία της οθόνης
+    for v, js in (('αρχική', 'home()'), ('λίστα', "openList('all')"), ('επεξεργαστής', 'edit(null)')):
+        d.pg.evaluate(js); d.pg.wait_for_timeout(300)
+        ok(f'12. κουμπί «Αναφορά προβλήματος» ορατό ({v})', d.pg.is_visible('#bugBtn'))
+    d.pg.fill('#f-titl', 'Δοκιμή αναφοράς')
+    m0 = len(katastasi()['mail'])
+    d.pg.click('#bugBtn'); d.pg.fill('#dlgV', 'Πάτησα Αποστολή και βγήκε κόκκινο μήνυμα.'); d.pg.click('#dlgOk'); d.pg.wait_for_timeout(900)
+    mm = katastasi()['mail'][m0:]
+    ok('12. η αναφορά στάλθηκε με email', len(mm) == 1 and 'κόκκινο μήνυμα' in mm[0].get('body', '') and 'edit' in mm[0].get('body', '') and 'Δοκιμή αναφοράς' in mm[0].get('body', ''), str(mm)[:200])
+    ok('12. επιβεβαίωση «Στάλθηκε» στον εκπαιδευτικό', 'Στάλθηκε' in d.pg.inner_text('#dlgT'))
+    d.pg.click('#dlgOk')
+    lg = browser.new_context(viewport={'width': 1280, 'height': 900}).new_page(); lg.goto(BASE); lg.wait_for_timeout(300)
+    ok('12. κουμπί ορατό και πριν από τη σύνδεση', lg.is_visible('#bugBtn')); lg.context.close()
+
     # ── 11. Κινητό: καμία οριζόντια κύλιση σε καμία οθόνη του Πίνακα (λάθος 13/11: η κεφαλίδα ξεχείλιζε 100 px)
     for w in (360, 390):
         m = browser.new_context(viewport={'width': w, 'height': 800}, is_mobile=True, has_touch=True).new_page()

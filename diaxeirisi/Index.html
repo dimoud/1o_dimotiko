@@ -262,6 +262,15 @@ h2{font-size:1.35rem;margin:0 0 6px}
 .dlg textarea{min-height:110px;resize:vertical}
 .dlg textarea:focus,.dlg input:focus{outline:none;border-color:var(--blue)}
 .dlg .row{display:flex;flex-direction:column;gap:10px}
+/* «Αναφορά προβλήματος»: πάντα ορατό κάτω δεξιά, σε κάθε οθόνη (και πριν από τη σύνδεση) */
+.bug-btn{position:fixed;right:16px;bottom:16px;z-index:55;display:inline-flex;align-items:center;gap:8px;border:2px solid #fff;
+  background:var(--coral,#a8432d);color:#fff;border-radius:999px;padding:12px 18px;min-height:48px;font:inherit;font-weight:800;font-size:.95rem;
+  box-shadow:0 8px 24px rgba(20,30,45,.28);cursor:pointer}
+.bug-btn:hover{filter:brightness(1.08)}.bug-btn:focus-visible{outline:3px solid #f2b233;outline-offset:3px}
+body{padding-bottom:84px}   /* να μη σκεπάζει ποτέ τα τελευταία κουμπιά της σελίδας */
+@media (max-width:560px){.bug-btn{right:10px;bottom:10px;padding:10px 14px;font-size:.85rem;min-height:44px}}
+@media print{.bug-btn{display:none}}
+.dlg .bug-info{font-size:.82rem;color:var(--ink2);text-align:left;margin:-6px 0 12px}
 @media(prefers-reduced-motion:reduce){.dlg .box{animation:none}}
 .login{max-width:460px;margin:10vh auto}
 .big-in{width:100%;min-height:60px;font-size:1.3rem;text-align:center;border:2px solid var(--line);border-radius:14px;letter-spacing:.1em}
@@ -481,6 +490,8 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
 
 <div class="modal hidden" id="modal"><div class="card" id="modalBody"></div></div>
 <div class="pub hidden" id="pub" role="status" aria-live="polite"></div>
+<button type="button" class="bug-btn" id="bugBtn" onclick="anaforaUI()" aria-label="Αναφορά προβλήματος: περιγράψτε τι πήγε στραβά και στείλτε το">🐞 <span>Αναφορά προβλήματος</span></button>
+
 <div class="dlg hidden" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgT"><div class="box">
  <div class="ic" id="dlgI"></div><h3 id="dlgT"></h3><p id="dlgP"></p>
  <div id="dlgIn"></div>
@@ -493,7 +504,31 @@ var ICON = { anakoinoseis: '📢', draseis: '📚', episkepseis: '🚌', giortes
              perivallon: '🌱', kipos: '🥕', 'energos-politis': '🏛️', diagonismoi: '🏆', goneis: '👪' };
 var $ = function (id) { return document.getElementById(id); };
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-function msg(el, text, kind) { $(el).innerHTML = text ? '<div class="msg ' + (kind || 'info') + '">' + esc(text) + '</div>' : ''; if (text) $(el).scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+/* ── στοιχεία για την αναφορά προβλήματος (μένουν μόνο στη μνήμη της σελίδας) ── */
+var ANAFORA = { js: [], lathi: [], kliseis: [] };
+function anaforaKrata_(k, v) { try { var a = ANAFORA[k]; a.push(new Date().toTimeString().slice(0, 8) + ' ' + String(v).slice(0, 300)); if (a.length > 8) a.shift(); } catch (x) {} }
+window.addEventListener('error', function (e) { anaforaKrata_('js', (e.message || 'σφάλμα') + (e.filename ? ' @' + String(e.filename).split('/').pop() + ':' + e.lineno : '')); });
+window.addEventListener('unhandledrejection', function (e) { anaforaKrata_('js', 'promise: ' + ((e.reason && e.reason.message) || e.reason)); });
+function anaforaUI() {
+  dlg({ icon: '🐞', title: 'Αναφορά προβλήματος', ok: '📨 Αποστολή στον υπεύθυνο', kind: 'green',
+        text: 'Περιγράψτε τι κάνατε και τι έγινε (π.χ. «πάτησα Αποστολή και βγήκε μήνυμα…»). Μαζί στέλνονται αυτόματα η οθόνη που είστε και τα τελευταία μηνύματα λάθους, ώστε να βρεθεί γρήγορα.',
+        input: { multiline: true, placeholder: 'Τι προσπαθούσατε να κάνετε; Τι έγινε αντί γι’ αυτό;' } }, function (v) {
+    v = String(v || '').trim();
+    if (v.length < 5) { dlg({ icon: '✍️', title: 'Γράψτε τι έγινε', text: 'Μία-δύο προτάσεις αρκούν, για να καταλάβουμε το πρόβλημα.', cancel: false }, function () { anaforaUI(); }); return; }
+    var orato = ['login', 'home', 'list', 'edit', 'review', 'pages', 'page', 'settings', 'odigies'].filter(function (k) { var e = $('v-' + k); return e && !e.classList.contains('hidden'); })[0] || '';
+    var pl = { othoni: orato, anartisi: (orato === 'page' && PCUR) ? 'σελίδα ' + PCUR.id + ' «' + PCUR.titlos + '»' : (CUR && /edit|review/.test(orato)) ? (CUR.id || 'νέα') + ' «' + ($('f-titl') ? $('f-titl').value : CUR.titlos || '') + '»' : '',
+               lathi: ANAFORA.lathi.join(' | '), js: ANAFORA.js.join(' | '), kliseis: ANAFORA.kliseis.join(' | '),
+               syskevi: navigator.userAgent + ' · οθόνη ' + innerWidth + '×' + innerHeight, url: location.href.split('#')[0], ekdosi: document.lastModified };
+    var tora = function () {
+      google.script.run.withSuccessHandler(function (r) { dlg({ icon: '✅', title: 'Στάλθηκε', text: (r && r.minima) || 'Η αναφορά στάλθηκε.', cancel: false }); })
+        .withFailureHandler(function (e) { dlg({ icon: '⚠️', title: 'Δεν στάλθηκε', text: ((e && e.message) || String(e)) + ' Αν δεν υπάρχει σύνδεση στο διαδίκτυο, δοκιμάστε ξανά σε λίγο.', cancel: false }); })
+        .anaforaSfalmatos(T || '', v, JSON.stringify(pl));
+    };
+    tora();
+  });
+}
+function msg(el, text, kind) {
+  if (text && kind === 'bad') anaforaKrata_('lathi', el + ': ' + text); $(el).innerHTML = text ? '<div class="msg ' + (kind || 'info') + '">' + esc(text) + '</div>' : ''; if (text) $(el).scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
 function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
 /* dlg({icon, title, text, ok, kind:'green'|'coral'|'', cancel:false για απλή ειδοποίηση, input:{placeholder,value,multiline}}, cb(τιμή)) */
 function dlg(o, cb) {
@@ -565,6 +600,7 @@ function run(fn, args, ok, el, btn, onFail) {
       if (/Failed to fetch|NetworkError|Load failed|network/i.test(m)) m = 'Δεν υπάρχει σύνδεση με το διαδίκτυο αυτή τη στιγμή. Ό,τι γράψατε είναι φυλαγμένο σε αυτή τη συσκευή· δοκιμάστε ξανά σε λίγο.';
       msg(el, m, 'bad');
     });
+  anaforaKrata_('kliseis', fn);
   r[fn].apply(r, args);
 }
 function nav(v) {

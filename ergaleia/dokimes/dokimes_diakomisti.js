@@ -92,5 +92,16 @@ ok('δεύτερη αποθήκευση με παλιά έκδοση → σύγ�
 ok('η Διεύθυνση παίρνει email για νέα προς έγκριση', g.mail.some(m => /Ανακοίνωση μόνο με κείμενο/.test(JSON.stringify(m))));
 ok('κάθε δημοσίευση ξεκινά τη δημοσίευση στο GitHub', g.dispatches.length >= 5, String(g.dispatches.length));
 
+// ── Αναφορά προβλήματος (κουμπί 🐞)
+g.props.DEV_EMAIL = 'developer@test.gr';
+let m0 = g.mail.length;
+ok('αναφορά από εκπαιδευτικό: email στον υπεύθυνο, με «Απάντηση» στον εκπαιδευτικό', g.call('anaforaSfalmatos', [K, 'Πάτησα Αποστολή και δεν έγινε τίποτα.', JSON.stringify({ othoni: 'edit', lathi: 'edMsg: κάτι' })]).ok
+   && g.mail.length === m0 + 1 && g.mail[m0].to === 'developer@test.gr' && g.mail[m0].replyTo === 'daskala1@test.gr' && /Πάτησα Αποστολή/.test(g.mail[m0].body) && /edMsg: κάτι/.test(g.mail[m0].body));
+ok('αναφορά χωρίς σύνδεση (π.χ. «δεν μπορώ να μπω»)', g.call('anaforaSfalmatos', ['', 'Δεν μπορώ να μπω με τον κωδικό μου.', '{}']).ok && /χωρίς σύνδεση/.test(g.mail[g.mail.length - 1].body));
+ok('αναφορά χωρίς περιγραφή: μήνυμα', /Γράψτε/.test(lathos(() => g.call('anaforaSfalmatos', [K, '  ', '{}']))));
+g.call('anaforaSfalmatos', ['', 'δεύτερη ανώνυμη', '{}']); g.call('anaforaSfalmatos', ['', 'τρίτη ανώνυμη', '{}']);
+ok('όριο αναφορών χωρίς σύνδεση (3 την ώρα)', /αρκετές/.test(lathos(() => g.call('anaforaSfalmatos', ['', 'τέταρτη ανώνυμη', '{}']))));
+ok('το email του υπεύθυνου δεν είναι στον κώδικα (δημόσιο αποθετήριο)', !/moudiotis|gmail\.com/.test(require('fs').readFileSync(require('path').join(require('./pagkos').RIZA, process.env.CODE_GS || 'diaxeirisi/Code.gs'), 'utf8')));
+
 console.log('\n' + (N - LATHI.length) + '/' + N + ' σωστά');
 if (LATHI.length) { LATHI.forEach(l => console.log('  - ' + l)); process.exit(1); }
