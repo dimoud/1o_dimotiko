@@ -23,7 +23,7 @@ var ETIKETES = { id: 'Κωδικός', katastasi: 'Κατάσταση', imeromin
   syggrafeas: 'Συντάκτης', synainesi: 'Συγκατάθεση κηδεμόνων', sxolio: 'Σχόλιο Διεύθυνσης', url_slug: 'Διεύθυνση σελίδας',
   protasi: 'Πρόταση αλλαγής', dimiourgia: 'Δημιουργία', tropopoiisi: 'Τελευταία αλλαγή', omada: 'Ομάδα', seira: 'Σειρά',
   perigrafi: 'Περιγραφή', simeiosi: 'Σημείωση', arithmos: 'Α/Α', xronos: 'Χρόνος', rolos: 'Ρόλος', onoma: 'Όνομα', energeia: 'Ενέργεια',
-  ekdosi: 'Έκδοση', teleftaios: 'Τελευταία αλλαγή από', dimosiefthike: 'Δημοσιεύτηκε' };
+  ekdosi: 'Έκδοση', teleftaios: 'Τελευταία αλλαγή από', dimosiefthike: 'Δημοσιεύτηκε', prin_kado: 'Κατάσταση πριν τον κάδο' };
 function etiketa_(k) { return ETIKETES[k] || k; }
 function kleidi_(h) { for (var k in ETIKETES) if (ETIKETES[k] === h) return k; return h; }
 
@@ -418,7 +418,7 @@ function morfi_(r) {
            taxeis: (r.taxeis || '').toString(), diktya: (r.diktya || '').toString(), alles_enotites: (r.alles_enotites || '').toString(), keimeno: r.keimeno,
            fotografies: json_(r.fotografies, []), arxeia: json_(r.arxeia, []), video: r.video || '',
            syggrafeas: r.syggrafeas, synainesi: r.synainesi === true || r.synainesi === 'TRUE', sxolio: r.sxolio || '',
-           arithmos: Number(r.arithmos) || 0, meres_kadou: r.katastasi === 'Αποσυρμένη' ? meresKadou_(r) : null,
+           arithmos: Number(r.arithmos) || 0, meres_kadou: r.katastasi === 'Αποσυρμένη' ? meresKadou_(r) : null, prin_kado: String(r.prin_kado || ''),
            ekdosi: Number(r.ekdosi) || 0, teleftaios: String(r.teleftaios || ''), tropopoiisi: r.tropopoiisi instanceof Date ? r.tropopoiisi.toISOString() : '' };
 }
 
@@ -478,6 +478,8 @@ function apothikefsi(token, d, energeia) {
     pedia.katastasi = energeia === 'dimosiefsi' ? 'Δημοσιευμένη' : energeia === 'egkrisi' ? 'Προς έγκριση' : 'Πρόχειρο';
     if (energeia === 'dimosiefsi') { pedia.protasi = ''; pedia.sxolio = ''; if (!(r && r.dimosiefthike instanceof Date)) pedia.dimosiefthike = now; }   // η ώρα της ΠΡΩΤΗΣ δημοσίευσης
     var id = r ? r.id : /^a\d{14}$/.test(d.neo_id || '') ? d.neo_id : 'a' + Utilities.formatDate(now, 'Europe/Athens', 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
+    if (!r) { var piasmena = {}; diavase_('anartiseis').forEach(function (x) { piasmena[String(x.id)] = 1; });   // ποτέ δύο αναρτήσεις με τον ίδιο κωδικό
+      while (piasmena[id]) id = 'a' + Utilities.formatDate(now, 'Europe/Athens', 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10); }
     if (r) grapse_(sh, r._row, pedia);
     else { pedia.id = id; pedia.dimiourgia = now; pedia.arithmos = arithmisi_() + 1; prosthese_(sh, 'anartiseis', pedia); }
     katagrafi_(s.rolos, pedia.syggrafeas, { proxeiro: 'Αποθήκευση προχείρου', egkrisi: 'Αποστολή για έγκριση', dimosiefsi: 'Δημοσίευση' }[energeia], id, pedia.titlos);
@@ -509,20 +511,26 @@ function apofasi(token, id, praxi, sxolio, ekdosi) {
     } else if (praxi === 'epistrofi') {
       if (r.protasi) grapse_(sh, r._row, { protasi: '', sxolio: sxolio || '', ekdosi: nea.ekdosi, teleftaios: nea.teleftaios });
       else grapse_(sh, r._row, { katastasi: 'Επιστράφηκε', sxolio: sxolio || '', ekdosi: nea.ekdosi, teleftaios: nea.teleftaios });
-    } else if (praxi === 'aposyrsi') {
-      grapse_(sh, r._row, { katastasi: 'Αποσυρμένη', protasi: '', tropopoiisi: new Date(), ekdosi: nea.ekdosi, teleftaios: nea.teleftaios });
+    } else if (praxi === 'aposyrsi') {   // από κάθε κατάσταση (και πρόχειρη ή επιστραμμένη)· κρατά την προηγούμενη για την επαναφορά
+      if (r.katastasi === 'Αποσυρμένη') throw new Error('Η ανάρτηση είναι ήδη στον κάδο.');
+      stili_(sh, 'prin_kado');
+      grapse_(sh, r._row, { katastasi: 'Αποσυρμένη', prin_kado: r.katastasi || 'Δημοσιευμένη', protasi: '', tropopoiisi: new Date(), ekdosi: nea.ekdosi, teleftaios: nea.teleftaios });
       egkatastasiKadou_();
     } else if (praxi === 'diagrafi') {      // οριστική διαγραφή: μόνο από τον κάδο
       if (r.katastasi !== 'Αποσυρμένη') throw new Error('Οριστική διαγραφή γίνεται μόνο σε ανάρτηση που είναι στον κάδο.');
       oristikiDiagrafi_(sh, diavase_('anartiseis'), [r], 'διεύθυνση', 'Οριστική διαγραφή');
       return { ok: true, minima: 'Η ανάρτηση διαγράφηκε οριστικά. Οι φωτογραφίες της πήγαν στον Κάδο του Google Drive (30 ημέρες).' };
-    } else if (praxi === 'epanafora') {
-      grapse_(sh, r._row, { katastasi: 'Δημοσιευμένη', tropopoiisi: new Date(), ekdosi: nea.ekdosi, teleftaios: nea.teleftaios });
+    } else if (praxi === 'epanafora') {   // γυρνά στην κατάσταση που είχε (μια πρόχειρη δεν δημοσιεύεται κατά λάθος)
+      var prin = KATASTASEIS.indexOf(r.prin_kado) >= 0 && r.prin_kado !== 'Αποσυρμένη' ? r.prin_kado : 'Δημοσιευμένη';
+      grapse_(sh, r._row, { katastasi: prin, prin_kado: '', tropopoiisi: new Date(), ekdosi: nea.ekdosi, teleftaios: nea.teleftaios });
     } else throw new Error('Άγνωστη ενέργεια.');
   } finally { lock.releaseLock(); }
   katagrafi_('διεύθυνση', 'Διεύθυνση', { egkrisi: 'Έγκριση και δημοσίευση', epistrofi: 'Επιστροφή με σχόλιο', aposyrsi: 'Απόσυρση', epanafora: 'Επαναφορά' }[praxi], id, r.titlos);
-  var ap = { ok: true, minima: { egkrisi: 'Εγκρίθηκε. Θα φανεί στον ιστότοπο μέσα σε μισή ώρα.', epistrofi: 'Επιστράφηκε στον συντάκτη.', aposyrsi: 'Μπήκε στον κάδο ανακύκλωσης. Φεύγει από την ιστοσελίδα μέσα σε μισή ώρα και διαγράφεται οριστικά σε ' + KADOS_MERES + ' ημέρες· ως τότε επαναφέρεται με ένα πάτημα.', epanafora: 'Επανήλθε. Θα φανεί μέσα σε μισή ώρα.' }[praxi] };
-  if (praxi !== 'epistrofi') ap.github = ksekinaDimosiefsi_();
+  var zontani = r.katastasi === 'Δημοσιευμένη' || (praxi === 'epanafora' && (!r.prin_kado || r.prin_kado === 'Δημοσιευμένη'));   // αλλάζει κάτι στην ιστοσελίδα;
+  var ap = { ok: true, minima: { egkrisi: 'Εγκρίθηκε. Θα φανεί στον ιστότοπο μέσα σε μισή ώρα.', epistrofi: 'Επιστράφηκε στον συντάκτη.',
+    aposyrsi: (zontani ? 'Μπήκε στον κάδο ανακύκλωσης. Φεύγει από την ιστοσελίδα μέσα σε μισή ώρα' : 'Μπήκε στον κάδο ανακύκλωσης (δεν είχε δημοσιευτεί)') + ' και διαγράφεται οριστικά σε ' + KADOS_MERES + ' ημέρες· ως τότε επαναφέρεται με ένα πάτημα.',
+    epanafora: zontani ? 'Επανήλθε. Θα φανεί μέσα σε μισή ώρα.' : 'Επανήλθε ως «' + r.prin_kado + '». Δεν δημοσιεύτηκε.' }[praxi] };
+  if (praxi === 'egkrisi' || (praxi !== 'epistrofi' && zontani)) ap.github = ksekinaDimosiefsi_();
   return ap;
 }
 

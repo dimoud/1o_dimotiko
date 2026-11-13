@@ -81,6 +81,16 @@ apof(D, r.id, 'egkrisi'); apof(D, r.id, 'aposyrsi');
 ok('απόσυρση στον κάδο', fere(D, r.id).katastasi === 'Αποσυρμένη');
 apof(D, r.id, 'epanafora');
 ok('επαναφορά', fere(D, r.id).katastasi === 'Δημοσιευμένη');
+// λάθος 13/11: επιστραμμένη ή πρόχειρη δεν αφαιρούνταν· και η επαναφορά τη δημοσίευε κατά λάθος
+r = save(K, base('Επιστραμμένη για αφαίρεση'), 'egkrisi'); apof(D, r.id, 'epistrofi', 'δεν θα ανέβει');
+let d0 = g.dispatches.length;
+ok('η Διευθύντρια αφαιρεί επιστραμμένη ανάρτηση (στον κάδο)', !lathos(() => apof(D, r.id, 'aposyrsi')) && fere(D, r.id).katastasi === 'Αποσυρμένη' && fere(D, r.id).prin_kado === 'Επιστράφηκε');
+ok('αφαίρεση μη δημοσιευμένης: δεν ξεκινά δημοσίευση', g.dispatches.length === d0);
+apof(D, r.id, 'epanafora');
+ok('επαναφορά επιστραμμένης: γυρνά «Επιστράφηκε», δεν δημοσιεύεται', fere(D, r.id).katastasi === 'Επιστράφηκε' && g.dispatches.length === d0);
+pr = save(D, base('Πρόχειρο για αφαίρεση'), 'proxeiro'); apof(D, pr.id, 'aposyrsi'); apof(D, pr.id, 'epanafora');
+ok('πρόχειρο: αφαίρεση και επαναφορά ως πρόχειρο', fere(D, pr.id).katastasi === 'Πρόχειρο');
+ok('διπλή αφαίρεση: μήνυμα', (apof(D, pr.id, 'aposyrsi'), /ήδη στον κάδο/.test(lathos(() => apof(D, pr.id, 'aposyrsi')))));
 
 // ── Ταυτόχρονη επεξεργασία
 r = save(D, base('Δύο ταυτόχρονα'), 'proxeiro');

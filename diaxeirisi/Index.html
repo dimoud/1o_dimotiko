@@ -438,6 +438,7 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
    <button class="btn green wide" onclick="decide('egkrisi')">✅ Δημοσίευση στην ιστοσελίδα</button>
    <button class="btn light wide" onclick="editFromReview()">✏️ Διόρθωση πριν τη δημοσίευση</button>
    <button class="btn light wide" onclick="returnPost()">↩️ Επιστροφή στον συντάκτη με σχόλιο</button>
+   <button class="small-link" style="color:var(--coral)" onclick="decide('aposyrsi')">🗑️ Αφαίρεση της ανάρτησης (στον κάδο για 40 ημέρες)</button>
   </div>
  </div>
 </section>
@@ -1524,11 +1525,11 @@ function edit(a, fromProp) {
   else act += '<button class="btn green wide" onclick="save(\'egkrisi\',this)">📤 Αποστολή στη Διευθύντρια</button>';
   act += '<button class="btn light wide" onclick="showPreview()">👁️ Προεπισκόπηση</button>';
   if (CUR.katastasi !== 'Δημοσιευμένη') act += '<button class="small-link" onclick="save(\'proxeiro\',this)">Αποθήκευση για αργότερα (δεν στέλνεται ακόμα)</button>';
-  if (ROLE === 'diefthynsi' && CUR.id && CUR.katastasi === 'Δημοσιευμένη') act += '<button class="small-link" style="color:var(--coral)" onclick="decide(\'aposyrsi\')">🗑️ Αφαίρεση από την ιστοσελίδα (στον κάδο για 40 ημέρες)</button>';
+  if (ROLE === 'diefthynsi' && CUR.id && CUR.katastasi !== 'Αποσυρμένη') act += '<button class="small-link" style="color:var(--coral)" onclick="decide(\'aposyrsi\')">🗑️ ' + (CUR.katastasi === 'Δημοσιευμένη' ? 'Αφαίρεση από την ιστοσελίδα' : 'Αφαίρεση της ανάρτησης') + ' (στον κάδο για 40 ημέρες)</button>';
   if (ROLE === 'diefthynsi' && CUR.id && CUR.katastasi === 'Αποσυρμένη') {
     n += '<div class="note">🗑️ Η ανάρτηση είναι στον <b>κάδο ανακύκλωσης</b>: δεν φαίνεται στην ιστοσελίδα και διαγράφεται οριστικά σε ' + (CUR.meres_kadou == null ? 40 : CUR.meres_kadou) + ' ημέρες.</div>';
     $('edNote').innerHTML = n;
-    act += '<button class="btn green wide" onclick="decide(\'epanafora\')">♻️ Επαναφορά στην ιστοσελίδα</button>';
+    act += '<button class="btn green wide" onclick="decide(\'epanafora\')">♻️ ' + (!CUR.prin_kado || CUR.prin_kado === 'Δημοσιευμένη' ? 'Επαναφορά στην ιστοσελίδα' : 'Επαναφορά (ως «' + esc(CUR.prin_kado) + '»)') + '</button>';
     act += '<button class="small-link" style="color:var(--coral)" onclick="decide(\'diagrafi\')">❌ Οριστική διαγραφή τώρα</button>';
   }
   act += '<button class="small-link" onclick="leave()">Πίσω χωρίς αποθήκευση</button>';
@@ -2080,6 +2081,8 @@ function decide(p, ok) {
             aposyrsi: { icon: '🗑️', title: 'Αφαίρεση από την ιστοσελίδα', text: 'Η ανάρτηση πηγαίνει στον κάδο ανακύκλωσης: δεν φαίνεται στην ιστοσελίδα και διαγράφεται οριστικά σε 40 ημέρες. Ως τότε την επαναφέρετε με ένα πάτημα.', ok: 'Ναι, στον κάδο', kind: 'coral' },
             diagrafi: { icon: '⚠️', title: 'Οριστική διαγραφή;', text: 'Η ανάρτηση σβήνεται για πάντα και δεν επαναφέρεται από τον Πίνακα. Οι φωτογραφίες της πάνε στον Κάδο του Google Drive.', ok: '❌ Ναι, οριστική διαγραφή', kind: 'coral' },
             epanafora: { icon: '♻️', title: 'Επαναφορά στην ιστοσελίδα', text: 'Θα ξαναφανεί μέσα σε μισή ώρα.', ok: 'Ναι, επαναφορά', kind: 'green' } }[p];
+  if (q && p === 'aposyrsi' && CUR && CUR.katastasi !== 'Δημοσιευμένη') { q.title = 'Αφαίρεση της ανάρτησης'; q.text = 'Η ανάρτηση δεν έχει δημοσιευτεί. Πηγαίνει στον κάδο ανακύκλωσης και διαγράφεται οριστικά σε 40 ημέρες. Ως τότε την επαναφέρετε με ένα πάτημα.'; }
+  if (q && p === 'epanafora' && CUR && CUR.prin_kado && CUR.prin_kado !== 'Δημοσιευμένη') { q.title = 'Επαναφορά από τον κάδο'; q.text = 'Θα επανέλθει ως «' + CUR.prin_kado + '». Δεν δημοσιεύεται.'; }
   if (q && !ok) { dlg(q, function () { decide(p, true); }); return; }
   var el = $('v-review').classList.contains('hidden') ? 'edMsg' : 'rvMsg';
   run('apofasi', [T, CUR.id, p, CUR._sx || '', CUR.ekdosi || 0], function (r) {
