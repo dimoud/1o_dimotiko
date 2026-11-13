@@ -351,8 +351,7 @@ class Istotopos:
         soma = f'''<article class="post">
 <div class="page-band"><header class="page-head wrap"><p class="post-date">{imerologio(p["imerominia"])}<span>{imerominia(p["imerominia"])} · Σχολικό έτος {p["sxoliko_etos"].replace("-", "–")}{" · ανέβηκε " + anevike(p) if ora(p) else ""}</span></p>
 <h1>{esc(p["titlos"])}</h1><p class="tags">{"".join(tags)}</p></header></div>
-<div class="wrap page-grid"><div class="main"><div class="prose">{keim}</div>{self.arxeia(p.get("arxeia", []))}{self.video(p.get("video"))}</div>{side}</div>
-<div class="wrap post-body">{self.gallery(fot, p["titlos"])}{nav}</div>
+<div class="wrap page-grid"><div class="main"><div class="prose">{keim}</div>{self.gallery(fot, p["titlos"])}{self.arxeia(p.get("arxeia", []))}{self.video(p.get("video"))}{nav}</div>{side}</div>
 </article>'''
         perig = md.keimeno_xoris_morfi(p.get('keimeno', ''))[:155].rsplit(' ', 1)[0] + '…' if len(p.get('keimeno', '')) > 155 else md.keimeno_xoris_morfi(p.get('keimeno', '')) or p['titlos']
         ld = [{'@context': 'https://schema.org', '@type': 'Article', 'headline': p['titlos'][:110], 'datePublished': p['imerominia'],
@@ -427,8 +426,8 @@ class Istotopos:
                 gal = []
         soma = (self.kefali(omada_titlos, s['titlos'], esc(s.get('perigrafi', ''))) +
                 f'<div class="wrap page-grid"><div class="main">{banner}<div class="prose">{sim}{md.pros_html(s.get("keimeno", ""))}</div>'
-                f'{self.arxeia(s.get("arxeia", []))}</div>{side}</div>'
-                f'<div class="wrap post-body">{self.gallery(gal, s["titlos"])}{sxet}</div>')
+                f'{self.gallery(gal, s["titlos"])}{self.arxeia(s.get("arxeia", []))}</div>{side}</div>'
+                f'<div class="wrap post-body">{sxet}</div>')
         self.grapse(path, titlos=s['titlos'], perigrafi=s['perigrafi'], soma=soma, diadromi=[(omada_titlos, omada_url)],
                     k=md.keimeno_xoris_morfi(s.get('keimeno', ''))[:400])
 

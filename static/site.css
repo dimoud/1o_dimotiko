@@ -661,3 +661,12 @@ html.anim-ready .net-intro .btn{transition:transform .25s cubic-bezier(.2,1.01,.
 .net-grid .related{margin-top:36px}
 @media (min-width:1069px){.net-grid .cards{grid-template-columns:repeat(2,1fr)}}
 @media (min-width:1069px){.net-grid .sl-track{grid-auto-columns:calc((100% - var(--g)) / 2)}}
+
+/* ανάρτηση/σελίδα: οι φωτογραφίες ακριβώς κάτω από το κείμενο, στη στήλη του (όχι κάτω από την πλαϊνή στήλη) */
+.page-grid .main .gallery-wrap{margin-top:28px}
+.page-grid .main .gallery{grid-template-columns:repeat(3,1fr)}
+@media (max-width:560px){.page-grid .main .gallery{grid-template-columns:repeat(2,1fr)}}
+.page-grid .main .post-nav{margin-top:36px}
+.page-grid + .post-body:empty{display:none}
+.page-grid{padding-bottom:var(--sec)}
+@media (min-width:1024px){.page-grid{grid-template-columns:minmax(0,1fr) 300px;gap:44px}.page-grid>.side{position:sticky;top:24px}}
