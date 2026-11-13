@@ -670,3 +670,4 @@ html.anim-ready .net-intro .btn{transition:transform .25s cubic-bezier(.2,1.01,.
 .page-grid + .post-body:empty{display:none}
 .page-grid{padding-bottom:var(--sec)}
 @media (min-width:1024px){.page-grid{grid-template-columns:minmax(0,1fr) 300px;gap:44px}.page-grid>.side{position:sticky;top:24px}}
+@media (min-width:1024px){.page-grid>.main{align-self:stretch;display:flex;flex-direction:column;min-width:0}.page-grid>.main>*{min-width:0}.page-grid>.main>.post-nav{margin-top:auto;padding-top:36px}.page-grid>.main>.post-nav{margin-bottom:0}}
