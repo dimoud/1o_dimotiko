@@ -107,6 +107,9 @@ header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0
 .top h1{font-size:1rem;margin:0;line-height:1.2;flex:1}
 .top h1 small{display:block;font-weight:400;color:var(--ink2);font-size:.8rem}
 .iconbtn{border:0;background:var(--blue-bg);color:var(--blue-d);border-radius:12px;min-height:44px;padding:0 14px;font-weight:700;cursor:pointer}
+/* κινητό: η κεφαλίδα χωρούσε 100px πιο φαρδιά από την οθόνη (οριζόντια κύλιση σε όλο τον Πίνακα) */
+@media (max-width:560px){.top{gap:6px;padding:8px 10px}.top .logo{width:30px;height:30px;flex:0 0 auto}.top h1{font-size:.88rem;min-width:0}.top h1 small{font-size:.72rem}.iconbtn{padding:0 9px;font-size:.85rem;min-height:40px;white-space:nowrap}}
+@media (max-width:400px){.top h1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.top h1 small{overflow:hidden;text-overflow:ellipsis}}
 /* κουμπιά */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:54px;padding:0 24px;border-radius:999px;border:0;cursor:pointer;font-weight:700;font-size:1rem;background:var(--blue);color:#fff;box-shadow:0 4px 12px rgba(30,100,168,.25)}
 .btn:hover{background:var(--blue-d)}
@@ -696,7 +699,9 @@ function xanaDimosiefsi_(btn) {
 function isWaiting(a) { return a.katastasi === 'Προς έγκριση' || a.exei_protasi; }
 
 /* ─── λίστα ─── */
-function openList(f) { FILTER = f; nav('list'); }
+function aplo_(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ς/g, 'σ'); }
+var LIST_N = 50;   // πόσες φαίνονται· «Περισσότερες» προσθέτει 50 (πριν: σιωπηλό όριο 80, οι παλιότερες δεν φαίνονταν)
+function openList(f) { FILTER = f; LIST_N = 50; nav('list'); }
 function loadList() { msg('listMsg', 'Φόρτωση…', 'info'); run('listaAnartiseon', [T], function (l) { ALL = l; msg('listMsg', ''); drawList(); fereRuns(drawList); }, 'listMsg'); }
 function drawList() {
   var f = [['all', 'Όλες'], ['wait', 'Περιμένουν έγκριση'], ['Πρόχειρο', 'Πρόχειρα'], ['Επιστράφηκε', 'Επιστράφηκαν'], ['Δημοσιευμένη', 'Δημοσιευμένες'], ['Αποσυρμένη', '🗑️ Κάδος']];
@@ -704,11 +709,11 @@ function drawList() {
     var n = ALL.filter(function (a) { return match(a, x[0]) && pass(a, ''); }).length;
     return '<button class="chip' + (FILTER === x[0] ? ' on' : '') + '" data-f="' + x[0] + '">' + x[1] + ' (' + n + ')</button>';
   }).join('');
-  $('filters').onclick = function (e) { var b = e.target.closest('.chip'); if (!b) return; FILTER = b.dataset.f; drawList(); };
+  $('filters').onclick = function (e) { var b = e.target.closest('.chip'); if (!b) return; FILTER = b.dataset.f; LIST_N = 50; drawList(); };
   $('listTitle').textContent = FILTER === 'wait' ? 'Περιμένουν έγκριση' : 'Αναρτήσεις';
   var en = {}; OPT.enotites.forEach(function (e) { en[e[0]] = e[1]; });
   drawFacets(en);
-  var l = ALL.filter(function (a) { return match(a, FILTER) && pass(a, ''); }).slice(0, 80);
+  var olo = ALL.filter(function (a) { return match(a, FILTER) && pass(a, ''); }), l = olo.slice(0, LIST_N);
   $('list').innerHTML = l.length ? l.map(function (a) {
     var st = a.exei_protasi ? '<span class="badge b-prop">Πρόταση αλλαγής</span>'
       : a.katastasi === 'Αποσυρμένη' ? '<span class="badge b-Αποσυρμένη">🗑️ Στον κάδο · οριστική διαγραφή σε ' + (a.meres_kadou == null ? '40' : a.meres_kadou) + ' ημέρες</span>'
@@ -717,8 +722,9 @@ function drawList() {
     return '<div class="post" data-id="' + a.id + '"><div class="thumb" data-th="' + (a.exofyllo || '') + '"' + (th ? ' style="background-image:url(' + th + ')"' : '') + '>' + (a.exofyllo ? '' : (ICON[a.enotita] || '📌')) + '</div>' +
       '<div class="t"><b>' + (a.arithmos ? '<span class="ar">Νο ' + a.arithmos + '</span> ' : '') + esc(a.titlos) + '</b><span class="m">' + hmer(a.imerominia) + ' · ' + esc(en[a.enotita] || '') + (a.fotografies ? ' · 📷 ' + a.fotografies : '') + '</span>' +
       (a.sxolio ? '<div class="m" style="color:var(--coral)">💬 ' + esc(a.sxolio) + '</div>' : '') + '<div>' + st + zoniki(a) + '</div></div></div>';
-  }).join('') : '<div class="empty">Δεν υπάρχουν αναρτήσεις εδώ.</div>';
-  $('list').onclick = function (e) { var d = e.target.closest('.post'); if (d) openPost(d.dataset.id); };
+  }).join('') + (olo.length > l.length ? '<p style="text-align:center"><button type="button" class="btn light" id="listMore">Εμφάνιση περισσότερων (' + (olo.length - l.length) + ' ακόμα)</button></p>' : '')
+    : '<div class="empty">Δεν υπάρχουν αναρτήσεις εδώ.</div>';
+  $('list').onclick = function (e) { if (e.target.closest('#listMore')) { LIST_N += 50; drawList(); return; } var d = e.target.closest('.post'); if (d) openPost(d.dataset.id); };
   loadThumbs(l.map(function (a) { return a.exofyllo; }));
 }
 function match(a, f) { return f === 'all' || (f === 'wait' ? isWaiting(a) : a.katastasi === f); }
@@ -727,8 +733,8 @@ function taxeisOf(a) { return String(a.taxeis || '').split(',').map(function (x)
 /* skip: το φίλτρο που δεν εφαρμόζεται (για να μετρά σωστά τις επιλογές του) */
 function stinEnotita_(a, k) { return a.enotita === k || String(a.alles_enotites || '').split(',').indexOf(k) >= 0; }
 function pass(a, skip) {
-  var q = $('q').value.trim().toLowerCase();
-  if (q && String(a.titlos).toLowerCase().indexOf(q) < 0 && String(a.arithmos) !== q.replace(/^(νο|no)\s*/, '')) return false;
+  var q = aplo_($('q').value.trim());   // χωρίς τόνους/κεφαλαία: «αγιασμος» βρίσκει «Αγιασμός»
+  if (q && aplo_(a.titlos).indexOf(q) < 0 && String(a.arithmos) !== q.replace(/^(νο|no)\s*/, '')) return false;
   if (skip !== 'thema' && THEMA && !stinEnotita_(a, THEMA)) return false;
   if (skip !== 'taxi' && TAXI && (TAXI === '-' ? taxeisOf(a).length : taxeisOf(a).indexOf(TAXI) < 0)) return false;
   if (skip !== 'etos' && ETOS && etos(a) !== ETOS) return false;
@@ -1699,7 +1705,7 @@ function save(en, btn) {
   if (!d.titlos.trim()) { msg('edMsg', 'Γράψτε έναν τίτλο (βήμα 1).', 'bad'); $('f-titl').focus(); return; }
   if (!d.enotita) { msg('edMsg', 'Διαλέξτε πού ανήκει η ανάρτηση (βήμα 4).', 'bad'); return; }
   if (d.video && d.video.split(/\s+/).some(function (v) { return !/(?:youtu\.be\/|v=|embed\/|shorts\/|live\/)[\w-]{6,}/.test(v); })) { msg('edMsg', 'Στο «Βίντεο» μπαίνει μόνο σύνδεσμος YouTube (π.χ. https://youtu.be/…). Άλλοι σύνδεσμοι δεν εμφανίζονται στην ιστοσελίδα.', 'bad'); $('f-vid').focus(); return; }
-  if (en !== 'proxeiro' && !d.syggrafeas) { msg('edMsg', 'Γράψτε το όνομά σας (βήμα 5).', 'bad'); $('f-syg').focus(); return; }
+  if (en !== 'proxeiro' && !d.syggrafeas && ROLE !== 'diefthynsi') { msg('edMsg', 'Γράψτε το όνομά σας (βήμα 5).', 'bad'); $('f-syg').focus(); return; }
   if (en !== 'proxeiro' && d.fotografies.length && !d.synainesi) { msg('edMsg', 'Τσεκάρετε το κίτρινο κουτάκι για τη συγκατάθεση των κηδεμόνων (κάτω από τις φωτογραφίες).', 'bad'); return; }
   if (en === 'dimosiefsi' && !btn._ok) {
     dlg({ icon: '🌐', title: 'Δημοσίευση στην ιστοσελίδα', text: '«' + d.titlos.trim() + '» θα φανεί στην ιστοσελίδα μέσα σε μισή ώρα. Μπορείτε να τη διορθώσετε ή να την αφαιρέσετε όποτε θέλετε.', ok: '✅ Ναι, δημοσίευση', kind: 'green' },

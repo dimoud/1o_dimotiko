@@ -389,7 +389,7 @@ function morfi_(r) {
  */
 function apothikefsi(token, d, energeia) {
   var s = synedria_(token);
-  elegxos_(d, energeia);
+  elegxos_(d, energeia, s.rolos);
   if (energeia === 'dimosiefsi' && s.rolos !== 'diefthynsi') throw new Error('Μόνο η Διεύθυνση δημοσιεύει.');
   var lock = kleidoma_();
   try {
@@ -469,7 +469,7 @@ function apofasi(token, id, praxi, sxolio, ekdosi) {
   return ap;
 }
 
-function elegxos_(d, energeia) {
+function elegxos_(d, energeia, rolos) {
   var l = [];
   if (String(d.keimeno || '').length > MEGISTO_KEIMENO) l.push(MINIMA_MEGETHOUS);
   if (!d.titlos || d.titlos.trim().length < 5) l.push('Ο τίτλος θέλει τουλάχιστον 5 χαρακτήρες.');
@@ -477,7 +477,8 @@ function elegxos_(d, energeia) {
   else if (d.imerominia < '2024-01-01') l.push('Η ημερομηνία πρέπει να είναι από 1/1/2024 και μετά.');
   if (!enotitesOles_().some(function (e) { return e[0] === d.enotita; })) l.push('Διαλέξτε πού ανήκει η ανάρτηση.');
   if (energeia !== 'proxeiro') {
-    if (!d.syggrafeas || !d.syggrafeas.trim()) l.push('Συμπληρώστε το «Ποιος το έγραψε».');
+    // ο εκπαιδευτικός υπογράφει πάντα· η Διεύθυνση όχι υποχρεωτικά (π.χ. διόρθωση παλιάς ανάρτησης του WordPress χωρίς συγγραφέα)
+    if (rolos !== 'diefthynsi' && (!d.syggrafeas || !d.syggrafeas.trim())) l.push('Συμπληρώστε το «Ποιος το έγραψε».');
     if ((d.fotografies || []).length && !d.synainesi) l.push('Επιβεβαιώστε ότι υπάρχει συγκατάθεση κηδεμόνων για τις φωτογραφίες.');
     if (!(d.keimeno || '').trim() && !(d.fotografies || []).length) l.push('Γράψτε κείμενο ή προσθέστε φωτογραφίες.');
   }
