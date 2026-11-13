@@ -452,10 +452,10 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
   <h2>Κωδικοί</h2>
   <p class="muted">Όταν αλλάζουν τα πρόσωπα, αλλάξτε τον κωδικό: όλοι αποσυνδέονται αμέσως.</p>
   <label style="font-weight:700" for="s-syn">Νέος κωδικός Συντάκτη (τουλάχιστον 8 χαρακτήρες)</label>
-  <input class="field" id="s-syn" type="password" autocomplete="new-password">
+  <div style="display:flex;gap:8px;align-items:center"><input class="field" id="s-syn" type="password" autocomplete="new-password" style="margin:0"><button type="button" class="btn light" style="white-space:nowrap" onclick="var i=$('s-syn');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁 Εμφάνιση':'🙈 Απόκρυψη'">👁 Εμφάνιση</button></div>
   <p><button class="btn light" onclick="chPass('syntaktis','s-syn')">Αλλαγή κωδικού Συντάκτη</button></p>
   <label style="font-weight:700" for="s-dir">Νέος κωδικός Διεύθυνσης (τουλάχιστον 10 χαρακτήρες)</label>
-  <input class="field" id="s-dir" type="password" autocomplete="new-password">
+  <div style="display:flex;gap:8px;align-items:center"><input class="field" id="s-dir" type="password" autocomplete="new-password" style="margin:0"><button type="button" class="btn light" style="white-space:nowrap" onclick="var i=$('s-dir');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁 Εμφάνιση':'🙈 Απόκρυψη'">👁 Εμφάνιση</button></div>
   <p><button class="btn light" onclick="chPass('diefthynsi','s-dir')">Αλλαγή κωδικού Διεύθυνσης</button></p>
   <label style="font-weight:700" for="s-mail">Email για τις ειδοποιήσεις</label>
   <input class="field" id="s-mail" type="email">
@@ -631,6 +631,8 @@ function start() {
   ftiaxeEpiloges_();
   if (location.hash === '#odigies') { try { history.replaceState(null, '', location.pathname); } catch (x) {} nav('odigies'); } else home();
 }
+/* σημερινή ημερομηνία στην ώρα της συσκευής (όχι UTC: μετά τα μεσάνυχτα έδινε την προηγούμενη μέρα) */
+function simera_() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
 function home() {
   parousiaStop_();
   nav('home'); msg('homeMsg', '');
@@ -937,6 +939,15 @@ function stoixisiStoixeiou(el) {
   if (c) return c[1];
   var a = ((el.style && el.style.textAlign) || el.getAttribute('align') || '').toLowerCase();
   return a === 'center' ? 'kentro' : a === 'right' || a === 'end' ? 'dexia' : a === 'justify' ? 'plires' : a === 'left' || a === 'start' ? 'aristera' : '';
+}
+/* απλό κείμενο που επικολλήθηκε (email, σημειώσεις): η κάθε γραμμή μένει γραμμή (π.χ. πρόγραμμα, υπογραφή),
+ * εκτός από λίστες, πίνακες και τίτλους που έχουν δική τους μορφή */
+function grammesKrata_(md) {
+  return String(md || '').split(/\n{2,}/).map(function (b) {
+    var gr = b.split('\n');
+    if (gr.length < 2 || gr.some(function (g) { return /^\s*([-*•]\s|\d+[.)]\s|#{1,6}\s|\|)/.test(g); })) return b;
+    return gr.map(function (g) { return g.replace(/\s+$/, ''); }).join('  \n');
+  }).join('\n\n');
 }
 function htmlToMd(root) {
   var BASE = root._basePt || 0;
@@ -1276,7 +1287,7 @@ function bindEditor(tbar, rte) {
     if (eik.length || /<img\b/i.test(h || '')) eikonesSeKeimeno_(eik, rte);
     if (!h && !t) return;
     var md;
-    if (h) md = htmlToMd(apoWord(h)); else md = diorthosiKeimenou(t || '');
+    if (h) md = htmlToMd(apoWord(h)); else md = grammesKrata_(diorthosiKeimenou(t || ''));
     document.execCommand('insertHTML', false, mdToHtml(md) || esc(diorthosiKeimenou(t || '')));
   });
 }
@@ -1310,7 +1321,7 @@ function getChips(id) { return Array.prototype.slice.call(document.querySelector
 function edit(a, fromProp) {
   if (!rte) initRte();
   PHS = false;
-  CUR = a ? JSON.parse(JSON.stringify(a)) : { id: '', katastasi: 'Πρόχειρο', imerominia: new Date().toISOString().slice(0, 10), titlos: '', enotita: '', taxeis: '', diktya: '',
+  CUR = a ? JSON.parse(JSON.stringify(a)) : { id: '', katastasi: 'Πρόχειρο', imerominia: simera_(), titlos: '', enotita: '', taxeis: '', diktya: '',
         keimeno: '', fotografies: [], arxeia: [], video: '', syggrafeas: store('onoma') || '', synainesi: false, alles_enotites: '' };
   if (fromProp && CUR.protasi) { var p = CUR.protasi; ['titlos', 'keimeno', 'enotita', 'video', 'syggrafeas'].forEach(function (k) { if (p[k] !== undefined) CUR[k] = p[k]; });
     CUR.fotografies = JSON.parse(p.fotografies || '[]'); CUR.arxeia = JSON.parse(p.arxeia || '[]'); CUR.taxeis = p.taxeis; CUR.diktya = p.diktya; CUR.synainesi = p.synainesi; if (p.alles_enotites != null) CUR.alles_enotites = p.alles_enotites; }
@@ -1687,6 +1698,7 @@ function save(en, btn) {
   var d = collect();
   if (!d.titlos.trim()) { msg('edMsg', 'Γράψτε έναν τίτλο (βήμα 1).', 'bad'); $('f-titl').focus(); return; }
   if (!d.enotita) { msg('edMsg', 'Διαλέξτε πού ανήκει η ανάρτηση (βήμα 4).', 'bad'); return; }
+  if (d.video && d.video.split(/\s+/).some(function (v) { return !/(?:youtu\.be\/|v=|embed\/|shorts\/|live\/)[\w-]{6,}/.test(v); })) { msg('edMsg', 'Στο «Βίντεο» μπαίνει μόνο σύνδεσμος YouTube (π.χ. https://youtu.be/…). Άλλοι σύνδεσμοι δεν εμφανίζονται στην ιστοσελίδα.', 'bad'); $('f-vid').focus(); return; }
   if (en !== 'proxeiro' && !d.syggrafeas) { msg('edMsg', 'Γράψτε το όνομά σας (βήμα 5).', 'bad'); $('f-syg').focus(); return; }
   if (en !== 'proxeiro' && d.fotografies.length && !d.synainesi) { msg('edMsg', 'Τσεκάρετε το κίτρινο κουτάκι για τη συγκατάθεση των κηδεμόνων (κάτω από τις φωτογραφίες).', 'bad'); return; }
   if (en === 'dimosiefsi' && !btn._ok) {
@@ -1783,7 +1795,7 @@ function selidaAnartisis_(a, fot) {
   var tax = [].concat(a.taxeis || []), dik = [].concat(a.diktya || []);
   if (typeof a.taxeis === 'string') tax = a.taxeis.split(',').map(function (x) { return x.trim(); }).filter(String);
   if (typeof a.diktya === 'string') dik = a.diktya.split(',').map(function (x) { return x.trim(); }).filter(String);
-  var d = a.imerominia || new Date().toISOString().slice(0, 10), et = sxolikoEtos_(d), m = d.match(/^(\d{4})-(\d{2})-(\d{2})/) || [0, '', 1, 1];
+  var d = a.imerominia || simera_(), et = sxolikoEtos_(d), m = d.match(/^(\d{4})-(\d{2})-(\d{2})/) || [0, '', 1, 1];
   var tags = en.map(function (k) { return '<a class="tag" href="#">' + esc(EN[k] || '') + '</a>'; }).join('') +
     tax.map(function (t) { return '<span class="tag tag-g">' + esc(/^(Ένταξη|Ολοήμερο)$/.test(t) ? t : t + '΄ τάξη') + '</span>'; }).join('') +
     dik.filter(function (x) { return DK[x]; }).map(function (x) { return '<a class="tag tag-g" href="#">' + esc(DK[x]) + '</a>'; }).join('');
@@ -1952,8 +1964,12 @@ function loadSettings() {
   }, 'sMsg');
 }
 function chPass(who, id) {
-  dlg({ icon: '🔑', title: 'Αλλαγή κωδικού', text: 'Όλοι θα αποσυνδεθούν, και εσείς. Θα μπείτε ξανά με τους ισχύοντες κωδικούς.', ok: 'Ναι, αλλαγή' }, function () {
-    run('allagiKodikou', [T, who, $(id).value], function (r) { $(id).value = ''; logout(); msg('loginMsg', r.minima, 'ok'); }, 'sMsg');
+  /* έλεγχος πριν φύγει: τα λάθη σε παράθυρο (όχι σε μήνυμα που μπορεί να μη φανεί), και ο νέος κωδικός γραμμένος για επιβεβαίωση */
+  var neos = ($(id).value || '').trim(), elax = who === 'syntaktis' ? 8 : 10, onoma = who === 'syntaktis' ? 'Συντάκτη (εκπαιδευτικοί)' : 'Διεύθυνσης';
+  if (neos.length < elax) { dlg({ icon: '⚠️', title: 'Ο κωδικός είναι μικρός', text: 'Ο κωδικός ' + onoma + ' θέλει τουλάχιστον ' + elax + ' χαρακτήρες. Τώρα έχει ' + neos.length + '.', cancel: false }); return; }
+  dlg({ icon: '🔑', title: 'Αλλαγή κωδικού ' + onoma, text: 'Ο νέος κωδικός θα είναι: «' + neos + '». Σημειώστε τον. Όλοι θα αποσυνδεθούν, και εσείς, και θα μπουν ξανά με τον νέο κωδικό.', ok: 'Ναι, αλλαγή' }, function () {
+    run('allagiKodikou', [T, who, neos], function (r) { $(id).value = ''; logout(); msg('loginMsg', '✔ ' + r.minima, 'ok'); }, 'sMsg', null,
+      function () { setTimeout(function () { var m = $('sMsg'); if (m && m.textContent) dlg({ icon: '⚠️', title: 'Ο κωδικός δεν άλλαξε', text: m.textContent, cancel: false }); }, 30); });
   });
 }
 var EMAILS = [];

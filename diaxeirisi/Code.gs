@@ -283,6 +283,13 @@ function syndesi(kodikos, email) {
   if (!rolos && h === p.getProperty('HASH_SYNTAKTI')) {
     melos = vresEmail_(email);
     if (melos) rolos = 'syntaktis';
+    else {   // σωστός κωδικός Συντάκτη, αλλά το email δεν είναι δηλωμένο: σαφές μήνυμα (όχι «λάθος κωδικός»)
+      katagrafi_('syntaktis', String(email || '').slice(0, 80), 'Άρνηση εισόδου: email εκτός λίστας', '', '');
+      return { ok: false, minima: !listaEmail_().length
+        ? 'Ο κωδικός είναι σωστός, αλλά η Διεύθυνση δεν έχει δηλώσει ακόμα κανένα email εκπαιδευτικού. Ζητήστε της να σας προσθέσει (Ρυθμίσεις → Εκπαιδευτικοί με πρόσβαση).'
+        : !String(email || '').trim() ? 'Γράψτε και το email σας (αυτό που έχει δηλώσει η Διεύθυνση).'
+        : 'Ο κωδικός είναι σωστός, αλλά το email «' + String(email).trim() + '» δεν είναι στη λίστα της Διεύθυνσης. Ελέγξτε το ή ζητήστε από τη Διεύθυνση να το προσθέσει.' };
+    }
   }
   if (!rolos) {
     c.put('apotyxies', String(fails + 1), 900);
@@ -438,7 +445,9 @@ function apofasi(token, id, praxi, sxolio, ekdosi) {
       var pedia = r.protasi ? json_(r.protasi, {}) : {};
       pedia.katastasi = 'Δημοσιευμένη'; pedia.protasi = ''; pedia.sxolio = ''; pedia.tropopoiisi = new Date(); pedia.ekdosi = nea.ekdosi; pedia.teleftaios = nea.teleftaios;
       stili_(sh, 'dimosiefthike'); pedia.dimosiefthike = r.dimosiefthike instanceof Date ? r.dimosiefthike : new Date();
-      if (!(pedia.synainesi === true || (r.synainesi === true || r.synainesi === 'TRUE'))) throw new Error('Λείπει η επιβεβαίωση συγκατάθεσης κηδεμόνων.');
+      var fotoEg = json_(pedia.fotografies !== undefined ? pedia.fotografies : r.fotografies, []);   // συγκατάθεση μόνο όταν υπάρχουν φωτογραφίες
+      var synEg = pedia.synainesi !== undefined ? pedia.synainesi === true : (r.synainesi === true || r.synainesi === 'TRUE');
+      if (fotoEg.length && !synEg) throw new Error('Λείπει η επιβεβαίωση συγκατάθεσης κηδεμόνων για τις φωτογραφίες. Ανοίξτε την ανάρτηση, τσεκάρετε τη συγκατάθεση στο βήμα 3 και πατήστε δημοσίευση.');
       grapse_(sh, r._row, pedia);
     } else if (praxi === 'epistrofi') {
       if (r.protasi) grapse_(sh, r._row, { protasi: '', sxolio: sxolio || '', ekdosi: nea.ekdosi, teleftaios: nea.teleftaios });
@@ -472,6 +481,8 @@ function elegxos_(d, energeia) {
     if ((d.fotografies || []).length && !d.synainesi) l.push('Επιβεβαιώστε ότι υπάρχει συγκατάθεση κηδεμόνων για τις φωτογραφίες.');
     if (!(d.keimeno || '').trim() && !(d.fotografies || []).length) l.push('Γράψτε κείμενο ή προσθέστε φωτογραφίες.');
   }
+  var vids = String(d.video || '').trim();   // μόνο YouTube εμφανίζεται στην ιστοσελίδα: άλλος σύνδεσμος θα χανόταν σιωπηλά
+  if (vids && vids.split(/\s+/).some(function (v) { return !youtubeId_(v); })) l.push('Στο «Βίντεο» μπαίνει μόνο σύνδεσμος YouTube (π.χ. https://youtu.be/…). Για βίντεο από Facebook ή Google Drive ανεβάστε το πρώτα στο κανάλι YouTube του σχολείου.');
   if (l.length) throw new Error(l.join('\n'));
 }
 
@@ -1141,7 +1152,7 @@ function json_(s, def) { try { return s ? JSON.parse(s) : def; } catch (e) { ret
 function hm_(d) { return d instanceof Date ? Utilities.formatDate(d, 'Europe/Athens', 'yyyy-MM-dd') : String(d || ''); }
 
 function youtubeId_(s) {
-  var m = String(s || '').match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{6,})/);
+  var m = String(s || '').match(/(?:youtu\.be\/|v=|embed\/|shorts\/|live\/)([\w-]{6,})/);
   return m ? m[1] : '';
 }
 
