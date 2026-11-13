@@ -77,7 +77,7 @@ function neosPagkos(epiloges) {
       DigestAlgorithm: { SHA_256: 'sha256' }, Charset: { UTF_8: 'utf8' },
       computeDigest: (a, s) => Array.from(crypto.createHash('sha256').update(String(s)).digest()).map(b => (b > 127 ? b - 256 : b)),
     },
-    MailApp: { sendEmail: (a, b, c, d) => { mail.push(typeof a === 'object' ? a : { to: a, subject: b, body: c, opt: d }); }, getRemainingDailyQuota: () => 100 },
+    MailApp: { sendEmail: (a, b, c, d) => { const m = typeof a === 'object' ? Object.assign({}, a) : { to: a, subject: b, body: c, opt: d }; if (m.attachments) m.attachments = m.attachments.map(x => ({ name: x.name, mime: x.mime, size: (x.bytes || []).length })); mail.push(m); }, getRemainingDailyQuota: () => 100 },
     UrlFetchApp: { fetch: (url, o) => { dispatches.push({ url, o }); return { getResponseCode: () => (epiloges.githubKodikos || 204), getContentText: () => '{"workflow_runs":[]}' }; } },
     DriveApp: {
       getFolderById: () => root, getRootFolder: () => root, getStorageUsed: () => 3e9, getStorageLimit: () => 15e9,

@@ -4,7 +4,8 @@ import json
 import re
 import unicodedata
 
-esc = lambda s: html.escape(str(s or ''), quote=True)
+from md import apokodikopoiisi
+esc = lambda s: html.escape(apokodikopoiisi(s), quote=True)
 
 MINES = ['Ιανουαρίου', 'Φεβρουαρίου', 'Μαρτίου', 'Απριλίου', 'Μαΐου', 'Ιουνίου', 'Ιουλίου',
          'Αυγούστου', 'Σεπτεμβρίου', 'Οκτωβρίου', 'Νοεμβρίου', 'Δεκεμβρίου']

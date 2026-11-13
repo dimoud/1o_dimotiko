@@ -258,13 +258,44 @@ def senaria(browser):
         ok(f'12. κουμπί «Αναφορά προβλήματος» ορατό ({v})', d.pg.is_visible('#bugBtn'))
     d.pg.fill('#f-titl', 'Δοκιμή αναφοράς')
     m0 = len(katastasi()['mail'])
-    d.pg.click('#bugBtn'); d.pg.fill('#dlgV', 'Πάτησα Αποστολή και βγήκε κόκκινο μήνυμα.'); d.pg.click('#dlgOk'); d.pg.wait_for_timeout(900)
+    if d.pg.is_visible('#dlg'): d.pg.keyboard.press('Escape'); d.pg.wait_for_timeout(200)
+    d.pg.click('#bugBtn'); d.pg.wait_for_selector('#bugDlg:not(.hidden)', timeout=3000)
+    ok('12. μεγάλο παράθυρο αναφοράς με ερωτήσεις', d.pg.is_visible('#bugTi') and d.pg.is_visible('#bugEg') and d.pg.is_visible('#bugDrop')
+       and d.pg.evaluate("document.querySelector('#bugDlg .box').getBoundingClientRect().width") >= 700)
+    d.pg.click('#bugOk'); d.pg.wait_for_timeout(200)
+    ok('12. χωρίς «τι έγινε» δεν στέλνει', 'Γράψτε στο 2' in d.pg.inner_text('#bugMsg') and len(katastasi()['mail']) == m0)
+    d.pg.fill('#bugTi', 'Ήθελα να στείλω ανάρτηση.'); d.pg.fill('#bugEg', 'Πάτησα Αποστολή και βγήκε κόκκινο μήνυμα.')
+    d.pg.check('input[name=bugVar][value="Δεν μπορώ να συνεχίσω"]', force=True); d.pg.check('input[name=bugEp][value="Ναι, κάθε φορά"]', force=True)
+    d.pg.set_input_files('#bugFile', foto); d.pg.wait_for_selector('#bugThumbs img', timeout=4000)
+    ok('12. η εικόνα φαίνεται ως μικρογραφία', d.pg.eval_on_selector_all('#bugThumbs img', 'e=>e.length') == 1)
+    d.pg.click('#bugOk'); d.pg.wait_for_timeout(1200)
     mm = katastasi()['mail'][m0:]
-    ok('12. η αναφορά στάλθηκε με email', len(mm) == 1 and 'κόκκινο μήνυμα' in mm[0].get('body', '') and 'edit' in mm[0].get('body', '') and 'Δοκιμή αναφοράς' in mm[0].get('body', ''), str(mm)[:200])
+    body = mm[0].get('body', '') if mm else ''
+    ok('12. η αναφορά στάλθηκε με email', len(mm) == 1 and 'κόκκινο μήνυμα' in body and 'Ήθελα να στείλω' in body and 'Δεν μπορώ να συνεχίσω' in body
+       and 'Ναι, κάθε φορά' in body and 'edit' in body and 'Δοκιμή αναφοράς' in body, str(mm)[:200])
+    ok('12. η εικόνα πήγε συνημμένη', bool(mm) and len(mm[0].get('attachments') or []) == 1 and mm[0]['attachments'][0]['mime'] == 'image/jpeg', str(mm[0].get('attachments') if mm else None))
     ok('12. επιβεβαίωση «Στάλθηκε» στον εκπαιδευτικό', 'Στάλθηκε' in d.pg.inner_text('#dlgT'))
     d.pg.click('#dlgOk')
     lg = browser.new_context(viewport={'width': 1280, 'height': 900}).new_page(); lg.goto(BASE); lg.wait_for_timeout(300)
-    ok('12. κουμπί ορατό και πριν από τη σύνδεση', lg.is_visible('#bugBtn')); lg.context.close()
+    ok('12. κουμπί ΚΡΥΦΟ πριν από τη σύνδεση', not lg.is_visible('#bugBtn')); lg.context.close()
+    d.pg.evaluate('logout()'); d.pg.wait_for_timeout(200)
+    ok('12. κουμπί κρύβεται μετά την αποσύνδεση', not d.pg.is_visible('#bugBtn'))
+
+    # ── 13. Σημεία στίξης: ό,τι γράφει ο εκπαιδευτικός μένει ίδιο σε Φύλλο, επεξεργαστή και ιστοσελίδα
+    K13 = ('Παρ. 3 & 4 του άρθρου 5. «Εισαγωγικά» “διπλά” ‘μονά’ \'απλά\' "διπλά". 5 < 7 > 2, 50% ~ 1/2. Ερωτηματικό; Άνω τελεία· Θαυμαστικό! '
+           '- – — (παρενθέσεις) [αγκύλες] {άγκιστρα}. a+b@test.gr 10€ $5 #ετικέτα @χρήστης ^ ` | ϊ ΰ Ϊ. 7 * 8. Τέλος…')
+    T13 = 'Στίξη: «Σ.Ε.Π.» & γονείς – 3/4 (Α΄ τάξη) “x”'
+    ok('12. κανένα σφάλμα JavaScript στην αναφορά', not d.lathi_js, '; '.join(d.lathi_js)[:300])
+    d.kleise(); d = Pinakas(browser); d.eisodos('syntaktis')
+    nea(d, T13, K13); d.pg.click('text=Αποστολή στη Διευθύντρια')
+    d.pg.wait_for_timeout(900)
+    a = grammi(T13)
+    ok('13. τίτλος και κείμενο αποθηκεύτηκαν αυτούσια', bool(a) and a['keimeno'] == K13 and a['titlos'] == T13, repr(a and a['keimeno'])[:160])
+    d.anoixe_anartisi('Στίξη:')
+    ok('13. ξανανοίγει ίδιο στον επεξεργαστή', d.pg.inner_text('#rte').strip() == K13 and d.pg.input_value('#f-titl') == T13, repr(d.pg.inner_text('#rte'))[:160])
+    import sys as _s; _s.path.insert(0, str(ED.parent.parent / 'build')); import md as _md, html as _h, re as _re
+    ok('13. η ιστοσελίδα δείχνει ακριβώς το ίδιο', _h.unescape(_re.sub(r'<[^>]+>', '', _md.pros_html(K13))).strip() == K13)
+    ok('13. παλιό «&amp;» (WordPress) βγαίνει ως «&»', _h.unescape(_re.sub(r'<[^>]+>', '', _md.pros_html('3 &amp; 4 &amp;amp; 5'))).strip() == '3 & 4 & 5')
 
     # ── 11. Κινητό: καμία οριζόντια κύλιση σε καμία οθόνη του Πίνακα (λάθος 13/11: η κεφαλίδα ξεχείλιζε 100 px)
     for w in (360, 390):

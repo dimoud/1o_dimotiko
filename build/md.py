@@ -12,6 +12,21 @@
 import html
 import re
 
+_ONT = re.compile(r'&(?:amp|lt|gt|quot|apos|nbsp|#\d{1,6}|#x[0-9a-fA-F]{1,6});')
+
+
+def apokodikopoiisi(s):
+    """Οντότητες HTML που ήρθαν μέσα στο κείμενο (π.χ. «&amp;» από το παλιό WordPress) → χαρακτήρες,
+    ώστε να διαφύγουν ΜΙΑ φορά. Χωρίς αυτό η σελίδα έδειχνε «3 &amp; 4»."""
+    s = str(s or '')
+    for _ in range(3):                       # και διπλά κωδικοποιημένα («&amp;amp;»)
+        n = _ONT.sub(lambda m: html.unescape(m.group(0)), s)
+        if n == s:
+            break
+        s = n
+    return s.replace('\u00a0', ' ')
+
+
 _URL = re.compile(r'(?<![\("\w])(https?://[^\s<>"\')\]]+[^\s<>"\')\].,;:!?«»])')
 _MAIL = re.compile(r'(?<![\w/:.\-])([\w.+-]+@[\w-]+\.[\w.-]*\w)')
 
@@ -38,7 +53,7 @@ def _syndesmos(url, keimeno):
 
 
 def inline(s):
-    s = html.escape(s, quote=False)
+    s = html.escape(apokodikopoiisi(s), quote=False)
     kratimena = []
 
     def krata(x):
@@ -148,7 +163,7 @@ def pros_html(keimeno, epipedo_titlou=2):
 
 def keimeno_xoris_morfi(keimeno):
     """Για περιγραφές/ευρετήριο: χωρίς σύμβολα Markdown."""
-    s = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', keimeno or '')
+    s = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', apokodikopoiisi(keimeno))
     s = _MORFI.sub(lambda m: m.group(2), s)
     s = re.sub(r'(^|\n)\s*\{(' + '|'.join(STOIXISEIS) + r')\}', r'\1', s)
     s = re.sub(r'[*#|=]+', ' ', s)

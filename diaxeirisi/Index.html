@@ -262,15 +262,41 @@ h2{font-size:1.35rem;margin:0 0 6px}
 .dlg textarea{min-height:110px;resize:vertical}
 .dlg textarea:focus,.dlg input:focus{outline:none;border-color:var(--blue)}
 .dlg .row{display:flex;flex-direction:column;gap:10px}
-/* «Αναφορά προβλήματος»: πάντα ορατό κάτω δεξιά, σε κάθε οθόνη (και πριν από τη σύνδεση) */
+/* «Αναφορά προβλήματος»: πάντα ορατό κάτω δεξιά, ΜΟΝΟ μετά τη σύνδεση (body.mesa) */
 .bug-btn{position:fixed;right:16px;bottom:16px;z-index:55;display:inline-flex;align-items:center;gap:8px;border:2px solid #fff;
   background:var(--coral,#a8432d);color:#fff;border-radius:999px;padding:12px 18px;min-height:48px;font:inherit;font-weight:800;font-size:.95rem;
   box-shadow:0 8px 24px rgba(20,30,45,.28);cursor:pointer}
 .bug-btn:hover{filter:brightness(1.08)}.bug-btn:focus-visible{outline:3px solid #f2b233;outline-offset:3px}
-body{padding-bottom:84px}   /* να μη σκεπάζει ποτέ τα τελευταία κουμπιά της σελίδας */
+body.mesa{padding-bottom:84px}   /* να μη σκεπάζει ποτέ τα τελευταία κουμπιά της σελίδας */
+body:not(.mesa) .bug-btn{display:none}
 @media (max-width:560px){.bug-btn{right:10px;bottom:10px;padding:10px 14px;font-size:.85rem;min-height:44px}}
 @media print{.bug-btn{display:none}}
 .dlg .bug-info{font-size:.82rem;color:var(--ink2);text-align:left;margin:-6px 0 12px}
+.dlg .box.bugbox{max-width:760px;text-align:left;max-height:calc(100vh - 32px);overflow:auto;padding:24px 26px 20px}
+.bugbox h3{display:flex;align-items:center;gap:10px;font-size:1.35rem}
+.bugbox .bug-lead{margin:0 0 16px;color:var(--ink2)}
+.bugbox label.bq{display:block;font-weight:800;margin:0 0 6px}
+.bugbox label.bq small{font-weight:400;color:var(--ink2)}
+.bugbox textarea{min-height:120px;margin-bottom:16px}
+.bugbox textarea.sm{min-height:76px}
+.bugbox fieldset{border:0;padding:0;margin:0 0 16px}
+.bugbox legend{font-weight:800;margin-bottom:8px;padding:0}
+.bugbox .bopts{display:flex;flex-wrap:wrap;gap:8px}
+.bugbox .bopts label{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;font-weight:600;min-height:44px}
+.bugbox .bopts input{width:auto;margin:0;accent-color:var(--blue)}
+.bugbox .bopts label:has(input:checked){border-color:var(--blue);background:var(--blue-bg)}
+.bugbox .bdrop{border:2px dashed var(--line);border-radius:16px;padding:14px;text-align:center;color:var(--ink2);margin:0 0 10px;cursor:pointer}
+.bugbox .bdrop.over,.bugbox .bdrop:focus-visible{border-color:var(--blue);background:var(--blue-bg);outline:none}
+.bugbox .bdrop b{color:var(--blue-d)}
+.bugbox .bthumbs{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 10px}
+.bugbox .bthumbs figure{position:relative;margin:0;width:120px;height:86px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#f4f6f9}
+.bugbox .bthumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.bugbox .bthumbs button{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(20,30,45,.75);color:#fff;font-weight:800;cursor:pointer}
+.bugbox .btip{font-size:.85rem;color:var(--ink2);margin:0 0 16px}
+.bugbox .bwarn{font-size:.85rem;color:#7c2e1d;background:var(--coral-bg);border-radius:10px;padding:8px 12px;margin:0 0 16px}
+.bugbox .bacts{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:14px}
+.bugbox .bmsg{margin:0 0 12px}
+@media (max-width:560px){.dlg .box.bugbox{padding:18px 16px}.bugbox .bacts .btn{flex:1 1 100%}}
 @media(prefers-reduced-motion:reduce){.dlg .box{animation:none}}
 .login{max-width:460px;margin:10vh auto}
 .big-in{width:100%;min-height:60px;font-size:1.3rem;text-align:center;border:2px solid var(--line);border-radius:14px;letter-spacing:.1em}
@@ -492,6 +518,33 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}td{padding:6px;border
 <div class="pub hidden" id="pub" role="status" aria-live="polite"></div>
 <button type="button" class="bug-btn" id="bugBtn" onclick="anaforaUI()" aria-label="Αναφορά προβλήματος: περιγράψτε τι πήγε στραβά και στείλτε το">🐞 <span>Αναφορά προβλήματος</span></button>
 
+<div class="dlg hidden" id="bugDlg" role="dialog" aria-modal="true" aria-labelledby="bugT"><div class="box bugbox">
+ <h3 id="bugT"><span aria-hidden="true">🐞</span> Αναφορά προβλήματος</h3>
+ <p class="bug-lead">Πείτε μας τι έγινε, όπως θα το λέγατε στο τηλέφωνο. Μαζί στέλνονται αυτόματα η οθόνη που είστε και τα τελευταία μηνύματα λάθους, ώστε να βρεθεί γρήγορα.</p>
+ <div id="bugMsg" class="bmsg"></div>
+ <label class="bq" for="bugTi">1. Τι προσπαθούσατε να κάνετε;</label>
+ <textarea id="bugTi" placeholder="π.χ. Ήθελα να ανεβάσω νέα ανάρτηση για την εκδρομή της Γ΄ τάξης με 5 φωτογραφίες."></textarea>
+ <label class="bq" for="bugEg">2. Τι έγινε αντί γι’ αυτό; <small>Αν βγήκε μήνυμα, γράψτε το όπως ακριβώς φάνηκε.</small></label>
+ <textarea id="bugEg" placeholder="π.χ. Πάτησα «Αποστολή στη Διευθύντρια» και βγήκε «Δεν ήταν δυνατή η αποθήκευση». Οι φωτογραφίες χάθηκαν."></textarea>
+ <fieldset><legend>3. Πόσο σας εμποδίζει;</legend><div class="bopts">
+  <label><input type="radio" name="bugVar" value="Δεν μπορώ να συνεχίσω"> 🔴 Δεν μπορώ να συνεχίσω</label>
+  <label><input type="radio" name="bugVar" value="Ενοχλεί, αλλά συνεχίζω"> 🟡 Ενοχλεί, αλλά συνεχίζω</label>
+  <label><input type="radio" name="bugVar" value="Πρόταση βελτίωσης"> 💡 Πρόταση βελτίωσης</label></div></fieldset>
+ <fieldset><legend>4. Αν το ξανακάνετε, γίνεται πάλι;</legend><div class="bopts">
+  <label><input type="radio" name="bugEp" value="Ναι, κάθε φορά"> Ναι, κάθε φορά</label>
+  <label><input type="radio" name="bugEp" value="Έγινε μία φορά"> Έγινε μία φορά</label>
+  <label><input type="radio" name="bugEp" value="Δεν το δοκίμασα ξανά"> Δεν το δοκίμασα ξανά</label></div></fieldset>
+ <label class="bq">5. Εικόνα της οθόνης <small>(προαιρετικά, έως 3)</small></label>
+ <div class="bdrop" id="bugDrop" tabindex="0" role="button" aria-label="Επισύναψη εικόνας">📎 <b>Επιλέξτε εικόνα</b>, σύρετέ τη εδώ ή πατήστε <b>Ctrl+V</b> για επικόλληση</div>
+ <input type="file" id="bugFile" accept="image/*" multiple class="hidden">
+ <div class="bthumbs" id="bugThumbs"></div>
+ <p class="btip">Πώς βγάζω εικόνα της οθόνης: <b>Windows</b> ⊞ Win + Shift + S και μετά Ctrl+V εδώ · <b>Mac</b> ⌘ + Shift + 4 · <b>κινητό</b> ένταση-κάτω μαζί με το κουμπί λειτουργίας.</p>
+ <p class="bwarn">Μην επισυνάπτετε εικόνες όπου φαίνονται πρόσωπα ή ονόματα μαθητών.</p>
+ <label class="bq" for="bugAl">6. Κάτι άλλο που πρέπει να ξέρουμε; <small>(προαιρετικά)</small></label>
+ <textarea id="bugAl" class="sm" placeholder="π.χ. Δουλεύω από το κινητό· έγινε και χθες."></textarea>
+ <div class="bacts"><button type="button" class="btn light" id="bugNo">Ακύρωση</button><button type="button" class="btn green" id="bugOk">📨 Αποστολή στον υπεύθυνο</button></div>
+</div></div>
+
 <div class="dlg hidden" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgT"><div class="box">
  <div class="ic" id="dlgI"></div><h3 id="dlgT"></h3><p id="dlgP"></p>
  <div id="dlgIn"></div>
@@ -509,23 +562,97 @@ var ANAFORA = { js: [], lathi: [], kliseis: [] };
 function anaforaKrata_(k, v) { try { var a = ANAFORA[k]; a.push(new Date().toTimeString().slice(0, 8) + ' ' + String(v).slice(0, 300)); if (a.length > 8) a.shift(); } catch (x) {} }
 window.addEventListener('error', function (e) { anaforaKrata_('js', (e.message || 'σφάλμα') + (e.filename ? ' @' + String(e.filename).split('/').pop() + ':' + e.lineno : '')); });
 window.addEventListener('unhandledrejection', function (e) { anaforaKrata_('js', 'promise: ' + ((e.reason && e.reason.message) || e.reason)); });
-function anaforaUI() {
-  dlg({ icon: '🐞', title: 'Αναφορά προβλήματος', ok: '📨 Αποστολή στον υπεύθυνο', kind: 'green',
-        text: 'Περιγράψτε τι κάνατε και τι έγινε (π.χ. «πάτησα Αποστολή και βγήκε μήνυμα…»). Μαζί στέλνονται αυτόματα η οθόνη που είστε και τα τελευταία μηνύματα λάθους, ώστε να βρεθεί γρήγορα.',
-        input: { multiline: true, placeholder: 'Τι προσπαθούσατε να κάνετε; Τι έγινε αντί γι’ αυτό;' } }, function (v) {
-    v = String(v || '').trim();
-    if (v.length < 5) { dlg({ icon: '✍️', title: 'Γράψτε τι έγινε', text: 'Μία-δύο προτάσεις αρκούν, για να καταλάβουμε το πρόβλημα.', cancel: false }, function () { anaforaUI(); }); return; }
-    var orato = ['login', 'home', 'list', 'edit', 'review', 'pages', 'page', 'settings', 'odigies'].filter(function (k) { var e = $('v-' + k); return e && !e.classList.contains('hidden'); })[0] || '';
-    var pl = { othoni: orato, anartisi: (orato === 'page' && PCUR) ? 'σελίδα ' + PCUR.id + ' «' + PCUR.titlos + '»' : (CUR && /edit|review/.test(orato)) ? (CUR.id || 'νέα') + ' «' + ($('f-titl') ? $('f-titl').value : CUR.titlos || '') + '»' : '',
-               lathi: ANAFORA.lathi.join(' | '), js: ANAFORA.js.join(' | '), kliseis: ANAFORA.kliseis.join(' | '),
-               syskevi: navigator.userAgent + ' · οθόνη ' + innerWidth + '×' + innerHeight, url: location.href.split('#')[0], ekdosi: document.lastModified };
-    var tora = function () {
-      google.script.run.withSuccessHandler(function (r) { dlg({ icon: '✅', title: 'Στάλθηκε', text: (r && r.minima) || 'Η αναφορά στάλθηκε.', cancel: false }); })
-        .withFailureHandler(function (e) { dlg({ icon: '⚠️', title: 'Δεν στάλθηκε', text: ((e && e.message) || String(e)) + ' Αν δεν υπάρχει σύνδεση στο διαδίκτυο, δοκιμάστε ξανά σε λίγο.', cancel: false }); })
-        .anaforaSfalmatos(T || '', v, JSON.stringify(pl));
+var BUG = { eikones: [] };
+function bugSmikrynsi_(file, cb) {   // εικόνα → JPEG έως 1600 px (μικρό email, χωρίς EXIF)
+  var fr = new FileReader();
+  fr.onload = function () {
+    var im = new Image();
+    im.onload = function () {
+      var k = Math.min(1, 1600 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+      c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+      var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
+      cb(c.toDataURL('image/jpeg', 0.85));
     };
-    tora();
+    im.onerror = function () { cb(null); };
+    im.src = fr.result;
+  };
+  fr.onerror = function () { cb(null); };
+  fr.readAsDataURL(file);
+}
+function bugProsthese_(files) {
+  files = Array.prototype.filter.call(files || [], function (f) { return f && /^image\//.test(f.type); });
+  if (!files.length) { msg('bugMsg', 'Μπορείτε να επισυνάψετε μόνο εικόνες (π.χ. στιγμιότυπο οθόνης).', 'bad'); return; }
+  files.forEach(function (f) {
+    if (BUG.eikones.length >= 3) { msg('bugMsg', 'Έως 3 εικόνες ανά αναφορά.', 'bad'); return; }
+    BUG.eikones.push({ onoma: f.name || 'othoni.png', d: null });
+    var th = BUG.eikones[BUG.eikones.length - 1];
+    bugSmikrynsi_(f, function (d) {
+      if (!d) { BUG.eikones.splice(BUG.eikones.indexOf(th), 1); msg('bugMsg', 'Η εικόνα «' + (f.name || '') + '» δεν διαβάστηκε.', 'bad'); }
+      else th.d = d;
+      bugThumbs_();
+    });
   });
+  bugThumbs_();
+}
+function bugThumbs_() {
+  $('bugThumbs').innerHTML = BUG.eikones.map(function (e, i) {
+    return '<figure>' + (e.d ? '<img src="' + e.d + '" alt="Εικόνα ' + (i + 1) + '">' : '<span style="display:block;padding:30px 0;text-align:center">…</span>') +
+      '<button type="button" data-i="' + i + '" aria-label="Αφαίρεση εικόνας ' + (i + 1) + '">✕</button></figure>';
+  }).join('');
+  $('bugDrop').classList.toggle('hidden', BUG.eikones.length >= 3);
+}
+function bugEpikollisi_(e) {
+  if ($('bugDlg').classList.contains('hidden')) return;
+  var it = (e.clipboardData && e.clipboardData.items) || [], f = [];
+  for (var i = 0; i < it.length; i++) if (it[i].kind === 'file' && /^image\//.test(it[i].type)) f.push(it[i].getAsFile());
+  if (f.length) { e.preventDefault(); msg('bugMsg', ''); bugProsthese_(f); }
+}
+function anaforaUI() {
+  if (!T) return;                     // μόνο για όσους έχουν συνδεθεί
+  var D = $('bugDlg'), ok = $('bugOk');
+  msg('bugMsg', '');
+  if (!D._stithike) {
+    D._stithike = true;
+    $('bugDrop').onclick = function () { $('bugFile').click(); };
+    $('bugDrop').onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('bugFile').click(); } };
+    $('bugFile').onchange = function () { msg('bugMsg', ''); bugProsthese_(this.files); this.value = ''; };
+    ['dragenter', 'dragover'].forEach(function (k) { $('bugDrop').addEventListener(k, function (e) { e.preventDefault(); this.classList.add('over'); }); });
+    ['dragleave', 'drop'].forEach(function (k) { $('bugDrop').addEventListener(k, function (e) { e.preventDefault(); this.classList.remove('over'); }); });
+    $('bugDrop').addEventListener('drop', function (e) { msg('bugMsg', ''); bugProsthese_(e.dataTransfer.files); });
+    $('bugThumbs').onclick = function (e) { var b = e.target.closest('button[data-i]'); if (b) { BUG.eikones.splice(+b.getAttribute('data-i'), 1); bugThumbs_(); } };
+    document.addEventListener('paste', bugEpikollisi_);
+    $('bugNo').onclick = function () { D.classList.add('hidden'); };
+    D.addEventListener('click', function (e) { if (e.target === D) D.classList.add('hidden'); });
+    D.addEventListener('keydown', function (e) { if (e.key === 'Escape') D.classList.add('hidden'); });
+    ok.onclick = bugApostoli_;
+  }
+  bugThumbs_();
+  D.classList.remove('hidden');
+  setTimeout(function () { $('bugTi').focus(); }, 30);
+}
+function bugApostoli_() {
+  var ti = $('bugTi').value.trim(), eg = $('bugEg').value.trim(), al = $('bugAl').value.trim(), ok = $('bugOk');
+  var r1 = document.querySelector('input[name=bugVar]:checked'), r2 = document.querySelector('input[name=bugEp]:checked');
+  if (eg.length < 5) { msg('bugMsg', 'Γράψτε στο 2 τι έγινε· μία-δύο προτάσεις αρκούν.', 'bad'); $('bugEg').focus(); return; }
+  if (BUG.eikones.some(function (e) { return !e.d; })) { msg('bugMsg', 'Περιμένετε λίγο να ετοιμαστούν οι εικόνες.', 'info'); return; }
+  var perigrafi = (ti ? 'Τι προσπαθούσα: ' + ti + '\n\n' : '') + 'Τι έγινε: ' + eg + '\n\n' +
+    'Πόσο εμποδίζει: ' + (r1 ? r1.value : '—') + '\nΕπαναλαμβάνεται: ' + (r2 ? r2.value : '—') + (al ? '\n\nΆλλο: ' + al : '');
+  var orato = ['login', 'home', 'list', 'edit', 'review', 'pages', 'page', 'settings', 'odigies'].filter(function (k) { var e = $('v-' + k); return e && !e.classList.contains('hidden'); })[0] || '';
+  var pl = { othoni: orato, anartisi: (orato === 'page' && PCUR) ? 'σελίδα ' + PCUR.id + ' «' + PCUR.titlos + '»' : (CUR && /edit|review/.test(orato)) ? (CUR.id || 'νέα') + ' «' + ($('f-titl') ? $('f-titl').value : CUR.titlos || '') + '»' : '',
+             lathi: ANAFORA.lathi.join(' | '), js: ANAFORA.js.join(' | '), kliseis: ANAFORA.kliseis.join(' | '),
+             syskevi: navigator.userAgent + ' · οθόνη ' + innerWidth + '×' + innerHeight, url: location.href.split('#')[0], ekdosi: document.lastModified };
+  var eik = BUG.eikones.map(function (e, i) { return { onoma: 'othoni-' + (i + 1) + '.jpg', b64: e.d.split(',')[1] }; });
+  ok.disabled = true; ok.textContent = 'Αποστολή…'; msg('bugMsg', '');
+  var telos = function () { ok.disabled = false; ok.textContent = '📨 Αποστολή στον υπεύθυνο'; };
+  google.script.run.withSuccessHandler(function (r) {
+      telos(); $('bugDlg').classList.add('hidden');
+      ['bugTi', 'bugEg', 'bugAl'].forEach(function (k) { $(k).value = ''; });
+      document.querySelectorAll('#bugDlg input[type=radio]').forEach(function (x) { x.checked = false; });
+      BUG.eikones = []; bugThumbs_();
+      dlg({ icon: '✅', title: 'Στάλθηκε', text: (r && r.minima) || 'Η αναφορά στάλθηκε.', cancel: false });
+    })
+    .withFailureHandler(function (e) { telos(); msg('bugMsg', ((e && e.message) || String(e)) + ' Ό,τι γράψατε κρατήθηκε· δοκιμάστε ξανά σε λίγο.', 'bad'); })
+    .anaforaSfalmatos(T || '', perigrafi, JSON.stringify(pl), eik);
 }
 function msg(el, text, kind) {
   if (text && kind === 'bad') anaforaKrata_('lathi', el + ': ' + text); $(el).innerHTML = text ? '<div class="msg ' + (kind || 'info') + '">' + esc(text) + '</div>' : ''; if (text) $(el).scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
@@ -649,7 +776,7 @@ function login(e) {
     start();
   }, 'loginMsg', $('bLogin'));
 }
-function logout() { T = null; try { sessionStorage.clear(); } catch (x) {} $('hdr').classList.add('hidden'); nav('login'); }
+function logout() { T = null; try { sessionStorage.clear(); } catch (x) {} $('hdr').classList.add('hidden'); document.body.classList.remove('mesa'); $('bugDlg').classList.add('hidden'); nav('login'); }
 function ftiaxeEpiloges_() {
   /* οι επιλογές «πού ανήκει» έρχονται από τον διακομιστή: ενότητες + όλες οι δημοσιευμένες σελίδες των μενού (s:…) */
   var OM_T = { sxoleio: 'Το Σχολείο μας', zoi: 'Σχολική Ζωή', goneis: 'Γονείς και Κηδεμόνες' }, OM_I = { sxoleio: '🏫', zoi: '🌱', goneis: '👪' };
@@ -665,7 +792,7 @@ function ftiaxeEpiloges_() {
   $('f-dik').innerHTML = OPT.diktya.map(function (d) { return '<label><input type="checkbox" value="' + d[0] + '"> ' + esc(d[1]) + '</label>'; }).join('');
 }
 function start() {
-  $('hdr').classList.remove('hidden');
+  $('hdr').classList.remove('hidden'); document.body.classList.add('mesa');
   $('roleLbl').textContent = ROLE === 'diefthynsi' ? 'Διεύθυνση' : 'Εκπαιδευτικός';
   ftiaxeEpiloges_();
   if (location.hash === '#odigies') { try { history.replaceState(null, '', location.pathname); } catch (x) {} nav('odigies'); } else home();
@@ -835,8 +962,20 @@ function inlineMd(s) {
   s = s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/==(.+?)==/g, '<mark>$1</mark>').replace(/(^|[^*\w])\*(?!\s)(.+?)\*(?!\w)/g, '$1<i>$2</i>');
   return s.replace(/ {2}\n/g, '<br>');
 }
+function ontotites_(x) {   // «&amp;» από το παλιό WordPress → «&» (ίδιο με τον διακομιστή)
+  var O = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+  for (var k = 0; k < 3; k++) {
+    var n = String(x || '').replace(/&(amp|lt|gt|quot|apos|nbsp|#\d{1,6}|#x[0-9a-fA-F]{1,6});/g, function (m, e) {
+      if (O[e] !== undefined) return O[e];
+      var c = /^#x/i.test(e) ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+      return c > 0 && c < 0x110000 ? String.fromCodePoint(c) : m;
+    });
+    if (n === x) break; x = n;
+  }
+  return x;
+}
 function mdToHtml(md) {
-  var out = [], lines = String(md || '').replace(/\r/g, '').split('\n'), para = [], list = null, tab = null, pal = '';
+  var out = [], lines = ontotites_(String(md || '')).replace(/\r/g, '').split('\n'), para = [], list = null, tab = null, pal = '';
   function kl(al) { return al && al !== 'aristera' ? ' class="al-' + al + '"' : ''; }
   function ft() { if (tab) { out.push('<table>' + tab.map(function (r, i) { var c = i ? 'td' : 'th'; return '<tr>' + r.map(function (x) { return '<' + c + '>' + (inlineMd(x) || '<br>') + '</' + c + '>'; }).join('') + '</tr>'; }).join('') + '</table>'); tab = null; } }
   function fp() { if (para.length) { out.push('<p' + kl(pal) + '>' + inlineMd(para.join('\n')).replace(/\n/g, ' ') + '</p>'); para = []; } pal = ''; }

@@ -341,30 +341,40 @@ function enotitesOles_() {
 /** Αναφορά προβλήματος από το κουμπί «🐞» του Πίνακα: email στον υπεύθυνο ανάπτυξης (DEV_EMAIL στις ρυθμίσεις του
  *  script, όχι στον κώδικα: το αποθετήριο είναι δημόσιο). Δουλεύει και χωρίς σύνδεση (π.χ. «δεν μπορώ να μπω»),
  *  με όριο αποστολών για να μη γίνει κανάλι ανεπιθύμητων. */
-function anaforaSfalmatos(token, perigrafi, plaisio) {
+function anaforaSfalmatos(token, perigrafi, plaisio, eikones) {
+  var s = synedria_(token);   // μόνο για όσους έχουν συνδεθεί (το κουμπί δεν φαίνεται πριν από τη σύνδεση)
   perigrafi = String(perigrafi || '').trim();
   if (perigrafi.length < 5) throw new Error('Γράψτε με λίγα λόγια τι έγινε (τουλάχιστον μία πρόταση).');
   if (perigrafi.length > 5000) perigrafi = perigrafi.slice(0, 5000) + ' …';
-  var s = null;
-  try { s = token ? synedria_(token) : null; } catch (e) { s = null; }
-  var c = CacheService.getScriptCache(), kl = 'anafora_' + (s ? (s.email || s.rolos) : 'anonymo'), n = Number(c.get(kl) || 0);
-  if (n >= (s ? 10 : 3)) throw new Error('Στάλθηκαν ήδη αρκετές αναφορές την τελευταία ώρα. Δοκιμάστε ξανά αργότερα ή τηλεφωνήστε.');
+  var c = CacheService.getScriptCache(), kl = 'anafora_' + (s.email || s.rolos), n = Number(c.get(kl) || 0);
+  if (n >= 10) throw new Error('Στάλθηκαν ήδη αρκετές αναφορές την τελευταία ώρα. Δοκιμάστε ξανά αργότερα ή τηλεφωνήστε.');
   c.put(kl, String(n + 1), 3600);
   var p = P(), pros = p.getProperty('DEV_EMAIL') || p.getProperty('NOTIFY_EMAIL');
   if (!pros) throw new Error('Δεν έχει οριστεί email για αναφορές.');
   var pl = {}; try { pl = typeof plaisio === 'object' && plaisio ? plaisio : JSON.parse(plaisio || '{}'); } catch (e) { pl = {}; }
-  var poios = s ? ((s.rolos === 'diefthynsi' ? 'Διεύθυνση' : 'Συντάκτης') + (s.onoma ? ' · ' + s.onoma : '') + (s.email ? ' · ' + s.email : '')) : 'χωρίς σύνδεση';
+  var poios = (s.rolos === 'diefthynsi' ? 'Διεύθυνση' : 'Συντάκτης') + (s.onoma ? ' · ' + s.onoma : '') + (s.email ? ' · ' + s.email : '');
+  var syn = [], ola = 0;
+  (Array.isArray(eikones) ? eikones : []).slice(0, 3).forEach(function (e, i) {
+    if (!e || typeof e.b64 !== 'string' || e.b64.length > 6000000) return;   // ~4,5 MB ανά εικόνα
+    var bytes; try { bytes = Utilities.base64Decode(e.b64); } catch (x) { return; }
+    var jpg = bytes.length > 3 && (bytes[0] & 255) === 0xFF && (bytes[1] & 255) === 0xD8;
+    var png = bytes.length > 8 && (bytes[0] & 255) === 0x89 && bytes[1] === 0x50;
+    if (!jpg && !png) return;                                               // μόνο εικόνες
+    ola += bytes.length; if (ola > 12000000) return;
+    syn.push(Utilities.newBlob(bytes, jpg ? 'image/jpeg' : 'image/png', 'othoni-' + (i + 1) + (jpg ? '.jpg' : '.png')));
+  });
   var gr = function (k, v) { return v === undefined || v === null || v === '' ? '' : k + ': ' + String(v).slice(0, 1500) + '\n'; };
   var soma = 'Αναφορά προβλήματος από τον Πίνακα διαχείρισης\n\n' + perigrafi + '\n\n——— Τεχνικά στοιχεία ———\n' +
     gr('Ποιος', poios) + gr('Ώρα', Utilities.formatDate(new Date(), 'Europe/Athens', 'dd/MM/yyyy HH:mm:ss')) +
     gr('Οθόνη Πίνακα', pl.othoni) + gr('Ανάρτηση/σελίδα', pl.anartisi) + gr('Τελευταία μηνύματα λάθους', pl.lathi) +
     gr('Σφάλματα JavaScript', pl.js) + gr('Τελευταίες κλήσεις', pl.kliseis) + gr('Συσκευή', pl.syskevi) + gr('Διεύθυνση', pl.url) +
-    gr('Έκδοση Πίνακα', pl.ekdosi);
-  var email = s && s.email ? s.email : '';
+    gr('Έκδοση Πίνακα', pl.ekdosi) + gr('Συνημμένες εικόνες', syn.length || '');
+  var email = s.email || '';
   var mail = { to: pros, subject: '🐞 Πίνακας ιστοσελίδας: αναφορά προβλήματος (' + poios.split(' · ')[0] + ')', body: soma, name: 'Πίνακας ιστοσελίδας σχολείου' };
-  if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) mail.replyTo = email;   // «Απάντηση» πηγαίνει κατευθείαν στον εκπαιδευτικό
+  if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) mail.replyTo = email;
+  if (syn.length) mail.attachments = syn;   // «Απάντηση» πηγαίνει κατευθείαν στον εκπαιδευτικό
   MailApp.sendEmail(mail);
-  katagrafi_(s ? s.rolos : 'anonymo', s ? (s.onoma || s.email || '') : '', 'Αναφορά προβλήματος', '', perigrafi.slice(0, 120));
+  katagrafi_(s.rolos, s.onoma || s.email || '', 'Αναφορά προβλήματος', '', perigrafi.slice(0, 120));
   return { ok: true, minima: 'Ευχαριστούμε! Η αναφορά στάλθηκε στον υπεύθυνο της ιστοσελίδας.' };
 }
 
@@ -417,8 +427,25 @@ function morfi_(r) {
  * energeia: 'proxeiro' | 'egkrisi' (αποστολή για έγκριση) | 'dimosiefsi' (μόνο Διεύθυνση)
  * Σε ήδη δημοσιευμένη ανάρτηση, ο Συντάκτης δημιουργεί ΠΡΟΤΑΣΗ αλλαγής· η ζωντανή μένει ως έχει.
  */
+/** «&amp;», «&quot;» κ.λπ. που ήρθαν μέσα σε κείμενο (π.χ. επικόλληση από το παλιό WordPress) → χαρακτήρες. */
+function ontotites_(x) {
+  if (typeof x !== 'string') return x;
+  var O = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+  for (var k = 0; k < 3; k++) {
+    var n = x.replace(/&(amp|lt|gt|quot|apos|nbsp|#\d{1,6}|#x[0-9a-fA-F]{1,6});/g, function (m, e) {
+      if (O[e] !== undefined) return O[e];
+      var c = e.charAt(1) === 'x' || e.charAt(1) === 'X' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+      return c > 0 && c < 0x110000 ? String.fromCodePoint(c) : m;
+    });
+    if (n === x) break; x = n;
+  }
+  return x;
+}
+function katharise_(d, pedia) { if (d) pedia.forEach(function (k) { if (d[k] !== undefined) d[k] = ontotites_(d[k]); }); return d; }
+
 function apothikefsi(token, d, energeia) {
   var s = synedria_(token);
+  katharise_(d, ['titlos', 'keimeno']);
   elegxos_(d, energeia, s.rolos);
   if (energeia === 'dimosiefsi' && s.rolos !== 'diefthynsi') throw new Error('Μόνο η Διεύθυνση δημοσιεύει.');
   var lock = kleidoma_();
@@ -586,6 +613,7 @@ function listaSelidon(token) {
 
 function apothikefsiSelidas(token, d, dimosiefsi) {
   var s = synedria_(token, 'diefthynsi');
+  katharise_(d, ['titlos', 'perigrafi', 'keimeno']);
   if (String(d.keimeno || '').length > MEGISTO_KEIMENO) throw new Error(MINIMA_MEGETHOUS);
   var lock = kleidoma_(), ekd;
   try {

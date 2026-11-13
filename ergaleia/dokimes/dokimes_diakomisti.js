@@ -97,10 +97,13 @@ g.props.DEV_EMAIL = 'developer@test.gr';
 let m0 = g.mail.length;
 ok('αναφορά από εκπαιδευτικό: email στον υπεύθυνο, με «Απάντηση» στον εκπαιδευτικό', g.call('anaforaSfalmatos', [K, 'Πάτησα Αποστολή και δεν έγινε τίποτα.', JSON.stringify({ othoni: 'edit', lathi: 'edMsg: κάτι' })]).ok
    && g.mail.length === m0 + 1 && g.mail[m0].to === 'developer@test.gr' && g.mail[m0].replyTo === 'daskala1@test.gr' && /Πάτησα Αποστολή/.test(g.mail[m0].body) && /edMsg: κάτι/.test(g.mail[m0].body));
-ok('αναφορά χωρίς σύνδεση (π.χ. «δεν μπορώ να μπω»)', g.call('anaforaSfalmatos', ['', 'Δεν μπορώ να μπω με τον κωδικό μου.', '{}']).ok && /χωρίς σύνδεση/.test(g.mail[g.mail.length - 1].body));
+ok('αναφορά χωρίς σύνδεση: δεν δέχεται (το κουμπί φαίνεται μόνο μετά τη σύνδεση)', /σύνδεση/.test(lathos(() => g.call('anaforaSfalmatos', ['', 'Δεν μπορώ να μπω με τον κωδικό μου.', '{}']))));
 ok('αναφορά χωρίς περιγραφή: μήνυμα', /Γράψτε/.test(lathos(() => g.call('anaforaSfalmatos', [K, '  ', '{}']))));
-g.call('anaforaSfalmatos', ['', 'δεύτερη ανώνυμη', '{}']); g.call('anaforaSfalmatos', ['', 'τρίτη ανώνυμη', '{}']);
-ok('όριο αναφορών χωρίς σύνδεση (3 την ώρα)', /αρκετές/.test(lathos(() => g.call('anaforaSfalmatos', ['', 'τέταρτη ανώνυμη', '{}']))));
+m0 = g.mail.length;
+ok('αναφορά με στιγμιότυπο οθόνης: συνημμένη εικόνα στο email', g.call('anaforaSfalmatos', [K, 'Τι έγινε: κόλλησε η λίστα.', '{}', [{ onoma: 'a.jpg', b64: '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==' }, { onoma: 'x.txt', b64: Buffer.from('<script>').toString('base64') }]]).ok
+   && g.mail.length === m0 + 1 && (g.mail[m0].attachments || []).length === 1 && /Συνημμένες εικόνες: 1/.test(g.mail[m0].body), JSON.stringify((g.mail[m0] || {}).attachments || null).slice(0, 120));
+for (let i = 0; i < 8; i++) { try { g.call('anaforaSfalmatos', [K, 'επανάληψη ' + i, '{}']); } catch (e) {} }
+ok('όριο αναφορών (10 την ώρα)', /αρκετές/.test(lathos(() => g.call('anaforaSfalmatos', [K, 'πολλές', '{}']))));
 ok('το email του υπεύθυνου δεν είναι στον κώδικα (δημόσιο αποθετήριο)', !/moudiotis|gmail\.com/.test(require('fs').readFileSync(require('path').join(require('./pagkos').RIZA, process.env.CODE_GS || 'diaxeirisi/Code.gs'), 'utf8')));
 
 console.log('\n' + (N - LATHI.length) + '/' + N + ' σωστά');
